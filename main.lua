@@ -18,6 +18,7 @@
     end)
     ```
 ]=]
+local HttpService = game:GetService("HttpService")
 local Iris = {} :: Types.Iris
 
 local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
