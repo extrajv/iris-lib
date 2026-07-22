@@ -1,3 +1,4 @@
+--!optimize 2
 --[=[
     @class Iris
 
@@ -17,1136 +18,15 @@
     end)
     ```
 ]=]
+local Iris = {} :: Types.Iris
 
-type InputDataTypes = "Num" | "Vector2" | "Vector3" | "UDim" | "UDim2" | "Color3" | "Color4" | "Rect" | "Enum" | "" | string
-
---[=[
-    @within Iris
-    @type ID string
-]=]
-export type ID = string
-
---[=[
-    @within State
-    @type State<T> { ID: ID, value: T, get: (self) -> T, set: (self, newValue: T) -> T, onChange: (self, callback: (newValue: T) -> ()) -> (), ConnectedWidgets: { [ID]: Widget }, ConnectedFunctions: { (newValue: T) -> () } }
-]=]
-export type State<T> = {
-	ID: ID,
-	value: T,
-	lastChangeTick: number,
-	ConnectedWidgets: { [ID]: Widget },
-	ConnectedFunctions: { (newValue: T) -> () },
-
-	get: (self: State<T>) -> T,
-	set: (self: State<T>, newValue: T, force: true?) -> (),
-	onChange: (self: State<T>, funcToConnect: (newValue: T) -> ()) -> () -> (),
-	changed: (self: State<T>) -> boolean,
-}
-
---[=[
-    @within Iris
-    @type Widget { ID: ID, type: string, lastCycleTick: number, parentWidget: Widget, Instance: GuiObject, ZIndex: number, arguments: { [string]: any }}
-]=]
-export type Widget = {
-	ID: ID,
-	type: string,
-	lastCycleTick: number,
-	trackedEvents: {},
-	parentWidget: ParentWidget,
-
-	arguments: {},
-	providedArguments: {},
-
-	Instance: GuiObject,
-	ZIndex: number,
-}
-
-export type ParentWidget = Widget & {
-	ChildContainer: GuiObject,
-	ZOffset: number,
-	ZUpdate: boolean,
-}
-
-export type StateWidget = Widget & {
-	state: {
-		[string]: State<any>,
-	},
-}
-
--- Events
-
-export type Hovered = {
-	isHoveredEvent: boolean,
-	hovered: () -> boolean,
-}
-
-export type Clicked = {
-	lastClickedTick: number,
-	clicked: () -> boolean,
-}
-
-export type RightClicked = {
-	lastRightClickedTick: number,
-	rightClicked: () -> boolean,
-}
-
-export type DoubleClicked = {
-	lastClickedTime: number,
-	lastClickedPosition: Vector2,
-	lastDoubleClickedTick: number,
-	doubleClicked: () -> boolean,
-}
-
-export type CtrlClicked = {
-	lastCtrlClickedTick: number,
-	ctrlClicked: () -> boolean,
-}
-
-export type Active = {
-	active: () -> boolean,
-}
-
-export type Checked = {
-	lastCheckedTick: number,
-	checked: () -> boolean,
-}
-
-export type Unchecked = {
-	lastUncheckedTick: number,
-	unchecked: () -> boolean,
-}
-
-export type Opened = {
-	lastOpenedTick: number,
-	opened: () -> boolean,
-}
-
-export type Closed = {
-	lastClosedTick: number,
-	closed: () -> boolean,
-}
-
-export type Collapsed = {
-	lastCollapsedTick: number,
-	collapsed: () -> boolean,
-}
-
-export type Uncollapsed = {
-	lastUncollapsedTick: number,
-	uncollapsed: () -> boolean,
-}
-
-export type Selected = {
-	lastSelectedTick: number,
-	selected: () -> boolean,
-}
-
-export type Unselected = {
-	lastUnselectedTick: number,
-	unselected: () -> boolean,
-}
-
-export type Changed = {
-	lastChangedTick: number,
-	changed: () -> boolean,
-}
-
-export type NumberChanged = {
-	lastNumberChangedTick: number,
-	numberChanged: () -> boolean,
-}
-
-export type TextChanged = {
-	lastTextChangedTick: number,
-	textChanged: () -> boolean,
-}
-
--- Widgets
-
--- Window
-
-export type Root = ParentWidget
-
-export type Window = ParentWidget & {
-	usesScreenGuis: boolean,
-
-	arguments: {
-		Title: string?,
-		NoTitleBar: boolean?,
-		NoBackground: boolean?,
-		NoCollapse: boolean?,
-		NoClose: boolean?,
-		NoMove: boolean?,
-		NoScrollbar: boolean?,
-		NoResize: boolean?,
-		NoNav: boolean?,
-		NoMenu: boolean?,
-	},
-
-	state: {
-		size: State<Vector2>,
-		position: State<Vector2>,
-		isUncollapsed: State<boolean>,
-		isOpened: State<boolean>,
-		scrollDistance: State<number>,
-	},
-} & Opened & Closed & Collapsed & Uncollapsed & Hovered
-
-export type Tooltip = Widget & {
-	arguments: {
-		Text: string,
-	},
-}
-
--- Menu
-
-export type MenuBar = ParentWidget
-
-export type Menu = ParentWidget & {
-	ButtonColors: { [string]: Color3 | number },
-
-	arguments: {
-		Text: string?,
-	},
-
-	state: {
-		isOpened: State<boolean>,
-	},
-} & Clicked & Opened & Closed & Hovered
-
-export type MenuItem = Widget & {
-	arguments: {
-		Text: string,
-		KeyCode: Enum.KeyCode?,
-		ModifierKey: Enum.ModifierKey?,
-	},
-} & Clicked & Hovered
-
-export type MenuToggle = Widget & {
-	arguments: {
-		Text: string,
-		KeyCode: Enum.KeyCode?,
-		ModifierKey: Enum.ModifierKey?,
-	},
-
-	state: {
-		isChecked: State<boolean>,
-	},
-} & Checked & Unchecked & Hovered
-
--- Format
-
-export type Separator = Widget
-
-export type Indent = ParentWidget & {
-	arguments: {
-		Width: number?,
-	},
-}
-
-export type SameLine = ParentWidget & {
-	arguments: {
-		Width: number?,
-		VerticalAlignment: Enum.VerticalAlignment?,
-		HorizontalAlignment: Enum.HorizontalAlignment?,
-	},
-}
-
-export type Group = ParentWidget
-
--- Text
-
-export type Text = Widget & {
-	arguments: {
-		Text: string,
-		Wrapped: boolean?,
-		Color: Color3?,
-		RichText: boolean?,
-	},
-} & Hovered
-
-export type SeparatorText = Widget & {
-	arguments: {
-		Text: string,
-	},
-} & Hovered
-
--- Basic
-
-export type Button = Widget & {
-	arguments: {
-		Text: string?,
-		Size: UDim2?,
-	},
-} & Clicked & RightClicked & DoubleClicked & CtrlClicked & Hovered
-
-export type Checkbox = Widget & {
-	arguments: {
-		Text: string?,
-	},
-
-	state: {
-		isChecked: State<boolean>,
-	},
-} & Unchecked & Checked & Hovered
-
-export type RadioButton = Widget & {
-	arguments: {
-		Text: string?,
-		Index: any,
-	},
-
-	state: {
-		index: State<any>,
-	},
-
-	active: () -> boolean,
-} & Selected & Unselected & Active & Hovered
-
--- Image
-
-export type Image = Widget & {
-	arguments: {
-		Image: string,
-		Size: UDim2,
-		Rect: Rect?,
-		ScaleType: Enum.ScaleType?,
-		TileSize: UDim2?,
-		SliceCenter: Rect?,
-		SliceScale: number?,
-		ResampleMode: Enum.ResamplerMode?,
-	},
-} & Hovered
-
--- ooops, may have overriden a Roblox type, and then got a weird type message
--- let's just hope I don't have to use a Roblox ImageButton type anywhere by name in this file
-export type ImageButton = Image & Clicked & RightClicked & DoubleClicked & CtrlClicked
-
--- Tree
-
-export type Tree = CollapsingHeader & {
-	arguments: {
-		Text: string,
-		SpanAvailWidth: boolean?,
-		NoIndent: boolean?,
-		DefaultOpen: true?,
-	},
-}
-
-export type CollapsingHeader = ParentWidget & {
-	arguments: {
-		Text: string?,
-		DefaultOpen: true?,
-	},
-
-	state: {
-		isUncollapsed: State<boolean>,
-	},
-} & Collapsed & Uncollapsed & Hovered
-
--- Tabs
-
-export type TabBar = ParentWidget & {
-	Tabs: { Tab },
-
-	state: {
-		index: State<number>,
-	},
-}
-
-export type Tab = ParentWidget & {
-	parentWidget: TabBar,
-	Index: number,
-	ButtonColors: { [string]: Color3 | number },
-
-	arguments: {
-		Text: string,
-		Hideable: boolean,
-	},
-
-	state: {
-		index: State<number>,
-		isOpened: State<boolean>,
-	},
-} & Clicked & Opened & Selected & Unselected & Active & Closed & Hovered
-
--- Input
-export type Input<T> = Widget & {
-	lastClickedTime: number,
-	lastClickedPosition: Vector2,
-
-	arguments: {
-		Text: string?,
-		Increment: T,
-		Min: T,
-		Max: T,
-		Format: { string },
-		Prefix: { string },
-		NoButtons: boolean?,
-	},
-
-	state: {
-		number: State<T>,
-		editingText: State<number>,
-	},
-} & NumberChanged & Hovered
-
-export type InputColor3 = Input<{ number }> & {
-	arguments: {
-		UseFloats: boolean?,
-		UseHSV: boolean?,
-	},
-
-	state: {
-		color: State<Color3>,
-		editingText: State<boolean>,
-	},
-} & NumberChanged & Hovered
-
-export type InputColor4 = InputColor3 & {
-	state: {
-		transparency: State<number>,
-	},
-}
-
-export type InputEnum = Input<number> & {
-	state: {
-		enumItem: State<EnumItem>,
-	},
-}
-
-export type InputText = Widget & {
-	arguments: {
-		Text: string?,
-		TextHint: string?,
-		ReadOnly: boolean?,
-		MultiLine: boolean?,
-	},
-
-	state: {
-		text: State<string>,
-	},
-} & TextChanged & Hovered
-
--- Combo
-
-export type Selectable = Widget & {
-	ButtonColors: { [string]: Color3 | number },
-
-	arguments: {
-		Text: string?,
-		Index: any?,
-		NoClick: boolean?,
-	},
-
-	state: {
-		index: State<any>,
-	},
-} & Selected & Unselected & Clicked & RightClicked & DoubleClicked & CtrlClicked & Hovered
-
-export type Combo = ParentWidget & {
-	arguments: {
-		Text: string?,
-		NoButton: boolean?,
-		NoPreview: boolean?,
-	},
-
-	state: {
-		index: State<any>,
-		isOpened: State<boolean>,
-	},
-
-	UIListLayout: UIListLayout,
-} & Opened & Closed & Changed & Clicked & Hovered
-
--- Plot
-
-export type ProgressBar = Widget & {
-	arguments: {
-		Text: string?,
-		Format: string?,
-	},
-
-	state: {
-		progress: State<number>,
-	},
-} & Changed & Hovered
-
-export type PlotLines = Widget & {
-	Lines: { Frame },
-	HoveredLine: Frame | false,
-	Tooltip: TextLabel,
-
-	arguments: {
-		Text: string,
-		Height: number,
-		Min: number,
-		Max: number,
-		TextOverlay: string,
-	},
-
-	state: {
-		values: State<{ number }>,
-		hovered: State<{ number }?>,
-	},
-} & Hovered
-
-export type PlotHistogram = Widget & {
-	Blocks: { Frame },
-	HoveredBlock: Frame | false,
-	Tooltip: TextLabel,
-
-	arguments: {
-		Text: string,
-		Height: number,
-		Min: number,
-		Max: number,
-		TextOverlay: string,
-		BaseLine: number,
-	},
-
-	state: {
-		values: State<{ number }>,
-		hovered: State<number?>,
-	},
-} & Hovered
-
-export type Table = ParentWidget & {
-	_columnIndex: number,
-	_rowIndex: number,
-	_rowContainer: Frame,
-	_rowInstances: { Frame },
-	_cellInstances: { { Frame } },
-	_rowBorders: { Frame },
-	_columnBorders: { GuiButton },
-	_rowCycles: { number },
-	_widths: { UDim },
-	_minWidths: { number },
-
-	arguments: {
-		NumColumns: number,
-		Header: boolean,
-		RowBackground: boolean,
-		OuterBorders: boolean,
-		InnerBorders: boolean,
-		Resizable: boolean,
-		FixedWidth: boolean,
-		ProportionalWidth: boolean,
-		LimitTableWidth: boolean,
-	},
-
-	state: {
-		widths: State<{ number }>,
-	},
-} & Hovered
-
-export type InputDataType = number | Vector2 | Vector3 | UDim | UDim2 | Color3 | Rect | { number }
-
-export type Argument = any
-export type Arguments = {
-	[string]: Argument,
-	Text: string,
-	TextHint: string,
-	TextOverlay: string,
-	ReadOnly: boolean,
-	MultiLine: boolean,
-	Wrapped: boolean,
-	Color: Color3,
-	RichText: boolean,
-
-	Increment: InputDataType,
-	Min: InputDataType,
-	Max: InputDataType,
-	Format: { string },
-	UseFloats: boolean,
-	UseHSV: boolean,
-	UseHex: boolean,
-	Prefix: { string },
-	BaseLine: number,
-
-	Width: number,
-	Height: number,
-	VerticalAlignment: Enum.VerticalAlignment,
-	HorizontalAlignment: Enum.HorizontalAlignment,
-	Index: any,
-	Image: string,
-	Size: UDim2,
-	Rect: Rect,
-	ScaleType: Enum.ScaleType,
-	TileSize: UDim2,
-	SliceCenter: Rect,
-	SliceScale: number,
-	ResampleMode: Enum.ResamplerMode,
-
-	SpanAvailWidth: boolean,
-	NoIdent: boolean,
-	NoClick: boolean,
-	NoButtons: boolean,
-	NoButton: boolean,
-	NoPreview: boolean,
-
-	NumColumns: number,
-	RowBg: boolean,
-	BordersOuter: boolean,
-	BordersInner: boolean,
-
-	Title: string,
-	NoTitleBar: boolean,
-	NoBackground: boolean,
-	NoCollapse: boolean,
-	NoClose: boolean,
-	NoMove: boolean,
-	NoScrollbar: boolean,
-	NoResize: boolean,
-	NoMenu: boolean,
-
-	KeyCode: Enum.KeyCode,
-	ModifierKey: Enum.ModifierKey,
-	Disabled: boolean,
-}
-
-export type States = {
-	[string]: State<any>,
-	number: State<number>,
-	color: State<Color3>,
-	transparency: State<number>,
-	editingText: State<boolean>,
-	index: State<any>,
-
-	size: State<Vector2>,
-	position: State<Vector2>,
-	progress: State<number>,
-	scrollDistance: State<number>,
-
-	isChecked: State<boolean>,
-	isOpened: State<boolean>,
-	isUncollapsed: State<boolean>,
-}
-
-export type Event = {
-	Init: (Widget) -> (),
-	Get: (Widget) -> boolean,
-}
-export type Events = { [string]: Event }
-
--- Widgets
-
-export type WidgetArguments = { [number]: Argument }
-export type WidgetStates = {
-	[string]: State<any>,
-	number: State<number>?,
-	color: State<Color3>?,
-	transparency: State<number>?,
-	editingText: State<boolean>?,
-	index: State<any>?,
-
-	size: State<Vector2>?,
-	position: State<Vector2>?,
-	progress: State<number>?,
-	scrollDistance: State<number>?,
-	values: State<number>?,
-
-	isChecked: State<boolean>?,
-	isOpened: State<boolean>?,
-	isUncollapsed: State<boolean>?,
-}
-
-export type WidgetClass = {
-	Generate: (thisWidget: Widget) -> GuiObject,
-	Discard: (thisWidget: Widget) -> (),
-	Update: (thisWidget: Widget, ...any) -> (),
-
-	Args: { [string]: number },
-	Events: Events,
-	hasChildren: boolean,
-	hasState: boolean,
-	ArgNames: { [number]: string },
-
-	GenerateState: (thisWidget: Widget) -> (),
-	UpdateState: (thisWidget: Widget) -> (),
-
-	ChildAdded: (thisWidget: Widget, thisChild: Widget) -> GuiObject,
-	ChildDiscarded: (thisWidget: Widget, thisChild: Widget) -> (),
-}
-
--- Iris
-
-export type Internal = {
-    --[[
-        --------------
-          PROPERTIES
-        --------------
-    ]]
-	_version: string,
-	_started: boolean,
-	_shutdown: boolean,
-	_cycleTick: number,
-	_deltaTime: number,
-	_eventConnection: RBXScriptConnection?,
-
-	-- Refresh
-	_globalRefreshRequested: boolean,
-	_refreshCounter: number,
-	_refreshLevel: number,
-	_refreshStack: { boolean },
-
-	-- Widgets & Instances
-	_widgets: { [string]: WidgetClass },
-	_widgetCount: number,
-	_stackIndex: number,
-	_rootInstance: GuiObject?,
-	_rootWidget: ParentWidget,
-	_lastWidget: Widget,
-	SelectionImageObject: Frame,
-	parentInstance: Instance,
-	_utility: WidgetUtility,
-
-	-- Config
-	_rootConfig: Config,
-	_config: Config,
-
-	-- ID
-	_IDStack: { ID },
-	_usedIDs: { [ID]: number },
-	_newID: boolean,
-	_pushedIds: { ID },
-	_nextWidgetId: ID?,
-
-	-- VDOM
-	_lastVDOM: { [ID]: Widget },
-	_VDOM: { [ID]: Widget },
-
-	-- State
-	_states: { [ID]: State<any> },
-
-	-- Callback
-	_postCycleCallbacks: { () -> () },
-	_connectedFunctions: { () -> () },
-	_connections: { RBXScriptConnection },
-	_initFunctions: { () -> () },
-	_cycleCoroutine: thread?,
-
-    --[[
-        ---------
-          STATE
-        ---------
-    ]]
-
-	StateClass: {
-		__index: any,
-
-		get: <T>(self: State<T>) -> any,
-		set: <T>(self: State<T>, newValue: any) -> any,
-		onChange: <T>(self: State<T>, callback: (newValue: any) -> ()) -> (),
-	},
-
-    --[[
-        -------------
-          FUNCTIONS
-        -------------
-    ]]
-	_cycle: (deltaTime: number) -> (),
-	_NoOp: () -> (),
-
-	-- Widget
-	WidgetConstructor: (type: string, widgetClass: WidgetClass) -> (),
-	_Insert: (widgetType: string, arguments: WidgetArguments?, states: WidgetStates?) -> Widget,
-	_GenNewWidget: (widgetType: string, arguments: Arguments, states: WidgetStates?, ID: ID) -> Widget,
-	_ContinueWidget: (ID: ID, widgetType: string) -> Widget,
-	_DiscardWidget: (widgetToDiscard: Widget) -> (),
-
-	_widgetState: (thisWidget: Widget, stateName: string, initialValue: any) -> State<any>,
-	_EventCall: (thisWidget: Widget, eventName: string) -> boolean,
-	_GetParentWidget: () -> ParentWidget,
-	SetFocusedWindow: (thisWidget: Window?) -> (),
-
-	-- Generate
-	_generateEmptyVDOM: () -> { [ID]: Widget },
-	_generateRootInstance: () -> (),
-	_generateSelectionImageObject: () -> (),
-
-	-- Utility
-	_getID: (levelsToIgnore: number) -> ID,
-	_deepCompare: (t1: {}, t2: {}) -> boolean,
-	_deepCopy: (t: {}) -> {},
-}
-
-export type WidgetUtility = {
-	GuiService: GuiService,
-	RunService: RunService,
-	TextService: TextService,
-	UserInputService: UserInputService,
-	ContextActionService: ContextActionService,
-
-	getTime: () -> number,
-	getMouseLocation: () -> Vector2,
-
-	ICONS: {
-		BLANK_SQUARE: string,
-		RIGHT_POINTING_TRIANGLE: string,
-		DOWN_POINTING_TRIANGLE: string,
-		MULTIPLICATION_SIGN: string,
-		BOTTOM_RIGHT_CORNER: string,
-		CHECK_MARK: string,
-		BORDER: string,
-		ALPHA_BACKGROUND_TEXTURE: string,
-		UNKNOWN_TEXTURE: string,
-	},
-
-	GuiOffset: Vector2,
-	MouseOffset: Vector2,
-
-	findBestWindowPosForPopup: (refPos: Vector2, size: Vector2, outerMin: Vector2, outerMax: Vector2) -> Vector2,
-	getScreenSizeForWindow: (thisWidget: Widget) -> Vector2,
-	isPosInsideRect: (pos: Vector2, rectMin: Vector2, rectMax: Vector2) -> boolean,
-	extend: (superClass: WidgetClass, { [any]: any }) -> WidgetClass,
-	discardState: (thisWidget: Widget) -> (),
-
-	UIPadding: (Parent: GuiObject, PxPadding: Vector2) -> UIPadding,
-	UIListLayout: (Parent: GuiObject, FillDirection: Enum.FillDirection, Padding: UDim) -> UIListLayout,
-	UIStroke: (Parent: GuiObject, Thickness: number, Color: Color3, Transparency: number) -> UIStroke,
-	UICorner: (Parent: GuiObject, PxRounding: number?) -> UICorner,
-	UISizeConstraint: (Parent: GuiObject, MinSize: Vector2?, MaxSize: Vector2?) -> UISizeConstraint,
-
-	applyTextStyle: (thisInstance: TextLabel | TextButton | TextBox) -> (),
-	applyInteractionHighlights: (Property: string, Button: GuiButton, Highlightee: GuiObject, Colors: { [string]: any }) -> (),
-	applyInteractionHighlightsWithMultiHighlightee: (Property: string, Button: GuiButton, Highlightees: { { GuiObject | { [string]: Color3 | number } } }) -> (),
-	applyFrameStyle: (thisInstance: GuiObject, noPadding: boolean?, noCorner: boolean?) -> (),
-
-	applyButtonClick: (thisInstance: GuiButton, callback: () -> ()) -> (),
-	applyButtonDown: (thisInstance: GuiButton, callback: (x: number, y: number) -> ()) -> (),
-	applyMouseEnter: (thisInstance: GuiObject, callback: (x: number, y: number) -> ()) -> (),
-	applyMouseMoved: (thisInstance: GuiObject, callback: (x: number, y: number) -> ()) -> (),
-	applyMouseLeave: (thisInstance: GuiObject, callback: (x: number, y: number) -> ()) -> (),
-	applyInputBegan: (thisInstance: GuiObject, callback: (input: InputObject) -> ()) -> (),
-	applyInputEnded: (thisInstance: GuiObject, callback: (input: InputObject) -> ()) -> (),
-
-	registerEvent: (event: string, callback: (...any) -> ()) -> (),
-
-	EVENTS: {
-		hover: (pathToHovered: (thisWidget: Widget & Hovered) -> GuiObject) -> Event,
-		click: (pathToClicked: (thisWidget: Widget & Clicked) -> GuiButton) -> Event,
-		rightClick: (pathToClicked: (thisWidget: Widget & RightClicked) -> GuiButton) -> Event,
-		doubleClick: (pathToClicked: (thisWidget: Widget & DoubleClicked) -> GuiButton) -> Event,
-		ctrlClick: (pathToClicked: (thisWidget: Widget & CtrlClicked) -> GuiButton) -> Event,
-	},
-
-	abstractButton: WidgetClass,
-}
-
-export type Config = {
-	TextColor: Color3,
-	TextTransparency: number,
-	TextDisabledColor: Color3,
-	TextDisabledTransparency: number,
-
-	BorderColor: Color3,
-	BorderActiveColor: Color3,
-	BorderTransparency: number,
-	BorderActiveTransparency: number,
-
-	WindowBgColor: Color3,
-	WindowBgTransparency: number,
-	ScrollbarGrabColor: Color3,
-	ScrollbarGrabTransparency: number,
-	PopupBgColor: Color3,
-	PopupBgTransparency: number,
-
-	TitleBgColor: Color3,
-	TitleBgTransparency: number,
-	TitleBgActiveColor: Color3,
-	TitleBgActiveTransparency: number,
-	TitleBgCollapsedColor: Color3,
-	TitleBgCollapsedTransparency: number,
-
-	MenubarBgColor: Color3,
-	MenubarBgTransparency: number,
-
-	FrameBgColor: Color3,
-	FrameBgTransparency: number,
-	FrameBgHoveredColor: Color3,
-	FrameBgHoveredTransparency: number,
-	FrameBgActiveColor: Color3,
-	FrameBgActiveTransparency: number,
-
-	ButtonColor: Color3,
-	ButtonTransparency: number,
-	ButtonHoveredColor: Color3,
-	ButtonHoveredTransparency: number,
-	ButtonActiveColor: Color3,
-	ButtonActiveTransparency: number,
-
-	ImageColor: Color3,
-	ImageTransparency: number,
-
-	SliderGrabColor: Color3,
-	SliderGrabTransparency: number,
-	SliderGrabActiveColor: Color3,
-	SliderGrabActiveTransparency: number,
-
-	HeaderColor: Color3,
-	HeaderTransparency: number,
-	HeaderHoveredColor: Color3,
-	HeaderHoveredTransparency: number,
-	HeaderActiveColor: Color3,
-	HeaderActiveTransparency: number,
-
-	TabColor: Color3,
-	TabTransparency: number,
-	TabHoveredColor: Color3,
-	TabHoveredTransparency: number,
-	TabActiveColor: Color3,
-	TabActiveTransparency: number,
-
-	SelectionImageObjectColor: Color3,
-	SelectionImageObjectTransparency: number,
-	SelectionImageObjectBorderColor: Color3,
-	SelectionImageObjectBorderTransparency: number,
-
-	TableBorderStrongColor: Color3,
-	TableBorderStrongTransparency: number,
-	TableBorderLightColor: Color3,
-	TableBorderLightTransparency: number,
-	TableRowBgColor: Color3,
-	TableRowBgTransparency: number,
-	TableRowBgAltColor: Color3,
-	TableRowBgAltTransparency: number,
-	TableHeaderColor: Color3,
-	TableHeaderTransparency: number,
-
-	NavWindowingHighlightColor: Color3,
-	NavWindowingHighlightTransparency: number,
-	NavWindowingDimBgColor: Color3,
-	NavWindowingDimBgTransparency: number,
-
-	SeparatorColor: Color3,
-	SeparatorTransparency: number,
-
-	CheckMarkColor: Color3,
-	CheckMarkTransparency: number,
-
-	PlotLinesColor: Color3,
-	PlotLinesTransparency: number,
-	PlotLinesHoveredColor: Color3,
-	PlotLinesHoveredTransparency: number,
-	PlotHistogramColor: Color3,
-	PlotHistogramTransparency: number,
-	PlotHistogramHoveredColor: Color3,
-	PlotHistogramHoveredTransparency: number,
-
-	ResizeGripColor: Color3,
-	ResizeGripTransparency: number,
-	ResizeGripHoveredColor: Color3,
-	ResizeGripHoveredTransparency: number,
-	ResizeGripActiveColor: Color3,
-	ResizeGripActiveTransparency: number,
-
-	HoverColor: Color3,
-	HoverTransparency: number,
-
-	-- Sizes
-	ItemWidth: UDim,
-	ContentWidth: UDim,
-	ContentHeight: UDim,
-
-	WindowPadding: Vector2,
-	WindowResizePadding: Vector2,
-	FramePadding: Vector2,
-	ItemSpacing: Vector2,
-	ItemInnerSpacing: Vector2,
-	CellPadding: Vector2,
-	DisplaySafeAreaPadding: Vector2,
-	IndentSpacing: number,
-	SeparatorTextPadding: Vector2,
-
-	TextFont: Font,
-	TextSize: number,
-	FrameBorderSize: number,
-	FrameRounding: number,
-	GrabRounding: number,
-	WindowBorderSize: number,
-	WindowTitleAlign: Enum.LeftRight,
-	PopupBorderSize: number,
-	PopupRounding: number,
-	ScrollbarSize: number,
-	GrabMinSize: number,
-	SeparatorTextBorderSize: number,
-	ImageBorderSize: number,
-
-	UseScreenGUIs: boolean,
-	IgnoreGuiInset: boolean,
-	Parent: BasePlayerGui,
-	RichText: boolean,
-	TextWrapped: boolean,
-	DisplayOrderOffset: number,
-	ZIndexOffset: number,
-
-	MouseDoubleClickTime: number,
-	MouseDoubleClickMaxDist: number,
-	MouseDragThreshold: number,
-}
-
-type WidgetCall<W, A, S, E...> = (arguments: A, states: S, E...) -> W
-
-export type Iris = {
-    --[[
-        -----------
-          WIDGETS
-        -----------
-    ]]
-
-	End: () -> (),
-
-	-- Window API
-	Window: WidgetCall<Window, WidgetArguments, WidgetStates?>,
-	Tooltip: WidgetCall<Tooltip, WidgetArguments, nil>,
-
-	-- Menu Widget API
-	MenuBar: () -> Widget,
-	Menu: WidgetCall<Menu, WidgetArguments, WidgetStates?>,
-	MenuItem: WidgetCall<MenuItem, WidgetArguments, nil>,
-	MenuToggle: WidgetCall<MenuToggle, WidgetArguments, WidgetStates?>,
-
-	-- Format Widget API
-	Separator: () -> Separator,
-	Indent: (arguments: WidgetArguments?) -> Indent,
-	SameLine: (arguments: WidgetArguments?) -> SameLine,
-	Group: () -> Group,
-
-	-- Text Widget API
-	Text: WidgetCall<Text, WidgetArguments, nil>,
-	TextWrapped: WidgetCall<Text, WidgetArguments, nil>,
-	TextColored: WidgetCall<Text, WidgetArguments, nil>,
-	SeparatorText: WidgetCall<SeparatorText, WidgetArguments, nil>,
-	InputText: WidgetCall<InputText, WidgetArguments, WidgetStates?>,
-
-	-- Basic Widget API
-	Button: WidgetCall<Button, WidgetArguments, nil>,
-	SmallButton: WidgetCall<Button, WidgetArguments, nil>,
-	Checkbox: WidgetCall<Checkbox, WidgetArguments, WidgetStates?>,
-	RadioButton: WidgetCall<RadioButton, WidgetArguments, WidgetStates?>,
-
-	-- Tree Widget API
-	Tree: WidgetCall<Tree, WidgetArguments, WidgetStates?>,
-	CollapsingHeader: WidgetCall<CollapsingHeader, WidgetArguments, WidgetStates?>,
-
-	-- Tab Widget API
-	TabBar: WidgetCall<TabBar, WidgetArguments?, WidgetStates?>,
-	Tab: WidgetCall<Tab, WidgetArguments, WidgetStates?>,
-
-	-- Input Widget API
-	InputNum: WidgetCall<Input<number>, WidgetArguments, WidgetStates?>,
-	InputVector2: WidgetCall<Input<Vector2>, WidgetArguments, WidgetStates?>,
-	InputVector3: WidgetCall<Input<Vector3>, WidgetArguments, WidgetStates?>,
-	InputUDim: WidgetCall<Input<UDim>, WidgetArguments, WidgetStates?>,
-	InputUDim2: WidgetCall<Input<UDim2>, WidgetArguments, WidgetStates?>,
-	InputRect: WidgetCall<Input<Rect>, WidgetArguments, WidgetStates?>,
-	InputColor3: WidgetCall<InputColor3, WidgetArguments, WidgetStates?>,
-	InputColor4: WidgetCall<InputColor4, WidgetArguments, WidgetStates?>,
-
-	-- Drag Widget API
-	DragNum: WidgetCall<Input<number>, WidgetArguments, WidgetStates?>,
-	DragVector2: WidgetCall<Input<Vector2>, WidgetArguments, WidgetStates?>,
-	DragVector3: WidgetCall<Input<Vector3>, WidgetArguments, WidgetStates?>,
-	DragUDim: WidgetCall<Input<UDim>, WidgetArguments, WidgetStates?>,
-	DragUDim2: WidgetCall<Input<UDim2>, WidgetArguments, WidgetStates?>,
-	DragRect: WidgetCall<Input<Rect>, WidgetArguments, WidgetStates?>,
-
-	-- Slider Widget API
-	SliderNum: WidgetCall<Input<number>, WidgetArguments, WidgetStates?>,
-	SliderVector2: WidgetCall<Input<Vector2>, WidgetArguments, WidgetStates?>,
-	SliderVector3: WidgetCall<Input<Vector3>, WidgetArguments, WidgetStates?>,
-	SliderUDim: WidgetCall<Input<UDim>, WidgetArguments, WidgetStates?>,
-	SliderUDim2: WidgetCall<Input<UDim2>, WidgetArguments, WidgetStates?>,
-	SliderRect: WidgetCall<Input<Rect>, WidgetArguments, WidgetStates?>,
-
-	-- Combo Widget Widget API
-	Selectable: WidgetCall<Selectable, WidgetArguments, WidgetStates?>,
-	Combo: WidgetCall<Combo, WidgetArguments, WidgetStates?>,
-	ComboArray: WidgetCall<Combo, WidgetArguments, WidgetStates?, { any }>,
-	ComboEnum: WidgetCall<Combo, WidgetArguments, WidgetStates?, Enum>,
-	InputEnum: WidgetCall<Combo, WidgetArguments, WidgetStates?, Enum>,
-
-	ProgressBar: WidgetCall<ProgressBar, WidgetArguments, WidgetStates?>,
-	PlotLines: WidgetCall<PlotLines, WidgetArguments, WidgetStates?>,
-	PlotHistogram: WidgetCall<PlotHistogram, WidgetArguments, WidgetStates?>,
-
-	Image: WidgetCall<Image, WidgetArguments, nil>,
-	ImageButton: WidgetCall<ImageButton, WidgetArguments, nil>,
-
-	-- Table Widget Api
-	Table: WidgetCall<Table, WidgetArguments, WidgetStates?>,
-	NextColumn: () -> number,
-	NextRow: () -> number,
-	SetColumnIndex: (index: number) -> (),
-	SetRowIndex: (index: number) -> (),
-	NextHeaderColumn: () -> number,
-	SetHeaderColumnIndex: (index: number) -> (),
-	SetColumnWidth: (index: number, width: number) -> (),
-
-    --[[
-        ---------
-          STATE
-        ---------
-    ]]
-
-	State: <T>(initialValue: T) -> State<T>,
-	WeakState: <T>(initialValue: T) -> T,
-	VariableState: <T>(variable: T, callback: (T) -> ()) -> State<T>,
-	TableState: <K, V>(tab: { [K]: V }, key: K, callback: ((newValue: V) -> true?)?) -> State<V>,
-	ComputedState: <T, U>(firstState: State<T>, onChangeCallback: (firstValue: T) -> U) -> State<U>,
-
-    --[[
-        -------------
-          FUNCTIONS
-        -------------
-    ]]
-
-	Init: (playerInstance: BasePlayerGui?, eventConnection: (RBXScriptConnection | () -> () | false)?, allowMultipleInits: boolean?) -> Iris,
-	Shutdown: () -> (),
-	Connect: (self: Iris, callback: () -> ()) -> () -> (),
-	Append: (userInstance: GuiObject) -> (),
-	ForceRefresh: () -> (),
-
-	-- Widget
-	SetFocusedWindow: (thisWidget: Window?) -> (),
-
-	-- ID API
-	PushId: (ID: ID) -> (),
-	PopId: () -> (),
-	SetNextWidgetID: (ID: ID) -> (),
-
-	-- Config API
-	UpdateGlobalConfig: (deltaStyle: { [string]: any }) -> (),
-	PushConfig: (deltaStyle: { [string]: any }) -> (),
-	PopConfig: () -> (),
-
-    --[[
-        --------------
-          PROPERTIES
-        --------------
-    ]]
-
-	Internal: Internal,
-	Disabled: boolean,
-	Args: { [string]: { [string]: number } },
-	Events: { [string]: () -> boolean },
-
-	TemplateConfig: { [string]: Config },
-	_config: Config,
-	ShowDemoWindow: () -> Window,
-}
-
-local Iris = {} :: Iris
-
-local HttpService: HttpService = game:GetService("HttpService")
-local Internal: Internal = (function(Iris: Iris): Internal
+local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
     --[=[
         @class Internal
         An internal class within Iris containing all the backend data and functions for Iris to operate.
         It is recommended that you don't generally interact with Internal unless you understand what you are doing.
     ]=]
-	local Internal = {} :: Internal
+	local Internal = {} :: Types.Internal
 
     --[[
         ---------------------------------
@@ -1288,7 +168,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 		end
 		self.value = newValue
 		self.lastChangeTick = Iris.Internal._cycleTick
-		for _, thisWidget: Widget in self.ConnectedWidgets do
+		for _, thisWidget: Types.Widget in self.ConnectedWidgets do
 			if thisWidget.lastCycleTick ~= -1 then
 				Internal._widgets[thisWidget.type].UpdateState(thisWidget)
 			end
@@ -1467,13 +347,13 @@ local Internal: Internal = (function(Iris: Iris): Internal
         @within Internal
         @function WidgetConstructor
         @param type string -- name used to denote the widget class.
-        @param widgetClass WidgetClass -- table of methods for the new widget.
+        @param widgetClass Types.WidgetClass -- table of methods for the new widget.
 
         For each widget, a widget class is created which handles all the operations of a widget. This removes the class nature
         of widgets, and simplifies the available functions which can be applied to any widget. The widgets themselves are
         dumb tables containing all the data but no methods to handle any of the data apart from events.
     ]=]
-	function Internal.WidgetConstructor(type: string, widgetClass: WidgetClass)
+	function Internal.WidgetConstructor(type: string, widgetClass: Types.WidgetClass)
 		local Fields: { [string]: { [string]: { string } } } = {
 			All = {
 				needed = {
@@ -1508,7 +388,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 
 		-- we ensure all essential functions and properties are present, otherwise the code will break later.
 		-- some functions will only be needed if the widget has children or has state.
-		local thisWidget = {} :: WidgetClass
+		local thisWidget = {} :: Types.WidgetClass
 		for _, field: string in Fields.All.needed do
 			assert(widgetClass[field] ~= nil, `field {field} is missing from widget {type}, it is needed for all widgets`)
 			thisWidget[field] = widgetClass[field]
@@ -1582,26 +462,26 @@ local Internal: Internal = (function(Iris: Iris): Internal
         Every widget is created through _Insert. An ID is generated based on the line of the calling code and is used to
         find the previous frame widget if it exists. If no widget exists, a new one is created.
     ]=]
-	function Internal._Insert(widgetType: string, args: WidgetArguments?, states: WidgetStates?): Widget
-		local ID: ID = Internal._getID(3)
+	function Internal._Insert(widgetType: string, args: Types.WidgetArguments?, states: Types.WidgetStates?): Types.Widget
+		local ID: Types.ID = Internal._getID(3)
 		--debug.profilebegin(ID)
 
 		-- fetch the widget class which contains all the functions for the widget.
-		local thisWidgetClass: WidgetClass = Internal._widgets[widgetType]
+		local thisWidgetClass: Types.WidgetClass = Internal._widgets[widgetType]
 
 		if Internal._VDOM[ID] then
 			-- widget already created once this frame, so we can append to it.
 			return Internal._ContinueWidget(ID, widgetType)
 		end
 
-		local arguments: Arguments = {} :: Arguments
+		local arguments: Types.Arguments = {} :: Types.Arguments
 		if args ~= nil then
 			if type(args) ~= "table" then
 				args = { args }
 			end
 
 			-- convert the arguments to a key-value dictionary so arguments can be referred to by their name and not index.
-			for index: number, argument: Argument in args do
+			for index: number, argument: Types.Argument in args do
 				assert(index > 0, `Widget Arguments must be a positive number, not {index} of type {typeof(index)} for {argument}.`)
 				arguments[thisWidgetClass.ArgNames[index]] = argument
 			end
@@ -1609,7 +489,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 		-- prevents tampering with the arguments which are used to check for changes.
 		table.freeze(arguments)
 
-		local lastWidget: Widget? = Internal._lastVDOM[ID]
+		local lastWidget: Types.Widget? = Internal._lastVDOM[ID]
 		if lastWidget and widgetType == lastWidget.type then
 			-- found a matching widget from last frame.
 			if Internal._refreshCounter > 0 then
@@ -1618,9 +498,9 @@ local Internal: Internal = (function(Iris: Iris): Internal
 				lastWidget = nil
 			end
 		end
-		local thisWidget: Widget = if lastWidget == nil then Internal._GenNewWidget(widgetType, arguments, states, ID) else lastWidget
+		local thisWidget: Types.Widget = if lastWidget == nil then Internal._GenNewWidget(widgetType, arguments, states, ID) else lastWidget
 
-		local parentWidget: ParentWidget = thisWidget.parentWidget
+		local parentWidget: Types.ParentWidget = thisWidget.parentWidget
 
 		if thisWidget.type ~= "Window" and thisWidget.type ~= "Tooltip" then
 			if thisWidget.ZIndex ~= parentWidget.ZOffset then
@@ -1638,7 +518,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 
 		-- since rows are not instances, but will be removed if not updated, we have to add specific table code.
 		if parentWidget.type == "Table" then
-			local Table = parentWidget :: Table
+			local Table = parentWidget :: Types.Table
 			Table._rowCycles[Table._rowIndex] = Internal._cycleTick
 		end
 
@@ -1655,7 +535,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 		parentWidget.ZOffset += 1
 
 		if thisWidgetClass.hasChildren then
-			local thisParent = thisWidget :: ParentWidget
+			local thisParent = thisWidget :: Types.ParentWidget
 			-- a parent widget, so we increase our depth.
 			thisParent.ZOffset = 0
 			thisParent.ZUpdate = false
@@ -1683,13 +563,13 @@ local Internal: Internal = (function(Iris: Iris): Internal
         All widgets are created as tables with properties. The widget class contains the functions to create the UI instances and
         update the widget or change state.
     ]=]
-	function Internal._GenNewWidget(widgetType: string, arguments: Arguments, states: WidgetStates?, ID: ID): Widget
-		local parentId: ID = Internal._IDStack[Internal._stackIndex]
-		local parentWidget: ParentWidget = Internal._VDOM[parentId]
-		local thisWidgetClass: WidgetClass = Internal._widgets[widgetType]
+	function Internal._GenNewWidget(widgetType: string, arguments: Types.Arguments, states: Types.WidgetStates?, ID: Types.ID): Types.Widget
+		local parentId: Types.ID = Internal._IDStack[Internal._stackIndex]
+		local parentWidget: Types.ParentWidget = Internal._VDOM[parentId]
+		local thisWidgetClass: Types.WidgetClass = Internal._widgets[widgetType]
 
 		-- widgets are just tables with properties.
-		local thisWidget = {} :: Widget
+		local thisWidget = {} :: Types.Widget
 		setmetatable(thisWidget, thisWidget)
 
 		thisWidget.ID = ID
@@ -1718,9 +598,9 @@ local Internal: Internal = (function(Iris: Iris): Internal
 
 		local eventMTParent
 		if thisWidgetClass.hasState then
-			local stateWidget = thisWidget :: StateWidget
+			local stateWidget = thisWidget :: Types.StateWidget
 			if states then
-				for index: string, state: State<any> in states do
+				for index: string, state: Types.State<any> in states do
 					if not (type(state) == "table" and getmetatable(state :: any) == Internal.StateClass) then
 						-- generate a new state.
 						states[index] = Internal._widgetState(stateWidget, index, state)
@@ -1729,7 +609,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 				end
 
 				stateWidget.state = states
-				for _, state: State<any> in states do
+				for _, state: Types.State<any> in states do
 					state.ConnectedWidgets[stateWidget.ID] = stateWidget
 				end
 			else
@@ -1768,9 +648,9 @@ local Internal: Internal = (function(Iris: Iris): Internal
         arguments or states.
         Basically equivalent to the end of `Internal._Insert`.
     ]=]
-	function Internal._ContinueWidget(ID: ID, widgetType: string): Widget
-		local thisWidgetClass: WidgetClass = Internal._widgets[widgetType]
-		local thisWidget: Widget = Internal._VDOM[ID]
+	function Internal._ContinueWidget(ID: Types.ID, widgetType: string): Types.Widget
+		local thisWidgetClass: Types.WidgetClass = Internal._widgets[widgetType]
+		local thisWidget: Types.Widget = Internal._VDOM[ID]
 
 		if thisWidgetClass.hasChildren then
 			-- a parent widget so we increase our depth.
@@ -1791,7 +671,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
         previous frame. There is no code which needs to update any widget tables since they are already reset
         at the start before discarding happens.
     ]=]
-	function Internal._DiscardWidget(widgetToDiscard: Widget)
+	function Internal._DiscardWidget(widgetToDiscard: Types.Widget)
 		local widgetParent = widgetToDiscard.parentWidget
 		if widgetParent then
 			-- if the parent needs to update it's children.
@@ -1816,8 +696,8 @@ local Internal: Internal = (function(Iris: Iris): Internal
         Connects the state to the widget. If no state exists then a new one is created. Called for every state in every
         widget if the user does not provide a state.
     ]=]
-	function Internal._widgetState(thisWidget: StateWidget, stateName: string, initialValue: any): State<any>
-		local ID: ID = thisWidget.ID .. stateName
+	function Internal._widgetState(thisWidget: Types.StateWidget, stateName: string, initialValue: any): Types.State<any>
+		local ID: Types.ID = thisWidget.ID .. stateName
 		if Internal._states[ID] then
 			Internal._states[ID].ConnectedWidgets[thisWidget.ID] = thisWidget
 			Internal._states[ID].lastChangeTick = Internal._cycleTick
@@ -1845,9 +725,9 @@ local Internal: Internal = (function(Iris: Iris): Internal
         A wrapper for any event on any widget. Automatically, Iris does not initialize events unless they are explicitly
         called so in the first frame, the event connections are set up. Every event is a function which returns a boolean.
     ]=]
-	function Internal._EventCall(thisWidget: Widget, eventName: string): boolean
-		local Events: Events = Internal._widgets[thisWidget.type].Events
-		local Event: Event = Events[eventName]
+	function Internal._EventCall(thisWidget: Types.Widget, eventName: string): boolean
+		local Events: Types.Events = Internal._widgets[thisWidget.type].Events
+		local Event: Types.Event = Events[eventName]
 		assert(Event ~= nil, `widget {thisWidget.type} has no event of name {eventName}`)
 
 		if thisWidget.trackedEvents[eventName] == nil then
@@ -1864,7 +744,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 
         Returns the parent widget of the currently active widget, based on the stack depth.
     ]=]
-	function Internal._GetParentWidget(): ParentWidget
+	function Internal._GetParentWidget(): Types.ParentWidget
 		return Internal._VDOM[Internal._IDStack[Internal._stackIndex]]
 	end
 
@@ -1878,7 +758,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 
         Creates the VDOM at the start of each frame containing just the root instance.
     ]=]
-	function Internal._generateEmptyVDOM(): { [ID]: Widget }
+	function Internal._generateEmptyVDOM(): { [Types.ID]: Types.Widget }
 		return {
 			["R"] = Internal._rootWidget,
 		}
@@ -1946,15 +826,15 @@ local Internal: Internal = (function(Iris: Iris): Internal
         created from. This ensures that the function is heuristic and always returns the same
         id for the same widget.
     ]=]
-	function Internal._getID(levelsToIgnore: number): ID
+	function Internal._getID(levelsToIgnore: number): Types.ID
 		if Internal._nextWidgetId then
-			local ID: ID = Internal._nextWidgetId
+			local ID: Types.ID = Internal._nextWidgetId
 			Internal._nextWidgetId = nil
 			return ID
 		end
 
 		local i: number = 1 + (levelsToIgnore or 1)
-		local ID: ID = ""
+		local ID: Types.ID = ""
 		local levelInfo: number = debug.info(i, "l")
 		while levelInfo ~= -1 and levelInfo ~= nil do
 			ID ..= "+" .. levelInfo
@@ -2042,14 +922,8 @@ local Internal: Internal = (function(Iris: Iris): Internal
 
 	Iris.Internal = Internal
 	Iris._config = Internal._config
-	print("SET UP INTERNAL")
 	return Internal
 end)(Iris)
-
-Iris.Internal = Internal
-for k,v in Internal do
-	Iris[k] = v
-end
 
 --[=[
     @within Iris
@@ -2097,47 +971,47 @@ Iris.Events = {}
 
     If the `eventConnection` is `false` then Iris will not create a cycle loop and the user will need to call [Internal._cycle] every frame.
 ]=]
-function Iris.Init(parentInstance: Instance?, eventConnection: (RBXScriptSignal | (() -> number) | false)?, allowMultipleInits: boolean): Iris
-	assert(Internal._shutdown == false, "Iris.Init() cannot be called once shutdown.")
-	assert(Internal._started == false or allowMultipleInits == true, "Iris.Init() can only be called once.")
+function Iris.Init(parentInstance: Instance?, eventConnection: (RBXScriptSignal | (() -> number) | false)?, allowMultipleInits: boolean): Types.Iris
+    assert(Internal._shutdown == false, "Iris.Init() cannot be called once shutdown.")
+    assert(Internal._started == false or allowMultipleInits == true, "Iris.Init() can only be called once.")
 
-	if Internal._started then
-		return Iris
-	end
+    if Internal._started then
+        return Iris
+    end
 
-	if parentInstance == nil then
-		-- coalesce to playerGui
-		parentInstance = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-	end
-	if eventConnection == nil then
-		-- coalesce to Heartbeat
-		eventConnection = game:GetService("RunService").Heartbeat
-	end
-	Internal.parentInstance = parentInstance :: Instance
-	Internal._started = true
+    if parentInstance == nil then
+        -- coalesce to playerGui
+        parentInstance = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    end
+    if eventConnection == nil then
+        -- coalesce to Heartbeat
+        eventConnection = game:GetService("RunService").Heartbeat
+    end
+    Internal.parentInstance = parentInstance :: Instance
+    Internal._started = true
 
-	Internal._generateRootInstance()
-	Internal._generateSelectionImageObject()
+    Internal._generateRootInstance()
+    Internal._generateSelectionImageObject()
 
-	for _, callback: () -> () in Internal._initFunctions do
-		callback()
-	end
+    for _, callback: () -> () in Internal._initFunctions do
+        callback()
+    end
 
-	-- spawns the connection to call `Internal._cycle()` within.
-	task.spawn(function()
-		if typeof(eventConnection) == "function" then
-			while Internal._started do
-				local deltaTime: number = eventConnection()
-				Internal._cycle(deltaTime)
-			end
-		elseif eventConnection ~= nil and eventConnection ~= false then
-			Internal._eventConnection = eventConnection:Connect(function(...)
-				Internal._cycle(...)
-			end)
-		end
-	end)
+    -- spawns the connection to call `Internal._cycle()` within.
+    task.spawn(function()
+        if typeof(eventConnection) == "function" then
+            while Internal._started do
+                local deltaTime: number = eventConnection()
+                Internal._cycle(deltaTime)
+            end
+        elseif eventConnection ~= nil and eventConnection ~= false then
+            Internal._eventConnection = eventConnection:Connect(function(...)
+                Internal._cycle(...)
+            end)
+        end
+    end)
 
-	return Iris
+    return Iris
 end
 
 --[=[
@@ -2147,28 +1021,28 @@ end
     Shuts Iris down. This can only be called once, and Iris cannot be started once shut down.
 ]=]
 function Iris.Shutdown()
-	Internal._started = false
-	Internal._shutdown = true
+    Internal._started = false
+    Internal._shutdown = true
 
-	if Internal._eventConnection then
-		Internal._eventConnection:Disconnect()
-	end
-	Internal._eventConnection = nil
+    if Internal._eventConnection then
+        Internal._eventConnection:Disconnect()
+    end
+    Internal._eventConnection = nil
 
-	if Internal._rootWidget then
-		if Internal._rootWidget.Instance then
-			Internal._widgets["Root"].Discard(Internal._rootWidget)
-		end
-		Internal._rootInstance = nil
-	end
+    if Internal._rootWidget then
+        if Internal._rootWidget.Instance then
+            Internal._widgets["Root"].Discard(Internal._rootWidget)
+        end
+        Internal._rootInstance = nil
+    end
 
-	if Internal.SelectionImageObject then
-		Internal.SelectionImageObject:Destroy()
-	end
+    if Internal.SelectionImageObject then
+        Internal.SelectionImageObject:Destroy()
+    end
 
-	for _, connection: RBXScriptConnection in Internal._connections do
-		connection:Disconnect()
-	end
+    for _, connection: RBXScriptConnection in Internal._connections do
+        connection:Disconnect()
+    end
 end
 
 --[=[
@@ -2184,14 +1058,14 @@ end
     Multiple callbacks can be added to Iris from many different scripts or modules.
 ]=]
 function Iris:Connect(callback: () -> ()): () -> () -- this uses method syntax for no reason.
-	if Internal._started == false then
-		warn("Iris:Connect() was called before calling Iris.Init(); always initialise Iris first.")
-	end
-	local connectionIndex: number = #Internal._connectedFunctions + 1
-	Internal._connectedFunctions[connectionIndex] = callback
-	return function()
-		Internal._connectedFunctions[connectionIndex] = nil
-	end
+    if Internal._started == false then
+        warn("Iris:Connect() was called before calling Iris.Init(); always initialise Iris first.")
+    end
+    local connectionIndex: number = #Internal._connectedFunctions + 1
+    Internal._connectedFunctions[connectionIndex] = callback
+    return function()
+        Internal._connectedFunctions[connectionIndex] = nil
+    end
 end
 
 --[=[
@@ -2205,14 +1079,14 @@ end
     property or by the current parent widget from the stack.
 ]=]
 function Iris.Append(userInstance: GuiObject)
-	local parentWidget: ParentWidget = Internal._GetParentWidget()
-	local widgetInstanceParent: GuiObject
-	if Internal._config.Parent then
-		widgetInstanceParent = Internal._config.Parent :: any
-	else
-		widgetInstanceParent = Internal._widgets[parentWidget.type].ChildAdded(parentWidget, { type = "userInstance" } :: Widget)
-	end
-	userInstance.Parent = widgetInstanceParent
+    local parentWidget: Types.ParentWidget = Internal._GetParentWidget()
+    local widgetInstanceParent: GuiObject
+    if Internal._config.Parent then
+        widgetInstanceParent = Internal._config.Parent :: any
+    else
+        widgetInstanceParent = Internal._widgets[parentWidget.type].ChildAdded(parentWidget, { type = "userInstance" } :: Types.Widget)
+    end
+    userInstance.Parent = widgetInstanceParent
 end
 
 --[=[
@@ -2243,12 +1117,12 @@ end
     :::
 ]=]
 function Iris.End()
-	if Internal._stackIndex == 1 then
-		error("Too many calls to Iris.End().", 2)
-	end
+    if Internal._stackIndex == 1 then
+        error("Too many calls to Iris.End().", 2)
+    end
 
-	Internal._IDStack[Internal._stackIndex] = nil
-	Internal._stackIndex -= 1
+    Internal._IDStack[Internal._stackIndex] = nil
+    Internal._stackIndex -= 1
 end
 
 --[[
@@ -2268,7 +1142,7 @@ end
     :::
 ]=]
 function Iris.ForceRefresh()
-	Internal._globalRefreshRequested = true
+    Internal._globalRefreshRequested = true
 end
 
 --[=[
@@ -2290,10 +1164,10 @@ end
     :::
 ]=]
 function Iris.UpdateGlobalConfig(deltaStyle: { [string]: any })
-	for index, style in deltaStyle do
-		Internal._rootConfig[index] = style
-	end
-	Iris.ForceRefresh()
+    for index, style in deltaStyle do
+        Internal._rootConfig[index] = style
+    end
+    Iris.ForceRefresh()
 end
 
 --[=[
@@ -2315,23 +1189,23 @@ end
     ```
 ]=]
 function Iris.PushConfig(deltaStyle: { [string]: any })
-	local ID = Iris.State(-1)
-	if ID.value == -1 then
-		ID:set(deltaStyle)
-	else
-		-- compare tables
-		if Internal._deepCompare(ID:get(), deltaStyle) == false then
-			-- refresh local
-			ID:set(deltaStyle)
-			Internal._refreshStack[Internal._refreshLevel] = true
-			Internal._refreshCounter += 1
-		end
-	end
-	Internal._refreshLevel += 1
+    local ID = Iris.State(-1)
+    if ID.value == -1 then
+        ID:set(deltaStyle)
+    else
+        -- compare tables
+        if Internal._deepCompare(ID:get(), deltaStyle) == false then
+            -- refresh local
+            ID:set(deltaStyle)
+            Internal._refreshStack[Internal._refreshLevel] = true
+            Internal._refreshCounter += 1
+        end
+    end
+    Internal._refreshLevel += 1
 
-	Internal._config = setmetatable(deltaStyle, {
-		__index = Internal._config,
-	}) :: any
+    Internal._config = setmetatable(deltaStyle, {
+        __index = Internal._config,
+    }) :: any
 end
 
 --[=[
@@ -2343,13 +1217,13 @@ end
     Each call to [Iris.PopConfig] should match a call to [Iris.PushConfig].
 ]=]
 function Iris.PopConfig()
-	Internal._refreshLevel -= 1
-	if Internal._refreshStack[Internal._refreshLevel] == true then
-		Internal._refreshCounter -= 1
-		Internal._refreshStack[Internal._refreshLevel] = nil
-	end
+    Internal._refreshLevel -= 1
+    if Internal._refreshStack[Internal._refreshLevel] == true then
+        Internal._refreshCounter -= 1
+        Internal._refreshStack[Internal._refreshLevel] = nil
+    end
 
-	Internal._config = getmetatable(Internal._config :: any).__index
+    Internal._config = getmetatable(Internal._config :: any).__index
 end
 
 --[=[
@@ -2661,6 +1535,7 @@ Iris.TemplateConfig = {
 		HoverTransparency = 0.1,
 	},
 }
+
 Iris.UpdateGlobalConfig(Iris.TemplateConfig.colorDark) -- use colorDark and sizeDefault themes by default
 Iris.UpdateGlobalConfig(Iris.TemplateConfig.sizeDefault)
 Iris.UpdateGlobalConfig(Iris.TemplateConfig.utilityDefault)
@@ -2679,11 +1554,11 @@ Internal._globalRefreshRequested = false -- UpdatingGlobalConfig changes this to
 
     Pushes an id onto the id stack for all future widgets. Use [Iris.PopId] to pop it off the stack.
 ]=]
-function Iris.PushId(ID: ID)
-	assert(typeof(ID) == "string", "The ID argument to Iris.PushId() to be a string.")
+function Iris.PushId(ID: Types.ID)
+    assert(typeof(ID) == "string", "The ID argument to Iris.PushId() to be a string.")
 
-	Internal._newID = true
-	table.insert(Internal._pushedIds, ID)
+    Internal._newID = true
+    table.insert(Internal._pushedIds, ID)
 end
 
 --[=[
@@ -2693,11 +1568,11 @@ end
     Removes the most recent pushed id from the id stack.
 ]=]
 function Iris.PopId()
-	if #Internal._pushedIds == 0 then
-		return
-	end
+    if #Internal._pushedIds == 0 then
+        return
+    end
 
-	table.remove(Internal._pushedIds)
+    table.remove(Internal._pushedIds)
 end
 
 --[=[
@@ -2722,8 +1597,8 @@ end
     -- both text widgets will be placed under the same window despite being called separately.
     ```
 ]=]
-function Iris.SetNextWidgetID(ID: ID)
-	Internal._nextWidgetId = ID
+function Iris.SetNextWidgetID(ID: Types.ID)
+    Internal._nextWidgetId = ID
 end
 
 --[[
@@ -2764,20 +1639,20 @@ end
     In this example, the code will work properly, and increment every frame.
     :::
 ]=]
-function Iris.State<T>(initialValue: T): State<T>
-	local ID: ID = Internal._getID(2)
-	if Internal._states[ID] then
-		return Internal._states[ID]
-	end
-	Internal._states[ID] = {
-		ID = ID,
-		value = initialValue,
-		lastChangeTick = Iris.Internal._cycleTick,
-		ConnectedWidgets = {},
-		ConnectedFunctions = {},
-	} :: any
-	setmetatable(Internal._states[ID], Internal.StateClass)
-	return Internal._states[ID]
+function Iris.State<T>(initialValue: T): Types.State<T>
+    local ID: Types.ID = Internal._getID(2)
+    if Internal._states[ID] then
+        return Internal._states[ID]
+    end
+    Internal._states[ID] = {
+        ID = ID,
+        value = initialValue,
+        lastChangeTick = Iris.Internal._cycleTick,
+        ConnectedWidgets = {},
+        ConnectedFunctions = {},
+    } :: any
+    setmetatable(Internal._states[ID], Internal.StateClass)
+    return Internal._states[ID]
 end
 
 --[=[
@@ -2789,24 +1664,24 @@ end
 
     Constructs a new state object, subsequent ID calls will return the same object, except all widgets connected to the state are discarded, the state reverts to the passed initialValue
 ]=]
-function Iris.WeakState<T>(initialValue: T): State<T>
-	local ID: ID = Internal._getID(2)
-	if Internal._states[ID] then
-		if next(Internal._states[ID].ConnectedWidgets) == nil then
-			Internal._states[ID] = nil
-		else
-			return Internal._states[ID]
-		end
-	end
-	Internal._states[ID] = {
-		ID = ID,
-		value = initialValue,
-		lastChangeTick = Iris.Internal._cycleTick,
-		ConnectedWidgets = {},
-		ConnectedFunctions = {},
-	} :: any
-	setmetatable(Internal._states[ID], Internal.StateClass)
-	return Internal._states[ID]
+function Iris.WeakState<T>(initialValue: T): Types.State<T>
+    local ID: Types.ID = Internal._getID(2)
+    if Internal._states[ID] then
+        if next(Internal._states[ID].ConnectedWidgets) == nil then
+            Internal._states[ID] = nil
+        else
+            return Internal._states[ID]
+        end
+    end
+    Internal._states[ID] = {
+        ID = ID,
+        value = initialValue,
+        lastChangeTick = Iris.Internal._cycleTick,
+        ConnectedWidgets = {},
+        ConnectedFunctions = {},
+    } :: any
+    setmetatable(Internal._states[ID], Internal.StateClass)
+    return Internal._states[ID]
 end
 
 --[=[
@@ -2847,30 +1722,30 @@ end
     You must use `state:set(...)` if you want the variable to update to the state's value.
     :::
 ]=]
-function Iris.VariableState<T>(variable: T, callback: (T) -> ()): State<T>
-	local ID: ID = Internal._getID(2)
-	local state: State<T>? = Internal._states[ID]
+function Iris.VariableState<T>(variable: T, callback: (T) -> ()): Types.State<T>
+    local ID: Types.ID = Internal._getID(2)
+    local state: Types.State<T>? = Internal._states[ID]
 
-	if state then
-		if variable ~= state.value then
-			state:set(variable)
-		end
-		return state
-	end
+    if state then
+        if variable ~= state.value then
+            state:set(variable)
+        end
+        return state
+    end
 
-	local newState = {
-		ID = ID,
-		value = variable,
-		lastChangeTick = Iris.Internal._cycleTick,
-		ConnectedWidgets = {},
-		ConnectedFunctions = {},
-	} :: State<T>
-	setmetatable(newState, Internal.StateClass)
-	Internal._states[ID] = newState
+    local newState = {
+        ID = ID,
+        value = variable,
+        lastChangeTick = Iris.Internal._cycleTick,
+        ConnectedWidgets = {},
+        ConnectedFunctions = {},
+    } :: Types.State<T>
+    setmetatable(newState, Internal.StateClass)
+    Internal._states[ID] = newState
 
-	newState:onChange(callback)
+    newState:onChange(callback)
 
-	return newState
+    return newState
 end
 
 --[=[
@@ -2927,40 +1802,40 @@ end
     You must use `state:set(...)` if you want the table value to update to the state's value.
     :::
 ]=]
-function Iris.TableState<K, V>(tab: { [K]: V }, key: K, callback: ((newValue: V) -> false?)?): State<V>
-	local value: V = tab[key]
-	local ID: ID = Internal._getID(2)
-	local state: State<V>? = Internal._states[ID]
+function Iris.TableState<K, V>(tab: { [K]: V }, key: K, callback: ((newValue: V) -> false?)?): Types.State<V>
+    local value: V = tab[key]
+    local ID: Types.ID = Internal._getID(2)
+    local state: Types.State<V>? = Internal._states[ID]
 
-	-- If the table values changes, then we update the state to match.
-	if state then
-		if value ~= state.value then
-			state:set(value)
-		end
-		return state
-	end
+    -- If the table values changes, then we update the state to match.
+    if state then
+        if value ~= state.value then
+            state:set(value)
+        end
+        return state
+    end
 
-	local newState = {
-		ID = ID,
-		value = value,
-		lastChangeTick = Iris.Internal._cycleTick,
-		ConnectedWidgets = {},
-		ConnectedFunctions = {},
-	} :: State<V>
-	setmetatable(newState, Internal.StateClass)
-	Internal._states[ID] = newState
+    local newState = {
+        ID = ID,
+        value = value,
+        lastChangeTick = Iris.Internal._cycleTick,
+        ConnectedWidgets = {},
+        ConnectedFunctions = {},
+    } :: Types.State<V>
+    setmetatable(newState, Internal.StateClass)
+    Internal._states[ID] = newState
 
-	-- When a change happens to the state, we update the table value.
-	newState:onChange(function()
-		if callback ~= nil then
-			if callback(newState.value) then
-				tab[key] = newState.value
-			end
-		else
-			tab[key] = newState.value
-		end
-	end)
-	return newState
+    -- When a change happens to the state, we update the table value.
+    newState:onChange(function()
+        if callback ~= nil then
+            if callback(newState.value) then
+                tab[key] = newState.value
+            end
+        else
+            tab[key] = newState.value
+        end
+    end)
+    return newState
 end
 
 --[=[
@@ -2980,25 +1855,25 @@ end
     ```
     :::
 ]=]
-function Iris.ComputedState<T, U>(firstState: State<T>, onChangeCallback: (firstValue: T) -> U): State<U>
-	local ID: ID = Internal._getID(2)
+function Iris.ComputedState<T, U>(firstState: Types.State<T>, onChangeCallback: (firstValue: T) -> U): Types.State<U>
+    local ID: Types.ID = Internal._getID(2)
 
-	if Internal._states[ID] then
-		return Internal._states[ID]
-	else
-		Internal._states[ID] = {
-			ID = ID,
-			value = onChangeCallback(firstState.value),
-			lastChangeTick = Iris.Internal._cycleTick,
-			ConnectedWidgets = {},
-			ConnectedFunctions = {},
-		} :: State<U>
-		firstState:onChange(function(newValue: T)
-			Internal._states[ID]:set(onChangeCallback(newValue))
-		end)
-		setmetatable(Internal._states[ID], Internal.StateClass)
-		return Internal._states[ID]
-	end
+    if Internal._states[ID] then
+        return Internal._states[ID]
+    else
+        Internal._states[ID] = {
+            ID = ID,
+            value = onChangeCallback(firstState.value),
+            lastChangeTick = Iris.Internal._cycleTick,
+            ConnectedWidgets = {},
+            ConnectedFunctions = {},
+        } :: Types.State<U>
+        firstState:onChange(function(newValue: T)
+            Internal._states[ID]:set(onChangeCallback(newValue))
+        end)
+        setmetatable(Internal._states[ID], Internal.StateClass)
+        return Internal._states[ID]
+    end
 end
 
 --[=[
@@ -3012,7 +1887,7 @@ end
     Iris:Connect(Iris.ShowDemoWindow)
     ```
 ]=]
-Iris.ShowDemoWindow = (function(Iris: Iris)
+Iris.ShowDemoWindow = (function(Iris: Types.Iris)
 	local showMainWindow = Iris.State(true)
 	local showRecursiveWindow = Iris.State(false)
 	local showRuntimeInfo = Iris.State(false)
@@ -3049,7 +1924,7 @@ Iris.ShowDemoWindow = (function(Iris: Iris)
 			do
 				Iris.SeparatorText({ "Basic" })
 
-				local radioButtonState: State<any> = Iris.State(1)
+				local radioButtonState: Types.State<any> = Iris.State(1)
 				Iris.Button({ "Button" })
 				Iris.SmallButton({ "SmallButton" })
 				Iris.Text({ "Text" })
@@ -4790,15 +3665,15 @@ Iris.ShowDemoWindow = (function(Iris: Iris)
 
 	-- main demo window
 	return function()
-		local NoTitleBar: State<boolean> = Iris.State(false)
-		local NoBackground: State<boolean> = Iris.State(false)
-		local NoCollapse: State<boolean> = Iris.State(false)
-		local NoClose: State<boolean> = Iris.State(true)
-		local NoMove: State<boolean> = Iris.State(false)
-		local NoScrollbar: State<boolean> = Iris.State(false)
-		local NoResize: State<boolean> = Iris.State(false)
-		local NoNav: State<boolean> = Iris.State(false)
-		local NoMenu: State<boolean> = Iris.State(false)
+		local NoTitleBar: Types.State<boolean> = Iris.State(false)
+		local NoBackground: Types.State<boolean> = Iris.State(false)
+		local NoCollapse: Types.State<boolean> = Iris.State(false)
+		local NoClose: Types.State<boolean> = Iris.State(true)
+		local NoMove: Types.State<boolean> = Iris.State(false)
+		local NoScrollbar: Types.State<boolean> = Iris.State(false)
+		local NoResize: Types.State<boolean> = Iris.State(false)
+		local NoNav: Types.State<boolean> = Iris.State(false)
+		local NoMenu: Types.State<boolean> = Iris.State(false)
 
 		if showMainWindow.value == false then
 			Iris.Checkbox({ "Open main window" }, { isChecked = showMainWindow })
@@ -4807,7 +3682,7 @@ Iris.ShowDemoWindow = (function(Iris: Iris)
 		end
 
 		debug.profilebegin("Iris/Demo/Window")
-		local window: Window = Iris.Window({
+		local window: Types.Window = Iris.Window({
 			[Iris.Args.Window.Title] = "Iris Demo Window",
 			[Iris.Args.Window.NoTitleBar] = NoTitleBar.value,
 			[Iris.Args.Window.NoBackground] = NoBackground.value,
@@ -4921,6763 +3796,6789 @@ Iris.ShowDemoWindow = (function(Iris: Iris)
 
 		return window
 	end
-end)(Iris)
-
-local widgets = {};
-
-widgets.GuiService = game:GetService("GuiService")
-widgets.RunService = game:GetService("RunService")
-widgets.UserInputService = game:GetService("UserInputService")
-widgets.ContextActionService = game:GetService("ContextActionService")
-widgets.TextService = game:GetService("TextService")
-
-widgets.ICONS = {
-	BLANK_SQUARE = "rbxassetid://129424136938371",
-	RIGHT_POINTING_TRIANGLE = "rbxassetid://115688938410406",
-	DOWN_POINTING_TRIANGLE = "rbxassetid://72409738439451",
-	MULTIPLICATION_SIGN = "rbxassetid://102837201516006", -- best approximation for a close X which roblox supports, needs to be scaled about 2x
-	BOTTOM_RIGHT_CORNER = "rbxassetid://129424136938371", -- used in window resize icon in bottom right
-	CHECK_MARK = "rbxassetid://114398260294996",
-	BORDER = "rbxassetid://138181141541662",
-	ALPHA_BACKGROUND_TEXTURE = "rbxassetid://97723548734320", -- used for color4 alpha
-	UNKNOWN_TEXTURE = "rbxassetid://109393364529689",
-}
-
-widgets.IS_STUDIO = widgets.RunService:IsStudio()
-function widgets.getTime(): number
-	-- time() always returns 0 in the context of plugins
-	if widgets.IS_STUDIO then
-		return os.clock()
-	else
-		return time()
-	end
 end
+)(Iris)
 
--- acts as an offset where the absolute position of the base frame is not zero, such as IgnoreGuiInset or for stories
-widgets.GuiOffset = if Iris._config.IgnoreGuiInset then -widgets.GuiService:GetGuiInset() else Vector2.zero
--- the registered mouse position always ignores the topbar, so needs a separate variable offset
-widgets.MouseOffset = if Iris._config.IgnoreGuiInset then Vector2.zero else widgets.GuiService:GetGuiInset()
+local widgets = {}
+local d = (function(Iris: Types.Internal)
+	widgets.GuiService = game:GetService("GuiService")
+	widgets.RunService = game:GetService("RunService")
+	widgets.UserInputService = game:GetService("UserInputService")
+	widgets.ContextActionService = game:GetService("ContextActionService")
+	widgets.TextService = game:GetService("TextService")
 
--- the topbar inset changes updates a frame later.
-local connection: RBXScriptConnection
-connection = widgets.GuiService:GetPropertyChangedSignal("TopbarInset"):Once(function()
-	widgets.MouseOffset = if Iris._config.IgnoreGuiInset then Vector2.zero else widgets.GuiService:GetGuiInset()
-	widgets.GuiOffset = if Iris._config.IgnoreGuiInset then -widgets.GuiService:GetGuiInset() else Vector2.zero
-	connection:Disconnect()
-end)
--- in case the topbar doesn't change, we cancel the event.
-task.delay(5, function()
-	connection:Disconnect()
-end)
+	widgets.ICONS = {
+		BLANK_SQUARE = "rbxassetid://129424136938371",
+		RIGHT_POINTING_TRIANGLE = "rbxassetid://115688938410406",
+		DOWN_POINTING_TRIANGLE = "rbxassetid://72409738439451",
+		MULTIPLICATION_SIGN = "rbxassetid://102837201516006", -- best approximation for a close X which roblox supports, needs to be scaled about 2x
+		BOTTOM_RIGHT_CORNER = "rbxassetid://129424136938371", -- used in window resize icon in bottom right
+		CHECK_MARK = "rbxassetid://114398260294996",
+		BORDER = "rbxassetid://138181141541662",
+		ALPHA_BACKGROUND_TEXTURE = "rbxassetid://97723548734320", -- used for color4 alpha
+		UNKNOWN_TEXTURE = "rbxassetid://109393364529689",
+	}
 
-function widgets.getMouseLocation(): Vector2
-	return widgets.UserInputService:GetMouseLocation() - widgets.MouseOffset
-end
-
-function widgets.isPosInsideRect(pos: Vector2, rectMin: Vector2, rectMax: Vector2): boolean
-	return pos.X >= rectMin.X and pos.X <= rectMax.X and pos.Y >= rectMin.Y and pos.Y <= rectMax.Y
-end
-
-function widgets.findBestWindowPosForPopup(refPos: Vector2, size: Vector2, outerMin: Vector2, outerMax: Vector2): Vector2
-	local CURSOR_OFFSET_DIST: number = 20
-
-	if refPos.X + size.X + CURSOR_OFFSET_DIST > outerMax.X then
-		if refPos.Y + size.Y + CURSOR_OFFSET_DIST > outerMax.Y then
-			-- placed to the top
-			refPos += Vector2.new(0, -(CURSOR_OFFSET_DIST + size.Y))
+	widgets.IS_STUDIO = widgets.RunService:IsStudio()
+	function widgets.getTime(): number
+		-- time() always returns 0 in the context of plugins
+		if widgets.IS_STUDIO then
+			return os.clock()
 		else
-			-- placed to the bottom
-			refPos += Vector2.new(0, CURSOR_OFFSET_DIST)
+			return time()
 		end
-	else
-		-- placed to the right
-		refPos += Vector2.new(CURSOR_OFFSET_DIST)
 	end
 
-	local clampedPos: Vector2 = Vector2.new(math.max(math.min(refPos.X + size.X, outerMax.X) - size.X, outerMin.X), math.max(math.min(refPos.Y + size.Y, outerMax.Y) - size.Y, outerMin.Y))
-	return clampedPos
-end
+	-- acts as an offset where the absolute position of the base frame is not zero, such as IgnoreGuiInset or for stories
+	widgets.GuiOffset = if Iris._config.IgnoreGuiInset then -widgets.GuiService:GetGuiInset() else Vector2.zero
+	-- the registered mouse position always ignores the topbar, so needs a separate variable offset
+	widgets.MouseOffset = if Iris._config.IgnoreGuiInset then Vector2.zero else widgets.GuiService:GetGuiInset()
 
-function widgets.getScreenSizeForWindow(thisWidget: Widget): Vector2 -- possible parents are GuiBase2d, CoreGui, PlayerGui
-	if thisWidget.Instance:IsA("GuiBase2d") then
-		return thisWidget.Instance.AbsoluteSize
-	else
-		local rootParent = thisWidget.Instance.Parent
-		if rootParent:IsA("GuiBase2d") then
-			return rootParent.AbsoluteSize
+	-- the topbar inset changes updates a frame later.
+	local connection: RBXScriptConnection
+	connection = widgets.GuiService:GetPropertyChangedSignal("TopbarInset"):Once(function()
+		widgets.MouseOffset = if Iris._config.IgnoreGuiInset then Vector2.zero else widgets.GuiService:GetGuiInset()
+		widgets.GuiOffset = if Iris._config.IgnoreGuiInset then -widgets.GuiService:GetGuiInset() else Vector2.zero
+		connection:Disconnect()
+	end)
+	-- in case the topbar doesn't change, we cancel the event.
+	task.delay(5, function()
+		connection:Disconnect()
+	end)
+
+	function widgets.getMouseLocation(): Vector2
+		return widgets.UserInputService:GetMouseLocation() - widgets.MouseOffset
+	end
+
+	function widgets.isPosInsideRect(pos: Vector2, rectMin: Vector2, rectMax: Vector2): boolean
+		return pos.X >= rectMin.X and pos.X <= rectMax.X and pos.Y >= rectMin.Y and pos.Y <= rectMax.Y
+	end
+
+	function widgets.findBestWindowPosForPopup(refPos: Vector2, size: Vector2, outerMin: Vector2, outerMax: Vector2): Vector2
+		local CURSOR_OFFSET_DIST: number = 20
+
+		if refPos.X + size.X + CURSOR_OFFSET_DIST > outerMax.X then
+			if refPos.Y + size.Y + CURSOR_OFFSET_DIST > outerMax.Y then
+				-- placed to the top
+				refPos += Vector2.new(0, -(CURSOR_OFFSET_DIST + size.Y))
+			else
+				-- placed to the bottom
+				refPos += Vector2.new(0, CURSOR_OFFSET_DIST)
+			end
 		else
-			if rootParent.Parent:IsA("GuiBase2d") then
+			-- placed to the right
+			refPos += Vector2.new(CURSOR_OFFSET_DIST)
+		end
+
+		local clampedPos: Vector2 = Vector2.new(math.max(math.min(refPos.X + size.X, outerMax.X) - size.X, outerMin.X), math.max(math.min(refPos.Y + size.Y, outerMax.Y) - size.Y, outerMin.Y))
+		return clampedPos
+	end
+
+	function widgets.getScreenSizeForWindow(thisWidget: Types.Widget): Vector2 -- possible parents are GuiBase2d, CoreGui, PlayerGui
+		if thisWidget.Instance:IsA("GuiBase2d") then
+			return thisWidget.Instance.AbsoluteSize
+		else
+			local rootParent = thisWidget.Instance.Parent
+			if rootParent:IsA("GuiBase2d") then
 				return rootParent.AbsoluteSize
 			else
-				return workspace.CurrentCamera.ViewportSize
+				if rootParent.Parent:IsA("GuiBase2d") then
+					return rootParent.AbsoluteSize
+				else
+					return workspace.CurrentCamera.ViewportSize
+				end
 			end
 		end
 	end
-end
 
-function widgets.extend(superClass: WidgetClass, subClass: WidgetClass): WidgetClass
-	local newClass: WidgetClass = table.clone(superClass)
-	for index: unknown, value: any in subClass do
-		newClass[index] = value
+	function widgets.extend(superClass: Types.WidgetClass, subClass: Types.WidgetClass): Types.WidgetClass
+		local newClass: Types.WidgetClass = table.clone(superClass)
+		for index: unknown, value: any in subClass do
+			newClass[index] = value
+		end
+		return newClass
 	end
-	return newClass
-end
 
-function widgets.UIPadding(Parent: GuiObject, PxPadding: Vector2): UIPadding
-	local UIPaddingInstance: UIPadding = Instance.new("UIPadding")
-	UIPaddingInstance.PaddingLeft = UDim.new(0, PxPadding.X)
-	UIPaddingInstance.PaddingRight = UDim.new(0, PxPadding.X)
-	UIPaddingInstance.PaddingTop = UDim.new(0, PxPadding.Y)
-	UIPaddingInstance.PaddingBottom = UDim.new(0, PxPadding.Y)
-	UIPaddingInstance.Parent = Parent
-	return UIPaddingInstance
-end
+	function widgets.UIPadding(Parent: GuiObject, PxPadding: Vector2): UIPadding
+		local UIPaddingInstance: UIPadding = Instance.new("UIPadding")
+		UIPaddingInstance.PaddingLeft = UDim.new(0, PxPadding.X)
+		UIPaddingInstance.PaddingRight = UDim.new(0, PxPadding.X)
+		UIPaddingInstance.PaddingTop = UDim.new(0, PxPadding.Y)
+		UIPaddingInstance.PaddingBottom = UDim.new(0, PxPadding.Y)
+		UIPaddingInstance.Parent = Parent
+		return UIPaddingInstance
+	end
 
-function widgets.UIListLayout(Parent: GuiObject, FillDirection: Enum.FillDirection, Padding: UDim): UIListLayout
-	local UIListLayoutInstance: UIListLayout = Instance.new("UIListLayout")
-	UIListLayoutInstance.SortOrder = Enum.SortOrder.LayoutOrder
-	UIListLayoutInstance.Padding = Padding
-	UIListLayoutInstance.FillDirection = FillDirection
-	UIListLayoutInstance.Parent = Parent
-	return UIListLayoutInstance
-end
+	function widgets.UIListLayout(Parent: GuiObject, FillDirection: Enum.FillDirection, Padding: UDim): UIListLayout
+		local UIListLayoutInstance: UIListLayout = Instance.new("UIListLayout")
+		UIListLayoutInstance.SortOrder = Enum.SortOrder.LayoutOrder
+		UIListLayoutInstance.Padding = Padding
+		UIListLayoutInstance.FillDirection = FillDirection
+		UIListLayoutInstance.Parent = Parent
+		return UIListLayoutInstance
+	end
 
-function widgets.UIStroke(Parent: GuiObject, Thickness: number, Color: Color3, Transparency: number): UIStroke
-	local UIStrokeInstance: UIStroke = Instance.new("UIStroke")
-	UIStrokeInstance.Thickness = Thickness
-	UIStrokeInstance.Color = Color
-	UIStrokeInstance.Transparency = Transparency
-	UIStrokeInstance.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	UIStrokeInstance.LineJoinMode = Enum.LineJoinMode.Round
-	UIStrokeInstance.Parent = Parent
-	return UIStrokeInstance
-end
+	function widgets.UIStroke(Parent: GuiObject, Thickness: number, Color: Color3, Transparency: number): UIStroke
+		local UIStrokeInstance: UIStroke = Instance.new("UIStroke")
+		UIStrokeInstance.Thickness = Thickness
+		UIStrokeInstance.Color = Color
+		UIStrokeInstance.Transparency = Transparency
+		UIStrokeInstance.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		UIStrokeInstance.LineJoinMode = Enum.LineJoinMode.Round
+		UIStrokeInstance.Parent = Parent
+		return UIStrokeInstance
+	end
 
-function widgets.UICorner(Parent: GuiObject, PxRounding: number?): UICorner
-	local UICornerInstance: UICorner = Instance.new("UICorner")
-	UICornerInstance.CornerRadius = UDim.new(PxRounding and 0 or 1, PxRounding or 0)
-	UICornerInstance.Parent = Parent
-	return UICornerInstance
-end
+	function widgets.UICorner(Parent: GuiObject, PxRounding: number?): UICorner
+		local UICornerInstance: UICorner = Instance.new("UICorner")
+		UICornerInstance.CornerRadius = UDim.new(PxRounding and 0 or 1, PxRounding or 0)
+		UICornerInstance.Parent = Parent
+		return UICornerInstance
+	end
 
-function widgets.UISizeConstraint(Parent: GuiObject, MinSize: Vector2?, MaxSize: Vector2?): UISizeConstraint
-	local UISizeConstraintInstance: UISizeConstraint = Instance.new("UISizeConstraint")
-	UISizeConstraintInstance.MinSize = MinSize or UISizeConstraintInstance.MinSize -- made these optional
-	UISizeConstraintInstance.MaxSize = MaxSize or UISizeConstraintInstance.MaxSize
-	UISizeConstraintInstance.Parent = Parent
-	return UISizeConstraintInstance
-end
+	function widgets.UISizeConstraint(Parent: GuiObject, MinSize: Vector2?, MaxSize: Vector2?): UISizeConstraint
+		local UISizeConstraintInstance: UISizeConstraint = Instance.new("UISizeConstraint")
+		UISizeConstraintInstance.MinSize = MinSize or UISizeConstraintInstance.MinSize -- made these optional
+		UISizeConstraintInstance.MaxSize = MaxSize or UISizeConstraintInstance.MaxSize
+		UISizeConstraintInstance.Parent = Parent
+		return UISizeConstraintInstance
+	end
 
--- below uses Iris
+	-- below uses Iris
 
-function widgets.applyTextStyle(thisInstance: TextLabel & TextButton & TextBox)
-	thisInstance.FontFace = Iris._config.TextFont
-	thisInstance.TextSize = Iris._config.TextSize
-	thisInstance.TextColor3 = Iris._config.TextColor
-	thisInstance.TextTransparency = Iris._config.TextTransparency
-	thisInstance.TextXAlignment = Enum.TextXAlignment.Left
-	thisInstance.TextYAlignment = Enum.TextYAlignment.Center
-	thisInstance.RichText = Iris._config.RichText
-	thisInstance.TextWrapped = Iris._config.TextWrapped
+	function widgets.applyTextStyle(thisInstance: TextLabel & TextButton & TextBox)
+		thisInstance.FontFace = Iris._config.TextFont
+		thisInstance.TextSize = Iris._config.TextSize
+		thisInstance.TextColor3 = Iris._config.TextColor
+		thisInstance.TextTransparency = Iris._config.TextTransparency
+		thisInstance.TextXAlignment = Enum.TextXAlignment.Left
+		thisInstance.TextYAlignment = Enum.TextYAlignment.Center
+		thisInstance.RichText = Iris._config.RichText
+		thisInstance.TextWrapped = Iris._config.TextWrapped
 
-	thisInstance.AutoLocalize = false
-end
+		thisInstance.AutoLocalize = false
+	end
 
-function widgets.applyInteractionHighlights(Property: string, Button: GuiButton, Highlightee: GuiObject, Colors: { [string]: any })
-	local exitedButton: boolean = false
-	widgets.applyMouseEnter(Button, function()
-		Highlightee[Property .. "Color3"] = Colors.HoveredColor
-		Highlightee[Property .. "Transparency"] = Colors.HoveredTransparency
-
-		exitedButton = false
-	end)
-
-	widgets.applyMouseLeave(Button, function()
-		Highlightee[Property .. "Color3"] = Colors.Color
-		Highlightee[Property .. "Transparency"] = Colors.Transparency
-
-		exitedButton = true
-	end)
-
-	widgets.applyInputBegan(Button, function(input: InputObject)
-		if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Gamepad1) then
-			return
-		end
-		Highlightee[Property .. "Color3"] = Colors.ActiveColor
-		Highlightee[Property .. "Transparency"] = Colors.ActiveTransparency
-	end)
-
-	widgets.applyInputEnded(Button, function(input: InputObject)
-		if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Gamepad1) or exitedButton then
-			return
-		end
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+	function widgets.applyInteractionHighlights(Property: string, Button: GuiButton, Highlightee: GuiObject, Colors: { [string]: any })
+		local exitedButton: boolean = false
+		widgets.applyMouseEnter(Button, function()
 			Highlightee[Property .. "Color3"] = Colors.HoveredColor
 			Highlightee[Property .. "Transparency"] = Colors.HoveredTransparency
-		end
-		if input.UserInputType == Enum.UserInputType.Gamepad1 then
-			Highlightee[Property .. "Color3"] = Colors.Color
-			Highlightee[Property .. "Transparency"] = Colors.Transparency
-		end
-	end)
-
-	Button.SelectionImageObject = Iris.SelectionImageObject
-end
-
-function widgets.applyInteractionHighlightsWithMultiHighlightee(Property: string, Button: GuiButton, Highlightees: { { GuiObject | { [string]: Color3 | number } } })
-	local exitedButton: boolean = false
-	widgets.applyMouseEnter(Button, function()
-		for _, Highlightee in Highlightees do
-			Highlightee[1][Property .. "Color3"] = Highlightee[2].HoveredColor
-			Highlightee[1][Property .. "Transparency"] = Highlightee[2].HoveredTransparency
 
 			exitedButton = false
-		end
-	end)
+		end)
 
-	widgets.applyMouseLeave(Button, function()
-		for _, Highlightee in Highlightees do
-			Highlightee[1][Property .. "Color3"] = Highlightee[2].Color
-			Highlightee[1][Property .. "Transparency"] = Highlightee[2].Transparency
+		widgets.applyMouseLeave(Button, function()
+			Highlightee[Property .. "Color3"] = Colors.Color
+			Highlightee[Property .. "Transparency"] = Colors.Transparency
 
 			exitedButton = true
-		end
-	end)
+		end)
 
-	widgets.applyInputBegan(Button, function(input: InputObject)
-		if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Gamepad1) then
-			return
-		end
-		for _, Highlightee in Highlightees do
-			Highlightee[1][Property .. "Color3"] = Highlightee[2].ActiveColor
-			Highlightee[1][Property .. "Transparency"] = Highlightee[2].ActiveTransparency
-		end
-	end)
+		widgets.applyInputBegan(Button, function(input: InputObject)
+			if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Gamepad1) then
+				return
+			end
+			Highlightee[Property .. "Color3"] = Colors.ActiveColor
+			Highlightee[Property .. "Transparency"] = Colors.ActiveTransparency
+		end)
 
-	widgets.applyInputEnded(Button, function(input: InputObject)
-		if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Gamepad1) or exitedButton then
-			return
-		end
-		for _, Highlightee in Highlightees do
+		widgets.applyInputEnded(Button, function(input: InputObject)
+			if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Gamepad1) or exitedButton then
+				return
+			end
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				Highlightee[1][Property .. "Color3"] = Highlightee[2].HoveredColor
-				Highlightee[1][Property .. "Transparency"] = Highlightee[2].HoveredTransparency
+				Highlightee[Property .. "Color3"] = Colors.HoveredColor
+				Highlightee[Property .. "Transparency"] = Colors.HoveredTransparency
 			end
 			if input.UserInputType == Enum.UserInputType.Gamepad1 then
+				Highlightee[Property .. "Color3"] = Colors.Color
+				Highlightee[Property .. "Transparency"] = Colors.Transparency
+			end
+		end)
+
+		Button.SelectionImageObject = Iris.SelectionImageObject
+	end
+
+	function widgets.applyInteractionHighlightsWithMultiHighlightee(Property: string, Button: GuiButton, Highlightees: { { GuiObject | { [string]: Color3 | number } } })
+		local exitedButton: boolean = false
+		widgets.applyMouseEnter(Button, function()
+			for _, Highlightee in Highlightees do
+				Highlightee[1][Property .. "Color3"] = Highlightee[2].HoveredColor
+				Highlightee[1][Property .. "Transparency"] = Highlightee[2].HoveredTransparency
+
+				exitedButton = false
+			end
+		end)
+
+		widgets.applyMouseLeave(Button, function()
+			for _, Highlightee in Highlightees do
 				Highlightee[1][Property .. "Color3"] = Highlightee[2].Color
 				Highlightee[1][Property .. "Transparency"] = Highlightee[2].Transparency
+
+				exitedButton = true
 			end
+		end)
+
+		widgets.applyInputBegan(Button, function(input: InputObject)
+			if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Gamepad1) then
+				return
+			end
+			for _, Highlightee in Highlightees do
+				Highlightee[1][Property .. "Color3"] = Highlightee[2].ActiveColor
+				Highlightee[1][Property .. "Transparency"] = Highlightee[2].ActiveTransparency
+			end
+		end)
+
+		widgets.applyInputEnded(Button, function(input: InputObject)
+			if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Gamepad1) or exitedButton then
+				return
+			end
+			for _, Highlightee in Highlightees do
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					Highlightee[1][Property .. "Color3"] = Highlightee[2].HoveredColor
+					Highlightee[1][Property .. "Transparency"] = Highlightee[2].HoveredTransparency
+				end
+				if input.UserInputType == Enum.UserInputType.Gamepad1 then
+					Highlightee[1][Property .. "Color3"] = Highlightee[2].Color
+					Highlightee[1][Property .. "Transparency"] = Highlightee[2].Transparency
+				end
+			end
+		end)
+
+		Button.SelectionImageObject = Iris.SelectionImageObject
+	end
+
+	function widgets.applyFrameStyle(thisInstance: GuiObject, noPadding: boolean?, noCorner: boolean?)
+		-- padding, border, and rounding
+		-- optimized to only use what instances are needed, based on style
+		local FrameBorderSize: number = Iris._config.FrameBorderSize
+		local FrameRounding: number = Iris._config.FrameRounding
+		thisInstance.BorderSizePixel = 0
+
+		if FrameBorderSize > 0 then
+			widgets.UIStroke(thisInstance, FrameBorderSize, Iris._config.BorderColor, Iris._config.BorderTransparency)
 		end
-	end)
-
-	Button.SelectionImageObject = Iris.SelectionImageObject
-end
-
-function widgets.applyFrameStyle(thisInstance: GuiObject, noPadding: boolean?, noCorner: boolean?)
-	-- padding, border, and rounding
-	-- optimized to only use what instances are needed, based on style
-	local FrameBorderSize: number = Iris._config.FrameBorderSize
-	local FrameRounding: number = Iris._config.FrameRounding
-	thisInstance.BorderSizePixel = 0
-
-	if FrameBorderSize > 0 then
-		widgets.UIStroke(thisInstance, FrameBorderSize, Iris._config.BorderColor, Iris._config.BorderTransparency)
+		if FrameRounding > 0 and not noCorner then
+			widgets.UICorner(thisInstance, FrameRounding)
+		end
+		if not noPadding then
+			widgets.UIPadding(thisInstance, Iris._config.FramePadding)
+		end
 	end
-	if FrameRounding > 0 and not noCorner then
-		widgets.UICorner(thisInstance, FrameRounding)
+
+	function widgets.applyButtonClick(thisInstance: GuiButton, callback: () -> ())
+		thisInstance.MouseButton1Click:Connect(function()
+			callback()
+		end)
 	end
-	if not noPadding then
-		widgets.UIPadding(thisInstance, Iris._config.FramePadding)
+
+	function widgets.applyButtonDown(thisInstance: GuiButton, callback: (x: number, y: number) -> ())
+		thisInstance.MouseButton1Down:Connect(function(x: number, y: number)
+			local position: Vector2 = Vector2.new(x, y) - widgets.MouseOffset
+			callback(position.X, position.Y)
+		end)
 	end
-end
 
-function widgets.applyButtonClick(thisInstance: GuiButton, callback: () -> ())
-	thisInstance.MouseButton1Click:Connect(function()
-		callback()
-	end)
-end
-
-function widgets.applyButtonDown(thisInstance: GuiButton, callback: (x: number, y: number) -> ())
-	thisInstance.MouseButton1Down:Connect(function(x: number, y: number)
-		local position: Vector2 = Vector2.new(x, y) - widgets.MouseOffset
-		callback(position.X, position.Y)
-	end)
-end
-
-function widgets.applyMouseEnter(thisInstance: GuiObject, callback: (x: number, y: number) -> ())
-	thisInstance.MouseEnter:Connect(function(x: number, y: number)
-		local position: Vector2 = Vector2.new(x, y) - widgets.MouseOffset
-		callback(position.X, position.Y)
-	end)
-end
-
-function widgets.applyMouseMoved(thisInstance: GuiObject, callback: (x: number, y: number) -> ())
-	thisInstance.MouseMoved:Connect(function(x: number, y: number)
-		local position: Vector2 = Vector2.new(x, y) - widgets.MouseOffset
-		callback(position.X, position.Y)
-	end)
-end
-
-function widgets.applyMouseLeave(thisInstance: GuiObject, callback: (x: number, y: number) -> ())
-	thisInstance.MouseLeave:Connect(function(x: number, y: number)
-		local position: Vector2 = Vector2.new(x, y) - widgets.MouseOffset
-		callback(position.X, position.Y)
-	end)
-end
-
-function widgets.applyInputBegan(thisInstance: GuiButton, callback: (input: InputObject) -> ())
-	thisInstance.InputBegan:Connect(function(...)
-		callback(...)
-	end)
-end
-
-function widgets.applyInputEnded(thisInstance: GuiButton, callback: (input: InputObject) -> ())
-	thisInstance.InputEnded:Connect(function(...)
-		callback(...)
-	end)
-end
-
-function widgets.discardState(thisWidget: StateWidget)
-	for _, state: State<any> in thisWidget.state do
-		state.ConnectedWidgets[thisWidget.ID] = nil
+	function widgets.applyMouseEnter(thisInstance: GuiObject, callback: (x: number, y: number) -> ())
+		thisInstance.MouseEnter:Connect(function(x: number, y: number)
+			local position: Vector2 = Vector2.new(x, y) - widgets.MouseOffset
+			callback(position.X, position.Y)
+		end)
 	end
-end
 
-function widgets.registerEvent(event: string, callback: (...any) -> ())
-	table.insert(Iris._initFunctions, function()
-		table.insert(Iris._connections, widgets.UserInputService[event]:Connect(callback))
-	end)
-end
+	function widgets.applyMouseMoved(thisInstance: GuiObject, callback: (x: number, y: number) -> ())
+		thisInstance.MouseMoved:Connect(function(x: number, y: number)
+			local position: Vector2 = Vector2.new(x, y) - widgets.MouseOffset
+			callback(position.X, position.Y)
+		end)
+	end
 
-widgets.EVENTS = {
-	hover = function(pathToHovered: (thisWidget: Widget) -> GuiObject)
-		return {
-			["Init"] = function(thisWidget: Widget & Hovered)
-				local hoveredGuiObject: GuiObject = pathToHovered(thisWidget)
-				widgets.applyMouseEnter(hoveredGuiObject, function()
-					thisWidget.isHoveredEvent = true
-				end)
-				widgets.applyMouseLeave(hoveredGuiObject, function()
+	function widgets.applyMouseLeave(thisInstance: GuiObject, callback: (x: number, y: number) -> ())
+		thisInstance.MouseLeave:Connect(function(x: number, y: number)
+			local position: Vector2 = Vector2.new(x, y) - widgets.MouseOffset
+			callback(position.X, position.Y)
+		end)
+	end
+
+	function widgets.applyInputBegan(thisInstance: GuiButton, callback: (input: InputObject) -> ())
+		thisInstance.InputBegan:Connect(function(...)
+			callback(...)
+		end)
+	end
+
+	function widgets.applyInputEnded(thisInstance: GuiButton, callback: (input: InputObject) -> ())
+		thisInstance.InputEnded:Connect(function(...)
+			callback(...)
+		end)
+	end
+
+	function widgets.discardState(thisWidget: Types.StateWidget)
+		for _, state: Types.State<any> in thisWidget.state do
+			state.ConnectedWidgets[thisWidget.ID] = nil
+		end
+	end
+
+	function widgets.registerEvent(event: string, callback: (...any) -> ())
+		table.insert(Iris._initFunctions, function()
+			table.insert(Iris._connections, widgets.UserInputService[event]:Connect(callback))
+		end)
+	end
+
+	widgets.EVENTS = {
+		hover = function(pathToHovered: (thisWidget: Types.Widget) -> GuiObject)
+			return {
+				["Init"] = function(thisWidget: Types.Widget & Types.Hovered)
+					local hoveredGuiObject: GuiObject = pathToHovered(thisWidget)
+					widgets.applyMouseEnter(hoveredGuiObject, function()
+						thisWidget.isHoveredEvent = true
+					end)
+					widgets.applyMouseLeave(hoveredGuiObject, function()
+						thisWidget.isHoveredEvent = false
+					end)
 					thisWidget.isHoveredEvent = false
-				end)
-				thisWidget.isHoveredEvent = false
-			end,
-			["Get"] = function(thisWidget: Widget & Hovered): boolean
-				return thisWidget.isHoveredEvent
-			end,
-		}
-	end,
+				end,
+				["Get"] = function(thisWidget: Types.Widget & Types.Hovered): boolean
+					return thisWidget.isHoveredEvent
+				end,
+			}
+		end,
 
-	click = function(pathToClicked: (thisWidget: Widget) -> GuiButton)
-		return {
-			["Init"] = function(thisWidget: Widget & Clicked)
-				local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
-				thisWidget.lastClickedTick = -1
+		click = function(pathToClicked: (thisWidget: Types.Widget) -> GuiButton)
+			return {
+				["Init"] = function(thisWidget: Types.Widget & Types.Clicked)
+					local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
+					thisWidget.lastClickedTick = -1
 
-				widgets.applyButtonClick(clickedGuiObject, function()
-					thisWidget.lastClickedTick = Iris._cycleTick + 1
-				end)
-			end,
-			["Get"] = function(thisWidget: Widget & Clicked): boolean
-				return thisWidget.lastClickedTick == Iris._cycleTick
-			end,
-		}
-	end,
+					widgets.applyButtonClick(clickedGuiObject, function()
+						thisWidget.lastClickedTick = Iris._cycleTick + 1
+					end)
+				end,
+				["Get"] = function(thisWidget: Types.Widget & Types.Clicked): boolean
+					return thisWidget.lastClickedTick == Iris._cycleTick
+				end,
+			}
+		end,
 
-	rightClick = function(pathToClicked: (thisWidget: Widget) -> GuiButton)
-		return {
-			["Init"] = function(thisWidget: Widget & RightClicked)
-				local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
-				thisWidget.lastRightClickedTick = -1
+		rightClick = function(pathToClicked: (thisWidget: Types.Widget) -> GuiButton)
+			return {
+				["Init"] = function(thisWidget: Types.Widget & Types.RightClicked)
+					local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
+					thisWidget.lastRightClickedTick = -1
 
-				clickedGuiObject.MouseButton2Click:Connect(function()
-					thisWidget.lastRightClickedTick = Iris._cycleTick + 1
-				end)
-			end,
-			["Get"] = function(thisWidget: Widget & RightClicked): boolean
-				return thisWidget.lastRightClickedTick == Iris._cycleTick
-			end,
-		}
-	end,
+					clickedGuiObject.MouseButton2Click:Connect(function()
+						thisWidget.lastRightClickedTick = Iris._cycleTick + 1
+					end)
+				end,
+				["Get"] = function(thisWidget: Types.Widget & Types.RightClicked): boolean
+					return thisWidget.lastRightClickedTick == Iris._cycleTick
+				end,
+			}
+		end,
 
-	doubleClick = function(pathToClicked: (thisWidget: Widget) -> GuiButton)
-		return {
-			["Init"] = function(thisWidget: Widget & DoubleClicked)
-				local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
-				thisWidget.lastClickedTime = -1
-				thisWidget.lastClickedPosition = Vector2.zero
-				thisWidget.lastDoubleClickedTick = -1
+		doubleClick = function(pathToClicked: (thisWidget: Types.Widget) -> GuiButton)
+			return {
+				["Init"] = function(thisWidget: Types.Widget & Types.DoubleClicked)
+					local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
+					thisWidget.lastClickedTime = -1
+					thisWidget.lastClickedPosition = Vector2.zero
+					thisWidget.lastDoubleClickedTick = -1
 
-				widgets.applyButtonDown(clickedGuiObject, function(x: number, y: number)
-					local currentTime: number = widgets.getTime()
-					local isTimeValid: boolean = currentTime - thisWidget.lastClickedTime < Iris._config.MouseDoubleClickTime
-					if isTimeValid and (Vector2.new(x, y) - thisWidget.lastClickedPosition).Magnitude < Iris._config.MouseDoubleClickMaxDist then
-						thisWidget.lastDoubleClickedTick = Iris._cycleTick + 1
-					else
-						thisWidget.lastClickedTime = currentTime
-						thisWidget.lastClickedPosition = Vector2.new(x, y)
-					end
-				end)
-			end,
-			["Get"] = function(thisWidget: Widget & DoubleClicked): boolean
-				return thisWidget.lastDoubleClickedTick == Iris._cycleTick
-			end,
-		}
-	end,
+					widgets.applyButtonDown(clickedGuiObject, function(x: number, y: number)
+						local currentTime: number = widgets.getTime()
+						local isTimeValid: boolean = currentTime - thisWidget.lastClickedTime < Iris._config.MouseDoubleClickTime
+						if isTimeValid and (Vector2.new(x, y) - thisWidget.lastClickedPosition).Magnitude < Iris._config.MouseDoubleClickMaxDist then
+							thisWidget.lastDoubleClickedTick = Iris._cycleTick + 1
+						else
+							thisWidget.lastClickedTime = currentTime
+							thisWidget.lastClickedPosition = Vector2.new(x, y)
+						end
+					end)
+				end,
+				["Get"] = function(thisWidget: Types.Widget & Types.DoubleClicked): boolean
+					return thisWidget.lastDoubleClickedTick == Iris._cycleTick
+				end,
+			}
+		end,
 
-	ctrlClick = function(pathToClicked: (thisWidget: Widget) -> GuiButton)
-		return {
-			["Init"] = function(thisWidget: Widget & CtrlClicked)
-				local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
-				thisWidget.lastCtrlClickedTick = -1
+		ctrlClick = function(pathToClicked: (thisWidget: Types.Widget) -> GuiButton)
+			return {
+				["Init"] = function(thisWidget: Types.Widget & Types.CtrlClicked)
+					local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
+					thisWidget.lastCtrlClickedTick = -1
 
-				widgets.applyButtonClick(clickedGuiObject, function()
-					if widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl) then
-						thisWidget.lastCtrlClickedTick = Iris._cycleTick + 1
-					end
-				end)
-			end,
-			["Get"] = function(thisWidget: Widget & CtrlClicked): boolean
-				return thisWidget.lastCtrlClickedTick == Iris._cycleTick
-			end,
-		}
-	end,
-}
+					widgets.applyButtonClick(clickedGuiObject, function()
+						if widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl) then
+							thisWidget.lastCtrlClickedTick = Iris._cycleTick + 1
+						end
+					end)
+				end,
+				["Get"] = function(thisWidget: Types.Widget & Types.CtrlClicked): boolean
+					return thisWidget.lastCtrlClickedTick == Iris._cycleTick
+				end,
+			}
+		end,
+	}
 
-Iris._utility = widgets
+	Iris._utility = widgets
 
-local NumNonWindowChildren: number = 0
+	local a = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local NumNonWindowChildren: number = 0
 
---stylua: ignore
-Iris.WidgetConstructor("Root", {
-	hasState = false,
-	hasChildren = true,
-	Args = {},
-	Events = {},
-	Generate = function(_thisWidget: Root)
-		local Root: Folder = Instance.new("Folder")
-		Root.Name = "Iris_Root"
+		--stylua: ignore
+		Iris.WidgetConstructor("Root", {
+			hasState = false,
+			hasChildren = true,
+			Args = {},
+			Events = {},
+			Generate = function(_thisWidget: Types.Root)
+				local Root: Folder = Instance.new("Folder")
+				Root.Name = "Iris_Root"
 
-		local PseudoWindowScreenGui
-		if Iris._config.UseScreenGUIs then
-			PseudoWindowScreenGui = Instance.new("ScreenGui")
-			PseudoWindowScreenGui.ResetOnSpawn = false
-			PseudoWindowScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-			PseudoWindowScreenGui.DisplayOrder = Iris._config.DisplayOrderOffset
-			PseudoWindowScreenGui.IgnoreGuiInset = Iris._config.IgnoreGuiInset
-		else
-			PseudoWindowScreenGui = Instance.new("Frame")
-			PseudoWindowScreenGui.AnchorPoint = Vector2.new(0.5, 0.5)
-			PseudoWindowScreenGui.Position = UDim2.new(0.5, 0, 0.5, 0)
-			PseudoWindowScreenGui.Size = UDim2.new(1, 0, 1, 0)
-			PseudoWindowScreenGui.BackgroundTransparency = 1
-			PseudoWindowScreenGui.ZIndex = Iris._config.DisplayOrderOffset
-		end
-		PseudoWindowScreenGui.Name = "PseudoWindowScreenGui"
-		PseudoWindowScreenGui.Parent = Root
+				local PseudoWindowScreenGui
+				if Iris._config.UseScreenGUIs then
+					PseudoWindowScreenGui = Instance.new("ScreenGui")
+					PseudoWindowScreenGui.ResetOnSpawn = false
+					PseudoWindowScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+					PseudoWindowScreenGui.DisplayOrder = Iris._config.DisplayOrderOffset
+					PseudoWindowScreenGui.IgnoreGuiInset = Iris._config.IgnoreGuiInset
+				else
+					PseudoWindowScreenGui = Instance.new("Frame")
+					PseudoWindowScreenGui.AnchorPoint = Vector2.new(0.5, 0.5)
+					PseudoWindowScreenGui.Position = UDim2.new(0.5, 0, 0.5, 0)
+					PseudoWindowScreenGui.Size = UDim2.new(1, 0, 1, 0)
+					PseudoWindowScreenGui.BackgroundTransparency = 1
+					PseudoWindowScreenGui.ZIndex = Iris._config.DisplayOrderOffset
+				end
+				PseudoWindowScreenGui.Name = "PseudoWindowScreenGui"
+				PseudoWindowScreenGui.Parent = Root
 
-		local PopupScreenGui
-		if Iris._config.UseScreenGUIs then
-			PopupScreenGui = Instance.new("ScreenGui")
-			PopupScreenGui.ResetOnSpawn = false
-			PopupScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-			PopupScreenGui.DisplayOrder = Iris._config.DisplayOrderOffset + 1024 -- room for 1024 regular windows before overlap
-			PopupScreenGui.IgnoreGuiInset = Iris._config.IgnoreGuiInset
-		else
-			PopupScreenGui = Instance.new("Frame")
-			PopupScreenGui.AnchorPoint = Vector2.new(0.5, 0.5)
-			PopupScreenGui.Position = UDim2.new(0.5, 0, 0.5, 0)
-			PopupScreenGui.Size = UDim2.new(1, 0, 1, 0)
-			PopupScreenGui.BackgroundTransparency = 1
-			PopupScreenGui.ZIndex = Iris._config.DisplayOrderOffset + 1024
-		end
-		PopupScreenGui.Name = "PopupScreenGui"
-		PopupScreenGui.Parent = Root
+				local PopupScreenGui
+				if Iris._config.UseScreenGUIs then
+					PopupScreenGui = Instance.new("ScreenGui")
+					PopupScreenGui.ResetOnSpawn = false
+					PopupScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+					PopupScreenGui.DisplayOrder = Iris._config.DisplayOrderOffset + 1024 -- room for 1024 regular windows before overlap
+					PopupScreenGui.IgnoreGuiInset = Iris._config.IgnoreGuiInset
+				else
+					PopupScreenGui = Instance.new("Frame")
+					PopupScreenGui.AnchorPoint = Vector2.new(0.5, 0.5)
+					PopupScreenGui.Position = UDim2.new(0.5, 0, 0.5, 0)
+					PopupScreenGui.Size = UDim2.new(1, 0, 1, 0)
+					PopupScreenGui.BackgroundTransparency = 1
+					PopupScreenGui.ZIndex = Iris._config.DisplayOrderOffset + 1024
+				end
+				PopupScreenGui.Name = "PopupScreenGui"
+				PopupScreenGui.Parent = Root
 
-		local TooltipContainer: Frame = Instance.new("Frame")
-		TooltipContainer.Name = "TooltipContainer"
-		TooltipContainer.AutomaticSize = Enum.AutomaticSize.XY
-		TooltipContainer.Size = UDim2.fromOffset(0, 0)
-		TooltipContainer.BackgroundTransparency = 1
-		TooltipContainer.BorderSizePixel = 0
+				local TooltipContainer: Frame = Instance.new("Frame")
+				TooltipContainer.Name = "TooltipContainer"
+				TooltipContainer.AutomaticSize = Enum.AutomaticSize.XY
+				TooltipContainer.Size = UDim2.fromOffset(0, 0)
+				TooltipContainer.BackgroundTransparency = 1
+				TooltipContainer.BorderSizePixel = 0
 
-		widgets.UIListLayout(TooltipContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.PopupBorderSize))
+				widgets.UIListLayout(TooltipContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.PopupBorderSize))
 
-		TooltipContainer.Parent = PopupScreenGui
+				TooltipContainer.Parent = PopupScreenGui
 
-		local MenuBarContainer: Frame = Instance.new("Frame")
-		MenuBarContainer.Name = "MenuBarContainer"
-		MenuBarContainer.AutomaticSize = Enum.AutomaticSize.Y
-		MenuBarContainer.Size = UDim2.fromScale(1, 0)
-		MenuBarContainer.BackgroundTransparency = 1
-		MenuBarContainer.BorderSizePixel = 0
+				local MenuBarContainer: Frame = Instance.new("Frame")
+				MenuBarContainer.Name = "MenuBarContainer"
+				MenuBarContainer.AutomaticSize = Enum.AutomaticSize.Y
+				MenuBarContainer.Size = UDim2.fromScale(1, 0)
+				MenuBarContainer.BackgroundTransparency = 1
+				MenuBarContainer.BorderSizePixel = 0
 
-		MenuBarContainer.Parent = PopupScreenGui
+				MenuBarContainer.Parent = PopupScreenGui
 
-		local PseudoWindow: Frame = Instance.new("Frame")
-		PseudoWindow.Name = "PseudoWindow"
-		PseudoWindow.Size = UDim2.new(0, 0, 0, 0)
-		PseudoWindow.Position = UDim2.fromOffset(0, 22)
-		PseudoWindow.AutomaticSize = Enum.AutomaticSize.XY
-		PseudoWindow.BackgroundTransparency = Iris._config.WindowBgTransparency
-		PseudoWindow.BackgroundColor3 = Iris._config.WindowBgColor
-		PseudoWindow.BorderSizePixel = Iris._config.WindowBorderSize
-		PseudoWindow.BorderColor3 = Iris._config.BorderColor
+				local PseudoWindow: Frame = Instance.new("Frame")
+				PseudoWindow.Name = "PseudoWindow"
+				PseudoWindow.Size = UDim2.new(0, 0, 0, 0)
+				PseudoWindow.Position = UDim2.fromOffset(0, 22)
+				PseudoWindow.AutomaticSize = Enum.AutomaticSize.XY
+				PseudoWindow.BackgroundTransparency = Iris._config.WindowBgTransparency
+				PseudoWindow.BackgroundColor3 = Iris._config.WindowBgColor
+				PseudoWindow.BorderSizePixel = Iris._config.WindowBorderSize
+				PseudoWindow.BorderColor3 = Iris._config.BorderColor
 
-		PseudoWindow.Selectable = false
-		PseudoWindow.SelectionGroup = true
-		PseudoWindow.SelectionBehaviorUp = Enum.SelectionBehavior.Stop
-		PseudoWindow.SelectionBehaviorDown = Enum.SelectionBehavior.Stop
-		PseudoWindow.SelectionBehaviorLeft = Enum.SelectionBehavior.Stop
-		PseudoWindow.SelectionBehaviorRight = Enum.SelectionBehavior.Stop
+				PseudoWindow.Selectable = false
+				PseudoWindow.SelectionGroup = true
+				PseudoWindow.SelectionBehaviorUp = Enum.SelectionBehavior.Stop
+				PseudoWindow.SelectionBehaviorDown = Enum.SelectionBehavior.Stop
+				PseudoWindow.SelectionBehaviorLeft = Enum.SelectionBehavior.Stop
+				PseudoWindow.SelectionBehaviorRight = Enum.SelectionBehavior.Stop
 
-		PseudoWindow.Visible = false
-
-		widgets.UIPadding(PseudoWindow, Iris._config.WindowPadding)
-		widgets.UIListLayout(PseudoWindow, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
-
-		PseudoWindow.Parent = PseudoWindowScreenGui
-
-		return Root
-	end,
-	Update = function(thisWidget: Root)
-		if NumNonWindowChildren > 0 then
-			local Root = thisWidget.Instance :: any
-			local PseudoWindowScreenGui = Root.PseudoWindowScreenGui :: any
-			local PseudoWindow: Frame = PseudoWindowScreenGui.PseudoWindow
-			PseudoWindow.Visible = true
-		end
-	end,
-	Discard = function(thisWidget: Root)
-		NumNonWindowChildren = 0
-		thisWidget.Instance:Destroy()
-	end,
-	ChildAdded = function(thisWidget: Root, thisChild: Widget)
-		local Root = thisWidget.Instance :: any
-
-		if thisChild.type == "Window" then
-			return thisWidget.Instance
-		elseif thisChild.type == "Tooltip" then
-			return Root.PopupScreenGui.TooltipContainer
-		elseif thisChild.type == "MenuBar" then
-			return Root.PopupScreenGui.MenuBarContainer
-		else
-			local PseudoWindowScreenGui = Root.PseudoWindowScreenGui :: any
-			local PseudoWindow: Frame = PseudoWindowScreenGui.PseudoWindow
-
-			NumNonWindowChildren += 1
-			PseudoWindow.Visible = true
-
-			return PseudoWindow
-		end
-	end,
-	ChildDiscarded = function(thisWidget: Root, thisChild: Widget)
-		if thisChild.type ~= "Window" and thisChild.type ~= "Tooltip" and thisChild.type ~= "MenuBar" then
-			NumNonWindowChildren -= 1
-			if NumNonWindowChildren == 0 then
-				local Root = thisWidget.Instance :: any
-				local PseudoWindowScreenGui = Root.PseudoWindowScreenGui :: any
-				local PseudoWindow: Frame = PseudoWindowScreenGui.PseudoWindow
 				PseudoWindow.Visible = false
+
+				widgets.UIPadding(PseudoWindow, Iris._config.WindowPadding)
+				widgets.UIListLayout(PseudoWindow, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
+
+				PseudoWindow.Parent = PseudoWindowScreenGui
+
+				return Root
+			end,
+			Update = function(thisWidget: Types.Root)
+				if NumNonWindowChildren > 0 then
+					local Root = thisWidget.Instance :: any
+					local PseudoWindowScreenGui = Root.PseudoWindowScreenGui :: any
+					local PseudoWindow: Frame = PseudoWindowScreenGui.PseudoWindow
+					PseudoWindow.Visible = true
+				end
+			end,
+			Discard = function(thisWidget: Types.Root)
+				NumNonWindowChildren = 0
+				thisWidget.Instance:Destroy()
+			end,
+			ChildAdded = function(thisWidget: Types.Root, thisChild: Types.Widget)
+				local Root = thisWidget.Instance :: any
+
+				if thisChild.type == "Window" then
+					return thisWidget.Instance
+				elseif thisChild.type == "Tooltip" then
+					return Root.PopupScreenGui.TooltipContainer
+				elseif thisChild.type == "MenuBar" then
+					return Root.PopupScreenGui.MenuBarContainer
+				else
+					local PseudoWindowScreenGui = Root.PseudoWindowScreenGui :: any
+					local PseudoWindow: Frame = PseudoWindowScreenGui.PseudoWindow
+
+					NumNonWindowChildren += 1
+					PseudoWindow.Visible = true
+
+					return PseudoWindow
+				end
+			end,
+			ChildDiscarded = function(thisWidget: Types.Root, thisChild: Types.Widget)
+				if thisChild.type ~= "Window" and thisChild.type ~= "Tooltip" and thisChild.type ~= "MenuBar" then
+					NumNonWindowChildren -= 1
+					if NumNonWindowChildren == 0 then
+						local Root = thisWidget.Instance :: any
+						local PseudoWindowScreenGui = Root.PseudoWindowScreenGui :: any
+						local PseudoWindow: Frame = PseudoWindowScreenGui.PseudoWindow
+						PseudoWindow.Visible = false
+					end
+				end
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local b = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local function relocateTooltips()
+			if Iris._rootInstance == nil then
+				return
 			end
-		end
-	end,
-} :: WidgetClass)
-
-local function relocateTooltips()
-	if Iris._rootInstance == nil then
-		return
-	end
-	local PopupScreenGui = Iris._rootInstance:FindFirstChild("PopupScreenGui")
-	local TooltipContainer = PopupScreenGui.TooltipContainer
-	local mouseLocation: Vector2 = widgets.getMouseLocation()
-	local newPosition: Vector2 = widgets.findBestWindowPosForPopup(mouseLocation, TooltipContainer.AbsoluteSize, Iris._config.DisplaySafeAreaPadding, PopupScreenGui.AbsoluteSize)
-	TooltipContainer.Position = UDim2.fromOffset(newPosition.X, newPosition.Y)
-end
-
-widgets.registerEvent("InputChanged", function()
-	if not Iris._started then
-		return
-	end
-	relocateTooltips()
-end)
-
---stylua: ignore
-Iris.WidgetConstructor("Tooltip", {
-	hasState = false,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-	},
-	Events = {},
-	Generate = function(thisWidget: Tooltip)
-		thisWidget.parentWidget = Iris._rootWidget -- only allow root as parent
-
-		local Tooltip: Frame = Instance.new("Frame")
-		Tooltip.Name = "Iris_Tooltip"
-		Tooltip.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(0, 0))
-		Tooltip.AutomaticSize = Enum.AutomaticSize.Y
-		Tooltip.BorderSizePixel = 0
-		Tooltip.BackgroundTransparency = 1
-		Tooltip.ZIndex = 1
-
-		local TooltipText: TextLabel = Instance.new("TextLabel")
-		TooltipText.Name = "TooltipText"
-		TooltipText.Size = UDim2.fromOffset(0, 0)
-		TooltipText.AutomaticSize = Enum.AutomaticSize.XY
-		TooltipText.BackgroundColor3 = Iris._config.PopupBgColor
-		TooltipText.BackgroundTransparency = Iris._config.PopupBgTransparency
-		TooltipText.TextWrapped = Iris._config.TextWrapped
-
-		widgets.applyTextStyle(TooltipText)
-		widgets.UIStroke(TooltipText, Iris._config.PopupBorderSize, Iris._config.BorderActiveColor, Iris._config.BorderActiveTransparency)
-		widgets.UIPadding(TooltipText, Iris._config.WindowPadding)
-		if Iris._config.PopupRounding > 0 then
-			widgets.UICorner(TooltipText, Iris._config.PopupRounding)
+			local PopupScreenGui = Iris._rootInstance:FindFirstChild("PopupScreenGui")
+			local TooltipContainer = PopupScreenGui.TooltipContainer
+			local mouseLocation: Vector2 = widgets.getMouseLocation()
+			local newPosition: Vector2 = widgets.findBestWindowPosForPopup(mouseLocation, TooltipContainer.AbsoluteSize, Iris._config.DisplaySafeAreaPadding, PopupScreenGui.AbsoluteSize)
+			TooltipContainer.Position = UDim2.fromOffset(newPosition.X, newPosition.Y)
 		end
 
-		TooltipText.Parent = Tooltip
+		widgets.registerEvent("InputChanged", function()
+			if not Iris._started then
+				return
+			end
+			relocateTooltips()
+		end)
 
-		return Tooltip
-	end,
-	Update = function(thisWidget: Tooltip)
-		local Tooltip = thisWidget.Instance :: Frame
-		local TooltipText: TextLabel = Tooltip.TooltipText
-		if thisWidget.arguments.Text == nil then
-			error("Text argument is required for Iris.Tooltip().", 5)
-		end
-		TooltipText.Text = thisWidget.arguments.Text
-		relocateTooltips()
-	end,
-	Discard = function(thisWidget: Tooltip)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass)
+		--stylua: ignore
+		Iris.WidgetConstructor("Tooltip", {
+			hasState = false,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+			},
+			Events = {},
+			Generate = function(thisWidget: Types.Tooltip)
+				thisWidget.parentWidget = Iris._rootWidget -- only allow root as parent
 
-local windowDisplayOrder: number = 0 -- incremental count which is used for determining focused windows ZIndex
-local dragWindow: Window? -- window being dragged, may be nil
-local isDragging: boolean = false
-local moveDeltaCursorPosition: Vector2 -- cursor offset from drag origin (top left of window)
+				local Tooltip: Frame = Instance.new("Frame")
+				Tooltip.Name = "Iris_Tooltip"
+				Tooltip.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(0, 0))
+				Tooltip.AutomaticSize = Enum.AutomaticSize.Y
+				Tooltip.BorderSizePixel = 0
+				Tooltip.BackgroundTransparency = 1
+				Tooltip.ZIndex = 1
 
-local resizeWindow: Window? -- window being resized, may be nil
-local isResizing = false
-local isInsideResize = false -- is cursor inside of the focused window resize outer padding
-local isInsideWindow = false -- is cursor inside of the focused window
-local resizeFromTopBottom: Enum.TopBottom = Enum.TopBottom.Top
-local resizeFromLeftRight: Enum.LeftRight = Enum.LeftRight.Left
+				local TooltipText: TextLabel = Instance.new("TextLabel")
+				TooltipText.Name = "TooltipText"
+				TooltipText.Size = UDim2.fromOffset(0, 0)
+				TooltipText.AutomaticSize = Enum.AutomaticSize.XY
+				TooltipText.BackgroundColor3 = Iris._config.PopupBgColor
+				TooltipText.BackgroundTransparency = Iris._config.PopupBgTransparency
+				TooltipText.TextWrapped = Iris._config.TextWrapped
 
-local lastCursorPosition: Vector2
+				widgets.applyTextStyle(TooltipText)
+				widgets.UIStroke(TooltipText, Iris._config.PopupBorderSize, Iris._config.BorderActiveColor, Iris._config.BorderActiveTransparency)
+				widgets.UIPadding(TooltipText, Iris._config.WindowPadding)
+				if Iris._config.PopupRounding > 0 then
+					widgets.UICorner(TooltipText, Iris._config.PopupRounding)
+				end
 
-local focusedWindow: Window? -- window with focus, may be nil
-local anyFocusedWindow: boolean = false -- is there any focused window?
+				TooltipText.Parent = Tooltip
 
-local windowWidgets: { [ID]: Window } = {} -- array of widget objects of type window
+				return Tooltip
+			end,
+			Update = function(thisWidget: Types.Tooltip)
+				local Tooltip = thisWidget.Instance :: Frame
+				local TooltipText: TextLabel = Tooltip.TooltipText
+				if thisWidget.arguments.Text == nil then
+					error("Text argument is required for Iris.Tooltip().", 5)
+				end
+				TooltipText.Text = thisWidget.arguments.Text
+				relocateTooltips()
+			end,
+			Discard = function(thisWidget: Types.Tooltip)
+				thisWidget.Instance:Destroy()
+			end,
+		} :: Types.WidgetClass)
 
-local function quickSwapWindows()
-	-- ctrl + tab swapping functionality
-	if Iris._config.UseScreenGUIs == false then
-		return
-	end
+		local windowDisplayOrder: number = 0 -- incremental count which is used for determining focused windows ZIndex
+		local dragWindow: Types.Window? -- window being dragged, may be nil
+		local isDragging: boolean = false
+		local moveDeltaCursorPosition: Vector2 -- cursor offset from drag origin (top left of window)
 
-	local lowest: number = 0xFFFF
-	local lowestWidget: Window
+		local resizeWindow: Types.Window? -- window being resized, may be nil
+		local isResizing = false
+		local isInsideResize = false -- is cursor inside of the focused window resize outer padding
+		local isInsideWindow = false -- is cursor inside of the focused window
+		local resizeFromTopBottom: Enum.TopBottom = Enum.TopBottom.Top
+		local resizeFromLeftRight: Enum.LeftRight = Enum.LeftRight.Left
 
-	for _, widget: Window in windowWidgets do
-		if widget.state.isOpened.value and not widget.arguments.NoNav then
-			if widget.Instance:IsA("ScreenGui") then
-				local value: number = widget.Instance.DisplayOrder
-				if value < lowest then
-					lowest = value
-					lowestWidget = widget
+		local lastCursorPosition: Vector2
+
+		local focusedWindow: Types.Window? -- window with focus, may be nil
+		local anyFocusedWindow: boolean = false -- is there any focused window?
+
+		local windowWidgets: { [Types.ID]: Types.Window } = {} -- array of widget objects of type window
+
+		local function quickSwapWindows()
+			-- ctrl + tab swapping functionality
+			if Iris._config.UseScreenGUIs == false then
+				return
+			end
+
+			local lowest: number = 0xFFFF
+			local lowestWidget: Types.Window
+
+			for _, widget: Types.Window in windowWidgets do
+				if widget.state.isOpened.value and not widget.arguments.NoNav then
+					if widget.Instance:IsA("ScreenGui") then
+						local value: number = widget.Instance.DisplayOrder
+						if value < lowest then
+							lowest = value
+							lowestWidget = widget
+						end
+					end
 				end
 			end
-		end
-	end
 
-	if not lowestWidget then
-		return
-	end
-
-	if lowestWidget.state.isUncollapsed.value == false then
-		lowestWidget.state.isUncollapsed:set(true)
-	end
-	Iris.SetFocusedWindow(lowestWidget)
-end
-
-local function fitSizeToWindowBounds(thisWidget: Window, intentedSize: Vector2): Vector2
-	local windowSize: Vector2 = Vector2.new(thisWidget.state.position.value.X, thisWidget.state.position.value.Y)
-	local minWindowSize: number = (Iris._config.TextSize + 2 * Iris._config.FramePadding.Y) * 2
-	local usableSize: Vector2 = widgets.getScreenSizeForWindow(thisWidget)
-	local safeAreaPadding: Vector2 = Vector2.new(Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.X, Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.Y)
-
-	local maxWindowSize: Vector2 = (usableSize - windowSize - safeAreaPadding)
-	return Vector2.new(math.clamp(intentedSize.X, minWindowSize, math.max(maxWindowSize.X, minWindowSize)), math.clamp(intentedSize.Y, minWindowSize, math.max(maxWindowSize.Y, minWindowSize)))
-end
-
-local function fitPositionToWindowBounds(thisWidget: Window, intendedPosition: Vector2): Vector2
-	local thisWidgetInstance = thisWidget.Instance
-	local usableSize: Vector2 = widgets.getScreenSizeForWindow(thisWidget)
-	local safeAreaPadding: Vector2 = Vector2.new(Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.X, Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.Y)
-
-	return Vector2.new(
-		math.clamp(intendedPosition.X, safeAreaPadding.X, math.max(safeAreaPadding.X, usableSize.X - thisWidgetInstance.WindowButton.AbsoluteSize.X - safeAreaPadding.X)),
-		math.clamp(intendedPosition.Y, safeAreaPadding.Y, math.max(safeAreaPadding.Y, usableSize.Y - thisWidgetInstance.WindowButton.AbsoluteSize.Y - safeAreaPadding.Y))
-	)
-end
-
-Iris.SetFocusedWindow = function(thisWidget: Window?)
-	if focusedWindow == thisWidget then
-		return
-	end
-
-	if anyFocusedWindow and focusedWindow ~= nil then
-		if windowWidgets[focusedWindow.ID] then
-			local Window = focusedWindow.Instance :: Frame
-			local WindowButton = Window.WindowButton :: TextButton
-			local Content = WindowButton.Content :: Frame
-			local TitleBar: Frame = Content.TitleBar
-			-- update appearance to unfocus
-			if focusedWindow.state.isUncollapsed.value then
-				TitleBar.BackgroundColor3 = Iris._config.TitleBgColor
-				TitleBar.BackgroundTransparency = Iris._config.TitleBgTransparency
-			else
-				TitleBar.BackgroundColor3 = Iris._config.TitleBgCollapsedColor
-				TitleBar.BackgroundTransparency = Iris._config.TitleBgCollapsedTransparency
+			if not lowestWidget then
+				return
 			end
-			WindowButton.UIStroke.Color = Iris._config.BorderColor
-		end
 
-		anyFocusedWindow = false
-		focusedWindow = nil
-	end
-
-	if thisWidget ~= nil then
-		-- update appearance to focus
-		anyFocusedWindow = true
-		focusedWindow = thisWidget
-		local Window = thisWidget.Instance :: Frame
-		local WindowButton = Window.WindowButton :: TextButton
-		local Content = WindowButton.Content :: Frame
-		local TitleBar: Frame = Content.TitleBar
-
-		TitleBar.BackgroundColor3 = Iris._config.TitleBgActiveColor
-		TitleBar.BackgroundTransparency = Iris._config.TitleBgActiveTransparency
-		WindowButton.UIStroke.Color = Iris._config.BorderActiveColor
-
-		windowDisplayOrder += 1
-		if thisWidget.usesScreenGuis then
-			Window.DisplayOrder = windowDisplayOrder + Iris._config.DisplayOrderOffset
-		else
-			Window.ZIndex = windowDisplayOrder + Iris._config.DisplayOrderOffset
-		end
-
-		if thisWidget.state.isUncollapsed.value == false then
-			thisWidget.state.isUncollapsed:set(true)
-		end
-
-		local firstSelectedObject: GuiObject? = widgets.GuiService.SelectedObject
-		if firstSelectedObject then
-			if TitleBar.Visible then
-				widgets.GuiService:Select(TitleBar)
-			else
-				widgets.GuiService:Select(thisWidget.ChildContainer)
+			if lowestWidget.state.isUncollapsed.value == false then
+				lowestWidget.state.isUncollapsed:set(true)
 			end
-		end
-	end
-end
-
-widgets.registerEvent("InputBegan", function(input: InputObject)
-	if not Iris._started then
-		return
-	end
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		local inWindow: boolean = false
-		local position: Vector2 = widgets.getMouseLocation()
-		for _, window: Window in windowWidgets do
-			local Window = window.Instance :: Instance
-			if not Window then
-				continue
-			end
-			local WindowButton = Window.WindowButton :: TextButton
-			local ResizeBorder: TextButton = WindowButton.ResizeBorder
-			if ResizeBorder and widgets.isPosInsideRect(position, ResizeBorder.AbsolutePosition - widgets.GuiOffset, ResizeBorder.AbsolutePosition - widgets.GuiOffset + ResizeBorder.AbsoluteSize) then
-				inWindow = true
-				break
-			end
+			Iris.SetFocusedWindow(lowestWidget)
 		end
 
-		if not inWindow then
-			Iris.SetFocusedWindow(nil)
-		end
-	end
+		local function fitSizeToWindowBounds(thisWidget: Types.Window, intentedSize: Vector2): Vector2
+			local windowSize: Vector2 = Vector2.new(thisWidget.state.position.value.X, thisWidget.state.position.value.Y)
+			local minWindowSize: number = (Iris._config.TextSize + 2 * Iris._config.FramePadding.Y) * 2
+			local usableSize: Vector2 = widgets.getScreenSizeForWindow(thisWidget)
+			local safeAreaPadding: Vector2 = Vector2.new(Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.X, Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.Y)
 
-	if input.KeyCode == Enum.KeyCode.Tab and (widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)) then
-		quickSwapWindows()
-	end
-
-	if input.UserInputType == Enum.UserInputType.MouseButton1 and isInsideResize and not isInsideWindow and anyFocusedWindow and focusedWindow then
-		local midWindow: Vector2 = focusedWindow.state.position.value + (focusedWindow.state.size.value / 2)
-		local cursorPosition: Vector2 = widgets.getMouseLocation() - midWindow
-
-		-- check which axis its closest to, then check which side is closest with math.sign
-		if math.abs(cursorPosition.X) * focusedWindow.state.size.value.Y >= math.abs(cursorPosition.Y) * focusedWindow.state.size.value.X then
-			resizeFromTopBottom = Enum.TopBottom.Center
-			resizeFromLeftRight = if math.sign(cursorPosition.X) == -1 then Enum.LeftRight.Left else Enum.LeftRight.Right
-		else
-			resizeFromLeftRight = Enum.LeftRight.Center
-			resizeFromTopBottom = if math.sign(cursorPosition.Y) == -1 then Enum.TopBottom.Top else Enum.TopBottom.Bottom
-		end
-		isResizing = true
-		resizeWindow = focusedWindow
-	end
-end)
-
-widgets.registerEvent("TouchTapInWorld", function(_, gameProcessedEvent: boolean)
-	if not Iris._started then
-		return
-	end
-	if not gameProcessedEvent then
-		Iris.SetFocusedWindow(nil)
-	end
-end)
-
-widgets.registerEvent("InputChanged", function(input: InputObject)
-	if not Iris._started then
-		return
-	end
-	if isDragging and dragWindow then
-		local mouseLocation: Vector2
-		if input.UserInputType == Enum.UserInputType.Touch then
-			local location: Vector3 = input.Position
-			mouseLocation = Vector2.new(location.X, location.Y)
-		else
-			mouseLocation = widgets.getMouseLocation()
-		end
-		local Window = dragWindow.Instance :: Frame
-		local dragInstance: TextButton = Window.WindowButton
-		local intendedPosition: Vector2 = mouseLocation - moveDeltaCursorPosition
-		local newPos: Vector2 = fitPositionToWindowBounds(dragWindow, intendedPosition)
-
-		-- state shouldnt be used like this, but calling :set would run the entire UpdateState function for the window, which is slow.
-		dragInstance.Position = UDim2.fromOffset(newPos.X, newPos.Y)
-		dragWindow.state.position.value = newPos
-	end
-	if isResizing and resizeWindow and resizeWindow.arguments.NoResize ~= true then
-		local Window = resizeWindow.Instance :: Frame
-		local resizeInstance: TextButton = Window.WindowButton
-		local windowPosition: Vector2 = Vector2.new(resizeInstance.Position.X.Offset, resizeInstance.Position.Y.Offset)
-		local windowSize: Vector2 = Vector2.new(resizeInstance.Size.X.Offset, resizeInstance.Size.Y.Offset)
-
-		local mouseDelta: Vector2 | Vector3
-		if input.UserInputType == Enum.UserInputType.Touch then
-			mouseDelta = input.Delta
-		else
-			mouseDelta = widgets.getMouseLocation() - lastCursorPosition
+			local maxWindowSize: Vector2 = (usableSize - windowSize - safeAreaPadding)
+			return Vector2.new(math.clamp(intentedSize.X, minWindowSize, math.max(maxWindowSize.X, minWindowSize)), math.clamp(intentedSize.Y, minWindowSize, math.max(maxWindowSize.Y, minWindowSize)))
 		end
 
-		local intendedPosition: Vector2 = windowPosition + Vector2.new(if resizeFromLeftRight == Enum.LeftRight.Left then mouseDelta.X else 0, if resizeFromTopBottom == Enum.TopBottom.Top then mouseDelta.Y else 0)
+		local function fitPositionToWindowBounds(thisWidget: Types.Window, intendedPosition: Vector2): Vector2
+			local thisWidgetInstance = thisWidget.Instance
+			local usableSize: Vector2 = widgets.getScreenSizeForWindow(thisWidget)
+			local safeAreaPadding: Vector2 = Vector2.new(Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.X, Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.Y)
 
-		local intendedSize: Vector2 = windowSize
-			+ Vector2.new(
-				if resizeFromLeftRight == Enum.LeftRight.Left then -mouseDelta.X elseif resizeFromLeftRight == Enum.LeftRight.Right then mouseDelta.X else 0,
-				if resizeFromTopBottom == Enum.TopBottom.Top then -mouseDelta.Y elseif resizeFromTopBottom == Enum.TopBottom.Bottom then mouseDelta.Y else 0
+			return Vector2.new(
+				math.clamp(intendedPosition.X, safeAreaPadding.X, math.max(safeAreaPadding.X, usableSize.X - thisWidgetInstance.WindowButton.AbsoluteSize.X - safeAreaPadding.X)),
+				math.clamp(intendedPosition.Y, safeAreaPadding.Y, math.max(safeAreaPadding.Y, usableSize.Y - thisWidgetInstance.WindowButton.AbsoluteSize.Y - safeAreaPadding.Y))
 			)
-
-		local newSize: Vector2 = fitSizeToWindowBounds(resizeWindow, intendedSize)
-		local newPosition: Vector2 = fitPositionToWindowBounds(resizeWindow, intendedPosition)
-
-		resizeInstance.Size = UDim2.fromOffset(newSize.X, newSize.Y)
-		resizeWindow.state.size.value = newSize
-		resizeInstance.Position = UDim2.fromOffset(newPosition.X, newPosition.Y)
-		resizeWindow.state.position.value = newPosition
-	end
-
-	lastCursorPosition = widgets.getMouseLocation()
-end)
-
-widgets.registerEvent("InputEnded", function(input, _)
-	if not Iris._started then
-		return
-	end
-	if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and isDragging and dragWindow then
-		local Window = dragWindow.Instance :: Frame
-		local dragInstance: TextButton = Window.WindowButton
-		isDragging = false
-		dragWindow.state.position:set(Vector2.new(dragInstance.Position.X.Offset, dragInstance.Position.Y.Offset))
-	end
-	if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and isResizing and resizeWindow then
-		local Window = resizeWindow.Instance :: Instance
-		isResizing = false
-		resizeWindow.state.size:set(Window.WindowButton.AbsoluteSize)
-	end
-
-	if input.KeyCode == Enum.KeyCode.ButtonX then
-		quickSwapWindows()
-	end
-end)
-
---stylua: ignore
-Iris.WidgetConstructor("Window", {
-	hasState = true,
-	hasChildren = true,
-	Args = {
-		["Title"] = 1,
-		["NoTitleBar"] = 2,
-		["NoBackground"] = 3,
-		["NoCollapse"] = 4,
-		["NoClose"] = 5,
-		["NoMove"] = 6,
-		["NoScrollbar"] = 7,
-		["NoResize"] = 8,
-		["NoNav"] = 9,
-		["NoMenu"] = 10,
-	},
-	Events = {
-		["closed"] = {
-			["Init"] = function(_thisWidget: Window) end,
-			["Get"] = function(thisWidget: Window)
-				return thisWidget.lastClosedTick == Iris._cycleTick
-			end,
-		},
-		["opened"] = {
-			["Init"] = function(_thisWidget: Window) end,
-			["Get"] = function(thisWidget: Window)
-				return thisWidget.lastOpenedTick == Iris._cycleTick
-			end,
-		},
-		["collapsed"] = {
-			["Init"] = function(_thisWidget: Window) end,
-			["Get"] = function(thisWidget: Window)
-				return thisWidget.lastCollapsedTick == Iris._cycleTick
-			end,
-		},
-		["uncollapsed"] = {
-			["Init"] = function(_thisWidget: Window) end,
-			["Get"] = function(thisWidget: Window)
-				return thisWidget.lastUncollapsedTick == Iris._cycleTick
-			end,
-		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			local Window = thisWidget.Instance :: Frame
-			return Window.WindowButton
-		end),
-	},
-	Generate = function(thisWidget: Window)
-		thisWidget.parentWidget = Iris._rootWidget -- only allow root as parent
-
-		thisWidget.usesScreenGuis = Iris._config.UseScreenGUIs
-		windowWidgets[thisWidget.ID] = thisWidget
-
-		local Window
-		if thisWidget.usesScreenGuis then
-			Window = Instance.new("ScreenGui")
-			Window.ResetOnSpawn = false
-			Window.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-			Window.DisplayOrder = Iris._config.DisplayOrderOffset
-			Window.IgnoreGuiInset = Iris._config.IgnoreGuiInset
-		else
-			Window = Instance.new("Frame")
-			Window.AnchorPoint = Vector2.new(0.5, 0.5)
-			Window.Position = UDim2.new(0.5, 0, 0.5, 0)
-			Window.Size = UDim2.new(1, 0, 1, 0)
-			Window.BackgroundTransparency = 1
-			Window.ZIndex = Iris._config.DisplayOrderOffset
 		end
-		Window.Name = "Iris_Window"
 
-		local WindowButton: TextButton = Instance.new("TextButton")
-		WindowButton.Name = "WindowButton"
-		WindowButton.Size = UDim2.fromOffset(0, 0)
-		WindowButton.BackgroundColor3 = Iris._config.MenubarBgColor
-		WindowButton.BackgroundTransparency = Iris._config.MenubarBgTransparency
-		WindowButton.BorderSizePixel = 0
-		WindowButton.Text = ""
-		WindowButton.ClipsDescendants = false
-		WindowButton.AutoButtonColor = false
-		WindowButton.Selectable = false
-		WindowButton.SelectionImageObject = Iris.SelectionImageObject
-
-		WindowButton.SelectionGroup = true
-		WindowButton.SelectionBehaviorUp = Enum.SelectionBehavior.Stop
-		WindowButton.SelectionBehaviorDown = Enum.SelectionBehavior.Stop
-		WindowButton.SelectionBehaviorLeft = Enum.SelectionBehavior.Stop
-		WindowButton.SelectionBehaviorRight = Enum.SelectionBehavior.Stop
-
-		widgets.UIStroke(WindowButton, Iris._config.WindowBorderSize, Iris._config.BorderColor, Iris._config.BorderTransparency)
-
-		WindowButton.Parent = Window
-
-		widgets.applyInputBegan(WindowButton, function(input: InputObject)
-			if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Keyboard then
+		Iris.SetFocusedWindow = function(thisWidget: Types.Window?)
+			if focusedWindow == thisWidget then
 				return
 			end
-			if thisWidget.state.isUncollapsed.value then
-				Iris.SetFocusedWindow(thisWidget)
+
+			if anyFocusedWindow and focusedWindow ~= nil then
+				if windowWidgets[focusedWindow.ID] then
+					local Window = focusedWindow.Instance :: Frame
+					local WindowButton = Window.WindowButton :: TextButton
+					local Content = WindowButton.Content :: Frame
+					local TitleBar: Frame = Content.TitleBar
+					-- update appearance to unfocus
+					if focusedWindow.state.isUncollapsed.value then
+						TitleBar.BackgroundColor3 = Iris._config.TitleBgColor
+						TitleBar.BackgroundTransparency = Iris._config.TitleBgTransparency
+					else
+						TitleBar.BackgroundColor3 = Iris._config.TitleBgCollapsedColor
+						TitleBar.BackgroundTransparency = Iris._config.TitleBgCollapsedTransparency
+					end
+					WindowButton.UIStroke.Color = Iris._config.BorderColor
+				end
+
+				anyFocusedWindow = false
+				focusedWindow = nil
 			end
-			if not thisWidget.arguments.NoMove and input.UserInputType == Enum.UserInputType.MouseButton1 then
-				dragWindow = thisWidget
-				isDragging = true
-				moveDeltaCursorPosition = widgets.getMouseLocation() - thisWidget.state.position.value
+
+			if thisWidget ~= nil then
+				-- update appearance to focus
+				anyFocusedWindow = true
+				focusedWindow = thisWidget
+				local Window = thisWidget.Instance :: Frame
+				local WindowButton = Window.WindowButton :: TextButton
+				local Content = WindowButton.Content :: Frame
+				local TitleBar: Frame = Content.TitleBar
+
+				TitleBar.BackgroundColor3 = Iris._config.TitleBgActiveColor
+				TitleBar.BackgroundTransparency = Iris._config.TitleBgActiveTransparency
+				WindowButton.UIStroke.Color = Iris._config.BorderActiveColor
+
+				windowDisplayOrder += 1
+				if thisWidget.usesScreenGuis then
+					Window.DisplayOrder = windowDisplayOrder + Iris._config.DisplayOrderOffset
+				else
+					Window.ZIndex = windowDisplayOrder + Iris._config.DisplayOrderOffset
+				end
+
+				if thisWidget.state.isUncollapsed.value == false then
+					thisWidget.state.isUncollapsed:set(true)
+				end
+
+				local firstSelectedObject: GuiObject? = widgets.GuiService.SelectedObject
+				if firstSelectedObject then
+					if TitleBar.Visible then
+						widgets.GuiService:Select(TitleBar)
+					else
+						widgets.GuiService:Select(thisWidget.ChildContainer)
+					end
+				end
 			end
-		end)
+		end
 
-		local Content: Frame = Instance.new("Frame")
-		Content.Name = "Content"
-		Content.AnchorPoint = Vector2.new(0.5, 0.5)
-		Content.Position = UDim2.fromScale(0.5, 0.5)
-		Content.Size = UDim2.fromScale(1, 1)
-		Content.BackgroundTransparency = 1
-		Content.ClipsDescendants = true
-		Content.Parent = WindowButton
-
-		local UIListLayout: UIListLayout = widgets.UIListLayout(Content, Enum.FillDirection.Vertical, UDim.new(0, 0))
-		UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-
-		local ChildContainer: ScrollingFrame = Instance.new("ScrollingFrame")
-		ChildContainer.Name = "WindowContainer"
-		ChildContainer.Size = UDim2.fromScale(1, 1)
-		ChildContainer.BackgroundColor3 = Iris._config.WindowBgColor
-		ChildContainer.BackgroundTransparency = Iris._config.WindowBgTransparency
-		ChildContainer.BorderSizePixel = 0
-
-		ChildContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-		ChildContainer.ScrollBarImageTransparency = Iris._config.ScrollbarGrabTransparency
-		ChildContainer.ScrollBarImageColor3 = Iris._config.ScrollbarGrabColor
-		ChildContainer.CanvasSize = UDim2.fromScale(0, 0)
-		ChildContainer.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-		ChildContainer.TopImage = widgets.ICONS.BLANK_SQUARE
-		ChildContainer.MidImage = widgets.ICONS.BLANK_SQUARE
-		ChildContainer.BottomImage = widgets.ICONS.BLANK_SQUARE
-
-		ChildContainer.LayoutOrder = thisWidget.ZIndex + 0xFFFF
-		ChildContainer.ClipsDescendants = true
-
-		widgets.UIPadding(ChildContainer, Iris._config.WindowPadding)
-
-		ChildContainer.Parent = Content
-
-		local UIFlexItem: UIFlexItem = Instance.new("UIFlexItem")
-		UIFlexItem.FlexMode = Enum.UIFlexMode.Fill
-		UIFlexItem.ItemLineAlignment = Enum.ItemLineAlignment.End
-		UIFlexItem.Parent = ChildContainer
-
-		ChildContainer:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-			-- "wrong" use of state here, for optimization
-			thisWidget.state.scrollDistance.value = ChildContainer.CanvasPosition.Y
-		end)
-
-		widgets.applyInputBegan(ChildContainer, function(input: InputObject)
-			if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Keyboard then
+		widgets.registerEvent("InputBegan", function(input: InputObject)
+			if not Iris._started then
 				return
 			end
-			if thisWidget.state.isUncollapsed.value then
-				Iris.SetFocusedWindow(thisWidget)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				local inWindow: boolean = false
+				local position: Vector2 = widgets.getMouseLocation()
+				for _, window: Types.Window in windowWidgets do
+					local Window = window.Instance :: Instance
+					if not Window then
+						continue
+					end
+					local WindowButton = Window.WindowButton :: TextButton
+					local ResizeBorder: TextButton = WindowButton.ResizeBorder
+					if ResizeBorder and widgets.isPosInsideRect(position, ResizeBorder.AbsolutePosition - widgets.GuiOffset, ResizeBorder.AbsolutePosition - widgets.GuiOffset + ResizeBorder.AbsoluteSize) then
+						inWindow = true
+						break
+					end
+				end
+
+				if not inWindow then
+					Iris.SetFocusedWindow(nil)
+				end
+			end
+
+			if input.KeyCode == Enum.KeyCode.Tab and (widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)) then
+				quickSwapWindows()
+			end
+
+			if input.UserInputType == Enum.UserInputType.MouseButton1 and isInsideResize and not isInsideWindow and anyFocusedWindow and focusedWindow then
+				local midWindow: Vector2 = focusedWindow.state.position.value + (focusedWindow.state.size.value / 2)
+				local cursorPosition: Vector2 = widgets.getMouseLocation() - midWindow
+
+				-- check which axis its closest to, then check which side is closest with math.sign
+				if math.abs(cursorPosition.X) * focusedWindow.state.size.value.Y >= math.abs(cursorPosition.Y) * focusedWindow.state.size.value.X then
+					resizeFromTopBottom = Enum.TopBottom.Center
+					resizeFromLeftRight = if math.sign(cursorPosition.X) == -1 then Enum.LeftRight.Left else Enum.LeftRight.Right
+				else
+					resizeFromLeftRight = Enum.LeftRight.Center
+					resizeFromTopBottom = if math.sign(cursorPosition.Y) == -1 then Enum.TopBottom.Top else Enum.TopBottom.Bottom
+				end
+				isResizing = true
+				resizeWindow = focusedWindow
 			end
 		end)
 
-		local TerminatingFrame: Frame = Instance.new("Frame")
-		TerminatingFrame.Name = "TerminatingFrame"
-		TerminatingFrame.Size = UDim2.fromOffset(0, Iris._config.WindowPadding.Y + Iris._config.FramePadding.Y)
-		TerminatingFrame.BackgroundTransparency = 1
-		TerminatingFrame.BorderSizePixel = 0
-		TerminatingFrame.LayoutOrder = 0x7FFFFFF0
+		widgets.registerEvent("TouchTapInWorld", function(_, gameProcessedEvent: boolean)
+			if not Iris._started then
+				return
+			end
+			if not gameProcessedEvent then
+				Iris.SetFocusedWindow(nil)
+			end
+		end)
 
-		local ChildContainerUIListLayout: UIListLayout = widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
-		ChildContainerUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-
-		TerminatingFrame.Parent = ChildContainer
-
-		local TitleBar: Frame = Instance.new("Frame")
-		TitleBar.Name = "TitleBar"
-		TitleBar.AutomaticSize = Enum.AutomaticSize.Y
-		TitleBar.Size = UDim2.fromScale(1, 0)
-		TitleBar.BorderSizePixel = 0
-		TitleBar.ClipsDescendants = true
-
-		TitleBar.Parent = Content
-
-		widgets.UIPadding(TitleBar, Vector2.new(Iris._config.FramePadding.X))
-		widgets.UIListLayout(TitleBar, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X)).VerticalAlignment = Enum.VerticalAlignment.Center
-		widgets.applyInputBegan(TitleBar, function(input: InputObject)
-			if input.UserInputType == Enum.UserInputType.Touch then
-				if not thisWidget.arguments.NoMove then
-					dragWindow = thisWidget
-					isDragging = true
+		widgets.registerEvent("InputChanged", function(input: InputObject)
+			if not Iris._started then
+				return
+			end
+			if isDragging and dragWindow then
+				local mouseLocation: Vector2
+				if input.UserInputType == Enum.UserInputType.Touch then
 					local location: Vector3 = input.Position
-					moveDeltaCursorPosition = Vector2.new(location.X, location.Y) - thisWidget.state.position.value
+					mouseLocation = Vector2.new(location.X, location.Y)
+				else
+					mouseLocation = widgets.getMouseLocation()
 				end
+				local Window = dragWindow.Instance :: Frame
+				local dragInstance: TextButton = Window.WindowButton
+				local intendedPosition: Vector2 = mouseLocation - moveDeltaCursorPosition
+				local newPos: Vector2 = fitPositionToWindowBounds(dragWindow, intendedPosition)
+
+				-- state shouldnt be used like this, but calling :set would run the entire UpdateState function for the window, which is slow.
+				dragInstance.Position = UDim2.fromOffset(newPos.X, newPos.Y)
+				dragWindow.state.position.value = newPos
 			end
-		end)
+			if isResizing and resizeWindow and resizeWindow.arguments.NoResize ~= true then
+				local Window = resizeWindow.Instance :: Frame
+				local resizeInstance: TextButton = Window.WindowButton
+				local windowPosition: Vector2 = Vector2.new(resizeInstance.Position.X.Offset, resizeInstance.Position.Y.Offset)
+				local windowSize: Vector2 = Vector2.new(resizeInstance.Size.X.Offset, resizeInstance.Size.Y.Offset)
 
-		local TitleButtonSize: number = Iris._config.TextSize + ((Iris._config.FramePadding.Y - 1) * 2)
+				local mouseDelta: Vector2 | Vector3
+				if input.UserInputType == Enum.UserInputType.Touch then
+					mouseDelta = input.Delta
+				else
+					mouseDelta = widgets.getMouseLocation() - lastCursorPosition
+				end
 
-		local CollapseButton: TextButton = Instance.new("TextButton")
-		CollapseButton.Name = "CollapseButton"
-		CollapseButton.AnchorPoint = Vector2.new(0, 0.5)
-		CollapseButton.Size = UDim2.fromOffset(TitleButtonSize, TitleButtonSize)
-		CollapseButton.Position = UDim2.new(0, 0, 0.5, 0)
-		CollapseButton.AutomaticSize = Enum.AutomaticSize.None
-		CollapseButton.BackgroundTransparency = 1
-		CollapseButton.BorderSizePixel = 0
-		CollapseButton.AutoButtonColor = false
-		CollapseButton.Text = ""
+				local intendedPosition: Vector2 = windowPosition + Vector2.new(if resizeFromLeftRight == Enum.LeftRight.Left then mouseDelta.X else 0, if resizeFromTopBottom == Enum.TopBottom.Top then mouseDelta.Y else 0)
 
-		widgets.UICorner(CollapseButton)
+				local intendedSize: Vector2 = windowSize
+					+ Vector2.new(
+						if resizeFromLeftRight == Enum.LeftRight.Left then -mouseDelta.X elseif resizeFromLeftRight == Enum.LeftRight.Right then mouseDelta.X else 0,
+						if resizeFromTopBottom == Enum.TopBottom.Top then -mouseDelta.Y elseif resizeFromTopBottom == Enum.TopBottom.Bottom then mouseDelta.Y else 0
+					)
 
-		CollapseButton.Parent = TitleBar
+				local newSize: Vector2 = fitSizeToWindowBounds(resizeWindow, intendedSize)
+				local newPosition: Vector2 = fitPositionToWindowBounds(resizeWindow, intendedPosition)
 
-		widgets.applyButtonClick(CollapseButton, function()
-			thisWidget.state.isUncollapsed:set(not thisWidget.state.isUncollapsed.value)
-		end)
-
-		widgets.applyInteractionHighlights("Background", CollapseButton, CollapseButton, {
-			Color = Iris._config.ButtonColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.ButtonHoveredColor,
-			HoveredTransparency = Iris._config.ButtonHoveredTransparency,
-			ActiveColor = Iris._config.ButtonActiveColor,
-			ActiveTransparency = Iris._config.ButtonActiveTransparency,
-		})
-
-		local CollapseArrow: ImageLabel = Instance.new("ImageLabel")
-		CollapseArrow.Name = "Arrow"
-		CollapseArrow.AnchorPoint = Vector2.new(0.5, 0.5)
-		CollapseArrow.Size = UDim2.fromOffset(math.floor(0.7 * TitleButtonSize), math.floor(0.7 * TitleButtonSize))
-		CollapseArrow.Position = UDim2.fromScale(0.5, 0.5)
-		CollapseArrow.BackgroundTransparency = 1
-		CollapseArrow.BorderSizePixel = 0
-		CollapseArrow.Image = widgets.ICONS.MULTIPLICATION_SIGN
-		CollapseArrow.ImageColor3 = Iris._config.TextColor
-		CollapseArrow.ImageTransparency = Iris._config.TextTransparency
-		CollapseArrow.Parent = CollapseButton
-
-		local CloseButton: TextButton = Instance.new("TextButton")
-		CloseButton.Name = "CloseButton"
-		CloseButton.AnchorPoint = Vector2.new(1, 0.5)
-		CloseButton.Size = UDim2.fromOffset(TitleButtonSize, TitleButtonSize)
-		CloseButton.Position = UDim2.new(1, 0, 0.5, 0)
-		CloseButton.AutomaticSize = Enum.AutomaticSize.None
-		CloseButton.BackgroundTransparency = 1
-		CloseButton.BorderSizePixel = 0
-		CloseButton.Text = ""
-		CloseButton.LayoutOrder = 2
-		CloseButton.AutoButtonColor = false
-
-		widgets.UICorner(CloseButton)
-
-		widgets.applyButtonClick(CloseButton, function()
-			thisWidget.state.isOpened:set(false)
-		end)
-
-		widgets.applyInteractionHighlights("Background", CloseButton, CloseButton, {
-			Color = Iris._config.ButtonColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.ButtonHoveredColor,
-			HoveredTransparency = Iris._config.ButtonHoveredTransparency,
-			ActiveColor = Iris._config.ButtonActiveColor,
-			ActiveTransparency = Iris._config.ButtonActiveTransparency,
-		})
-
-		CloseButton.Parent = TitleBar
-
-		local CloseIcon: ImageLabel = Instance.new("ImageLabel")
-		CloseIcon.Name = "Icon"
-		CloseIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-		CloseIcon.Size = UDim2.fromOffset(math.floor(0.7 * TitleButtonSize), math.floor(0.7 * TitleButtonSize))
-		CloseIcon.Position = UDim2.fromScale(0.5, 0.5)
-		CloseIcon.BackgroundTransparency = 1
-		CloseIcon.BorderSizePixel = 0
-		CloseIcon.Image = widgets.ICONS.MULTIPLICATION_SIGN
-		CloseIcon.ImageColor3 = Iris._config.TextColor
-		CloseIcon.ImageTransparency = Iris._config.TextTransparency
-		CloseIcon.Parent = CloseButton
-
-		-- allowing fractional titlebar title location dosent seem useful, as opposed to Enum.LeftRight.
-
-		local Title: TextLabel = Instance.new("TextLabel")
-		Title.Name = "Title"
-		Title.AutomaticSize = Enum.AutomaticSize.XY
-		Title.BorderSizePixel = 0
-		Title.BackgroundTransparency = 1
-		Title.LayoutOrder = 1
-		Title.ClipsDescendants = true
-
-		widgets.UIPadding(Title, Vector2.new(0, Iris._config.FramePadding.Y))
-		widgets.applyTextStyle(Title)
-		Title.TextXAlignment = Enum.TextXAlignment[Iris._config.WindowTitleAlign.Name] :: Enum.TextXAlignment
-
-		local TitleFlexItem: UIFlexItem = Instance.new("UIFlexItem")
-		TitleFlexItem.FlexMode = Enum.UIFlexMode.Fill
-		TitleFlexItem.ItemLineAlignment = Enum.ItemLineAlignment.Center
-
-		TitleFlexItem.Parent = Title
-
-		Title.Parent = TitleBar
-
-		local ResizeButtonSize: number = Iris._config.TextSize + Iris._config.FramePadding.X
-
-		local LeftResizeGrip = Instance.new("ImageButton")
-		LeftResizeGrip.Name = "LeftResizeGrip"
-		LeftResizeGrip.AnchorPoint = Vector2.yAxis
-		LeftResizeGrip.Rotation = 180
-		LeftResizeGrip.Size = UDim2.fromOffset(ResizeButtonSize, ResizeButtonSize)
-		LeftResizeGrip.Position = UDim2.fromScale(0, 1)
-		LeftResizeGrip.BackgroundTransparency = 1
-		LeftResizeGrip.BorderSizePixel = 0
-		LeftResizeGrip.Image = widgets.ICONS.BOTTOM_RIGHT_CORNER
-		LeftResizeGrip.ImageColor3 = Iris._config.ResizeGripColor
-		LeftResizeGrip.ImageTransparency = 1
-		LeftResizeGrip.AutoButtonColor = false
-		LeftResizeGrip.ZIndex = 3
-		LeftResizeGrip.Parent = WindowButton
-
-		widgets.applyInteractionHighlights("Image", LeftResizeGrip, LeftResizeGrip, {
-			Color = Iris._config.ResizeGripColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.ResizeGripHoveredColor,
-			HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
-			ActiveColor = Iris._config.ResizeGripActiveColor,
-			ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
-		})
-
-		widgets.applyButtonDown(LeftResizeGrip, function()
-			if not anyFocusedWindow or not (focusedWindow == thisWidget) then
-				Iris.SetFocusedWindow(thisWidget)
-				-- mitigating wrong focus when clicking on buttons inside of a window without clicking the window itself
+				resizeInstance.Size = UDim2.fromOffset(newSize.X, newSize.Y)
+				resizeWindow.state.size.value = newSize
+				resizeInstance.Position = UDim2.fromOffset(newPosition.X, newPosition.Y)
+				resizeWindow.state.position.value = newPosition
 			end
-			isResizing = true
-			resizeFromTopBottom = Enum.TopBottom.Bottom
-			resizeFromLeftRight = Enum.LeftRight.Left
-			resizeWindow = thisWidget
+
+			lastCursorPosition = widgets.getMouseLocation()
 		end)
 
-		-- each border uses an image, allowing it to have a visible borde which is larger than the UI
-		local RightResizeGrip = Instance.new("ImageButton")
-		RightResizeGrip.Name = "RightResizeGrip"
-		RightResizeGrip.AnchorPoint = Vector2.one
-		RightResizeGrip.Rotation = 90
-		RightResizeGrip.Size = UDim2.fromOffset(ResizeButtonSize, ResizeButtonSize)
-		RightResizeGrip.Position = UDim2.fromScale(1, 1)
-		RightResizeGrip.BackgroundTransparency = 1
-		RightResizeGrip.BorderSizePixel = 0
-		RightResizeGrip.Image = widgets.ICONS.BOTTOM_RIGHT_CORNER
-		RightResizeGrip.ImageColor3 = Iris._config.ResizeGripColor
-		RightResizeGrip.ImageTransparency = Iris._config.ResizeGripTransparency
-		RightResizeGrip.AutoButtonColor = false
-		RightResizeGrip.ZIndex = 3
-		RightResizeGrip.Parent = WindowButton
-
-		widgets.applyInteractionHighlights("Image", RightResizeGrip, RightResizeGrip, {
-			Color = Iris._config.ResizeGripColor,
-			Transparency = Iris._config.ResizeGripTransparency,
-			HoveredColor = Iris._config.ResizeGripHoveredColor,
-			HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
-			ActiveColor = Iris._config.ResizeGripActiveColor,
-			ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
-		})
-
-		widgets.applyButtonDown(RightResizeGrip, function()
-			if not anyFocusedWindow or not (focusedWindow == thisWidget) then
-				Iris.SetFocusedWindow(thisWidget)
-				-- mitigating wrong focus when clicking on buttons inside of a window without clicking the window itself
-			end
-			isResizing = true
-			resizeFromTopBottom = Enum.TopBottom.Bottom
-			resizeFromLeftRight = Enum.LeftRight.Right
-			resizeWindow = thisWidget
-		end)
-
-		local LeftResizeBorder: ImageButton = Instance.new("ImageButton")
-		LeftResizeBorder.Name = "LeftResizeBorder"
-		LeftResizeBorder.AnchorPoint = Vector2.new(1, .5)
-		LeftResizeBorder.Position = UDim2.fromScale(0, .5)
-		LeftResizeBorder.Size = UDim2.new(0, Iris._config.WindowResizePadding.X, 1, 2 * Iris._config.WindowBorderSize)
-		LeftResizeBorder.Transparency = 1
-		LeftResizeBorder.Image = widgets.ICONS.BORDER
-		LeftResizeBorder.ResampleMode = Enum.ResamplerMode.Pixelated
-		LeftResizeBorder.ScaleType = Enum.ScaleType.Slice
-		LeftResizeBorder.SliceCenter = Rect.new(0, 0, 1, 1)
-		LeftResizeBorder.ImageRectOffset = Vector2.new(2, 2)
-		LeftResizeBorder.ImageRectSize = Vector2.new(2, 1)
-		LeftResizeBorder.ImageTransparency = 1
-		LeftResizeBorder.ZIndex = 4
-		LeftResizeBorder.AutoButtonColor = false
-
-		LeftResizeBorder.Parent = WindowButton
-
-		local RightResizeBorder: ImageButton = Instance.new("ImageButton")
-		RightResizeBorder.Name = "RightResizeBorder"
-		RightResizeBorder.AnchorPoint = Vector2.new(0, .5)
-		RightResizeBorder.Position = UDim2.fromScale(1, .5)
-		RightResizeBorder.Size = UDim2.new(0, Iris._config.WindowResizePadding.X, 1, 2 * Iris._config.WindowBorderSize)
-		RightResizeBorder.Transparency = 1
-		RightResizeBorder.Image = widgets.ICONS.BORDER
-		RightResizeBorder.ResampleMode = Enum.ResamplerMode.Pixelated
-		RightResizeBorder.ScaleType = Enum.ScaleType.Slice
-		RightResizeBorder.SliceCenter = Rect.new(1, 0, 2, 1)
-		RightResizeBorder.ImageRectOffset = Vector2.new(1, 2)
-		RightResizeBorder.ImageRectSize = Vector2.new(2, 1)
-		RightResizeBorder.ImageTransparency = 1
-		RightResizeBorder.ZIndex = 4
-		RightResizeBorder.AutoButtonColor = false
-
-		RightResizeBorder.Parent = WindowButton
-
-		local TopResizeBorder: ImageButton = Instance.new("ImageButton")
-		TopResizeBorder.Name = "TopResizeBorder"
-		TopResizeBorder.AnchorPoint = Vector2.new(.5, 1)
-		TopResizeBorder.Position = UDim2.fromScale(.5, 0)
-		TopResizeBorder.Size = UDim2.new(1, 2 * Iris._config.WindowBorderSize, 0, Iris._config.WindowResizePadding.Y)
-		TopResizeBorder.Transparency = 1
-		TopResizeBorder.Image = widgets.ICONS.BORDER
-		TopResizeBorder.ResampleMode = Enum.ResamplerMode.Pixelated
-		TopResizeBorder.ScaleType = Enum.ScaleType.Slice
-		TopResizeBorder.SliceCenter = Rect.new(0, 0, 1, 1)
-		TopResizeBorder.ImageRectOffset = Vector2.new(2, 2)
-		TopResizeBorder.ImageRectSize = Vector2.new(1, 2)
-		TopResizeBorder.ImageTransparency = 1
-		TopResizeBorder.ZIndex = 4
-		TopResizeBorder.AutoButtonColor = false
-
-		TopResizeBorder.Parent = WindowButton
-
-		local BottomResizeBorder: ImageButton = Instance.new("ImageButton")
-		BottomResizeBorder.Name = "BottomResizeBorder"
-		BottomResizeBorder.AnchorPoint = Vector2.new(.5, 0)
-		BottomResizeBorder.Position = UDim2.fromScale(.5, 1)
-		BottomResizeBorder.Size = UDim2.new(1, 2 * Iris._config.WindowBorderSize, 0, Iris._config.WindowResizePadding.Y)
-		BottomResizeBorder.Transparency = 1
-		BottomResizeBorder.Image = widgets.ICONS.BORDER
-		BottomResizeBorder.ResampleMode = Enum.ResamplerMode.Pixelated
-		BottomResizeBorder.ScaleType = Enum.ScaleType.Slice
-		BottomResizeBorder.SliceCenter = Rect.new(0, 1, 1, 2)
-		BottomResizeBorder.ImageRectOffset = Vector2.new(2, 1)
-		BottomResizeBorder.ImageRectSize = Vector2.new(1, 2)
-		BottomResizeBorder.ImageTransparency = 1
-		BottomResizeBorder.ZIndex = 4
-		BottomResizeBorder.AutoButtonColor = false
-
-		BottomResizeBorder.Parent = WindowButton
-
-		widgets.applyInteractionHighlights("Image", LeftResizeBorder, LeftResizeBorder, {
-			Color = Iris._config.ResizeGripColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.ResizeGripHoveredColor,
-			HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
-			ActiveColor = Iris._config.ResizeGripActiveColor,
-			ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
-		})
-
-		widgets.applyInteractionHighlights("Image", RightResizeBorder, RightResizeBorder, {
-			Color = Iris._config.ResizeGripColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.ResizeGripHoveredColor,
-			HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
-			ActiveColor = Iris._config.ResizeGripActiveColor,
-			ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
-		})
-
-		widgets.applyInteractionHighlights("Image", TopResizeBorder, TopResizeBorder, {
-			Color = Iris._config.ResizeGripColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.ResizeGripHoveredColor,
-			HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
-			ActiveColor = Iris._config.ResizeGripActiveColor,
-			ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
-		})
-
-		widgets.applyInteractionHighlights("Image", BottomResizeBorder, BottomResizeBorder, {
-			Color = Iris._config.ResizeGripColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.ResizeGripHoveredColor,
-			HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
-			ActiveColor = Iris._config.ResizeGripActiveColor,
-			ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
-		})
-
-		local ResizeBorder: Frame = Instance.new("Frame")
-		ResizeBorder.Name = "ResizeBorder"
-		ResizeBorder.Size = UDim2.new(1, Iris._config.WindowResizePadding.X * 2, 1, Iris._config.WindowResizePadding.Y * 2)
-		ResizeBorder.Position = UDim2.fromOffset(-Iris._config.WindowResizePadding.X, -Iris._config.WindowResizePadding.Y)
-		ResizeBorder.BackgroundTransparency = 1
-		ResizeBorder.BorderSizePixel = 0
-		ResizeBorder.Active = false
-		ResizeBorder.Selectable = false
-		ResizeBorder.ClipsDescendants = false
-		ResizeBorder.Parent = WindowButton
-
-		widgets.applyMouseEnter(ResizeBorder, function()
-			if focusedWindow == thisWidget then
-				isInsideResize = true
-			end
-		end)
-		widgets.applyMouseLeave(ResizeBorder, function()
-			if focusedWindow == thisWidget then
-				isInsideResize = false
-			end
-		end)
-		widgets.applyInputBegan(ResizeBorder, function(input: InputObject)
-			if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Keyboard then
+		widgets.registerEvent("InputEnded", function(input, _)
+			if not Iris._started then
 				return
 			end
-			if thisWidget.state.isUncollapsed.value then
-				Iris.SetFocusedWindow(thisWidget)
+			if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and isDragging and dragWindow then
+				local Window = dragWindow.Instance :: Frame
+				local dragInstance: TextButton = Window.WindowButton
+				isDragging = false
+				dragWindow.state.position:set(Vector2.new(dragInstance.Position.X.Offset, dragInstance.Position.Y.Offset))
+			end
+			if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and isResizing and resizeWindow then
+				local Window = resizeWindow.Instance :: Instance
+				isResizing = false
+				resizeWindow.state.size:set(Window.WindowButton.AbsoluteSize)
+			end
+
+			if input.KeyCode == Enum.KeyCode.ButtonX then
+				quickSwapWindows()
 			end
 		end)
 
-		widgets.applyMouseEnter(WindowButton, function()
-			if focusedWindow == thisWidget then
-				isInsideWindow = true
+		--stylua: ignore
+		Iris.WidgetConstructor("Window", {
+			hasState = true,
+			hasChildren = true,
+			Args = {
+				["Title"] = 1,
+				["NoTitleBar"] = 2,
+				["NoBackground"] = 3,
+				["NoCollapse"] = 4,
+				["NoClose"] = 5,
+				["NoMove"] = 6,
+				["NoScrollbar"] = 7,
+				["NoResize"] = 8,
+				["NoNav"] = 9,
+				["NoMenu"] = 10,
+			},
+			Events = {
+				["closed"] = {
+					["Init"] = function(_thisWidget: Types.Window) end,
+					["Get"] = function(thisWidget: Types.Window)
+						return thisWidget.lastClosedTick == Iris._cycleTick
+					end,
+				},
+				["opened"] = {
+					["Init"] = function(_thisWidget: Types.Window) end,
+					["Get"] = function(thisWidget: Types.Window)
+						return thisWidget.lastOpenedTick == Iris._cycleTick
+					end,
+				},
+				["collapsed"] = {
+					["Init"] = function(_thisWidget: Types.Window) end,
+					["Get"] = function(thisWidget: Types.Window)
+						return thisWidget.lastCollapsedTick == Iris._cycleTick
+					end,
+				},
+				["uncollapsed"] = {
+					["Init"] = function(_thisWidget: Types.Window) end,
+					["Get"] = function(thisWidget: Types.Window)
+						return thisWidget.lastUncollapsedTick == Iris._cycleTick
+					end,
+				},
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					local Window = thisWidget.Instance :: Frame
+					return Window.WindowButton
+				end),
+			},
+			Generate = function(thisWidget: Types.Window)
+				thisWidget.parentWidget = Iris._rootWidget -- only allow root as parent
+
+				thisWidget.usesScreenGuis = Iris._config.UseScreenGUIs
+				windowWidgets[thisWidget.ID] = thisWidget
+
+				local Window
+				if thisWidget.usesScreenGuis then
+					Window = Instance.new("ScreenGui")
+					Window.ResetOnSpawn = false
+					Window.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+					Window.DisplayOrder = Iris._config.DisplayOrderOffset
+					Window.IgnoreGuiInset = Iris._config.IgnoreGuiInset
+				else
+					Window = Instance.new("Frame")
+					Window.AnchorPoint = Vector2.new(0.5, 0.5)
+					Window.Position = UDim2.new(0.5, 0, 0.5, 0)
+					Window.Size = UDim2.new(1, 0, 1, 0)
+					Window.BackgroundTransparency = 1
+					Window.ZIndex = Iris._config.DisplayOrderOffset
+				end
+				Window.Name = "Iris_Window"
+
+				local WindowButton: TextButton = Instance.new("TextButton")
+				WindowButton.Name = "WindowButton"
+				WindowButton.Size = UDim2.fromOffset(0, 0)
+				WindowButton.BackgroundColor3 = Iris._config.MenubarBgColor
+				WindowButton.BackgroundTransparency = Iris._config.MenubarBgTransparency
+				WindowButton.BorderSizePixel = 0
+				WindowButton.Text = ""
+				WindowButton.ClipsDescendants = false
+				WindowButton.AutoButtonColor = false
+				WindowButton.Selectable = false
+				WindowButton.SelectionImageObject = Iris.SelectionImageObject
+
+				WindowButton.SelectionGroup = true
+				WindowButton.SelectionBehaviorUp = Enum.SelectionBehavior.Stop
+				WindowButton.SelectionBehaviorDown = Enum.SelectionBehavior.Stop
+				WindowButton.SelectionBehaviorLeft = Enum.SelectionBehavior.Stop
+				WindowButton.SelectionBehaviorRight = Enum.SelectionBehavior.Stop
+
+				widgets.UIStroke(WindowButton, Iris._config.WindowBorderSize, Iris._config.BorderColor, Iris._config.BorderTransparency)
+
+				WindowButton.Parent = Window
+
+				widgets.applyInputBegan(WindowButton, function(input: InputObject)
+					if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Keyboard then
+						return
+					end
+					if thisWidget.state.isUncollapsed.value then
+						Iris.SetFocusedWindow(thisWidget)
+					end
+					if not thisWidget.arguments.NoMove and input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragWindow = thisWidget
+						isDragging = true
+						moveDeltaCursorPosition = widgets.getMouseLocation() - thisWidget.state.position.value
+					end
+				end)
+
+				local Content: Frame = Instance.new("Frame")
+				Content.Name = "Content"
+				Content.AnchorPoint = Vector2.new(0.5, 0.5)
+				Content.Position = UDim2.fromScale(0.5, 0.5)
+				Content.Size = UDim2.fromScale(1, 1)
+				Content.BackgroundTransparency = 1
+				Content.ClipsDescendants = true
+				Content.Parent = WindowButton
+
+				local UIListLayout: UIListLayout = widgets.UIListLayout(Content, Enum.FillDirection.Vertical, UDim.new(0, 0))
+				UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+				local ChildContainer: ScrollingFrame = Instance.new("ScrollingFrame")
+				ChildContainer.Name = "WindowContainer"
+				ChildContainer.Size = UDim2.fromScale(1, 1)
+				ChildContainer.BackgroundColor3 = Iris._config.WindowBgColor
+				ChildContainer.BackgroundTransparency = Iris._config.WindowBgTransparency
+				ChildContainer.BorderSizePixel = 0
+
+				ChildContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+				ChildContainer.ScrollBarImageTransparency = Iris._config.ScrollbarGrabTransparency
+				ChildContainer.ScrollBarImageColor3 = Iris._config.ScrollbarGrabColor
+				ChildContainer.CanvasSize = UDim2.fromScale(0, 0)
+				ChildContainer.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+				ChildContainer.TopImage = widgets.ICONS.BLANK_SQUARE
+				ChildContainer.MidImage = widgets.ICONS.BLANK_SQUARE
+				ChildContainer.BottomImage = widgets.ICONS.BLANK_SQUARE
+
+				ChildContainer.LayoutOrder = thisWidget.ZIndex + 0xFFFF
+				ChildContainer.ClipsDescendants = true
+
+				widgets.UIPadding(ChildContainer, Iris._config.WindowPadding)
+
+				ChildContainer.Parent = Content
+
+				local UIFlexItem: UIFlexItem = Instance.new("UIFlexItem")
+				UIFlexItem.FlexMode = Enum.UIFlexMode.Fill
+				UIFlexItem.ItemLineAlignment = Enum.ItemLineAlignment.End
+				UIFlexItem.Parent = ChildContainer
+
+				ChildContainer:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+					-- "wrong" use of state here, for optimization
+					thisWidget.state.scrollDistance.value = ChildContainer.CanvasPosition.Y
+				end)
+
+				widgets.applyInputBegan(ChildContainer, function(input: InputObject)
+					if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Keyboard then
+						return
+					end
+					if thisWidget.state.isUncollapsed.value then
+						Iris.SetFocusedWindow(thisWidget)
+					end
+				end)
+
+				local TerminatingFrame: Frame = Instance.new("Frame")
+				TerminatingFrame.Name = "TerminatingFrame"
+				TerminatingFrame.Size = UDim2.fromOffset(0, Iris._config.WindowPadding.Y + Iris._config.FramePadding.Y)
+				TerminatingFrame.BackgroundTransparency = 1
+				TerminatingFrame.BorderSizePixel = 0
+				TerminatingFrame.LayoutOrder = 0x7FFFFFF0
+
+				local ChildContainerUIListLayout: UIListLayout = widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
+				ChildContainerUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+				TerminatingFrame.Parent = ChildContainer
+
+				local TitleBar: Frame = Instance.new("Frame")
+				TitleBar.Name = "TitleBar"
+				TitleBar.AutomaticSize = Enum.AutomaticSize.Y
+				TitleBar.Size = UDim2.fromScale(1, 0)
+				TitleBar.BorderSizePixel = 0
+				TitleBar.ClipsDescendants = true
+
+				TitleBar.Parent = Content
+
+				widgets.UIPadding(TitleBar, Vector2.new(Iris._config.FramePadding.X))
+				widgets.UIListLayout(TitleBar, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X)).VerticalAlignment = Enum.VerticalAlignment.Center
+				widgets.applyInputBegan(TitleBar, function(input: InputObject)
+					if input.UserInputType == Enum.UserInputType.Touch then
+						if not thisWidget.arguments.NoMove then
+							dragWindow = thisWidget
+							isDragging = true
+							local location: Vector3 = input.Position
+							moveDeltaCursorPosition = Vector2.new(location.X, location.Y) - thisWidget.state.position.value
+						end
+					end
+				end)
+
+				local TitleButtonSize: number = Iris._config.TextSize + ((Iris._config.FramePadding.Y - 1) * 2)
+
+				local CollapseButton: TextButton = Instance.new("TextButton")
+				CollapseButton.Name = "CollapseButton"
+				CollapseButton.AnchorPoint = Vector2.new(0, 0.5)
+				CollapseButton.Size = UDim2.fromOffset(TitleButtonSize, TitleButtonSize)
+				CollapseButton.Position = UDim2.new(0, 0, 0.5, 0)
+				CollapseButton.AutomaticSize = Enum.AutomaticSize.None
+				CollapseButton.BackgroundTransparency = 1
+				CollapseButton.BorderSizePixel = 0
+				CollapseButton.AutoButtonColor = false
+				CollapseButton.Text = ""
+
+				widgets.UICorner(CollapseButton)
+
+				CollapseButton.Parent = TitleBar
+
+				widgets.applyButtonClick(CollapseButton, function()
+					thisWidget.state.isUncollapsed:set(not thisWidget.state.isUncollapsed.value)
+				end)
+
+				widgets.applyInteractionHighlights("Background", CollapseButton, CollapseButton, {
+					Color = Iris._config.ButtonColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.ButtonHoveredColor,
+					HoveredTransparency = Iris._config.ButtonHoveredTransparency,
+					ActiveColor = Iris._config.ButtonActiveColor,
+					ActiveTransparency = Iris._config.ButtonActiveTransparency,
+				})
+
+				local CollapseArrow: ImageLabel = Instance.new("ImageLabel")
+				CollapseArrow.Name = "Arrow"
+				CollapseArrow.AnchorPoint = Vector2.new(0.5, 0.5)
+				CollapseArrow.Size = UDim2.fromOffset(math.floor(0.7 * TitleButtonSize), math.floor(0.7 * TitleButtonSize))
+				CollapseArrow.Position = UDim2.fromScale(0.5, 0.5)
+				CollapseArrow.BackgroundTransparency = 1
+				CollapseArrow.BorderSizePixel = 0
+				CollapseArrow.Image = widgets.ICONS.MULTIPLICATION_SIGN
+				CollapseArrow.ImageColor3 = Iris._config.TextColor
+				CollapseArrow.ImageTransparency = Iris._config.TextTransparency
+				CollapseArrow.Parent = CollapseButton
+
+				local CloseButton: TextButton = Instance.new("TextButton")
+				CloseButton.Name = "CloseButton"
+				CloseButton.AnchorPoint = Vector2.new(1, 0.5)
+				CloseButton.Size = UDim2.fromOffset(TitleButtonSize, TitleButtonSize)
+				CloseButton.Position = UDim2.new(1, 0, 0.5, 0)
+				CloseButton.AutomaticSize = Enum.AutomaticSize.None
+				CloseButton.BackgroundTransparency = 1
+				CloseButton.BorderSizePixel = 0
+				CloseButton.Text = ""
+				CloseButton.LayoutOrder = 2
+				CloseButton.AutoButtonColor = false
+
+				widgets.UICorner(CloseButton)
+
+				widgets.applyButtonClick(CloseButton, function()
+					thisWidget.state.isOpened:set(false)
+				end)
+
+				widgets.applyInteractionHighlights("Background", CloseButton, CloseButton, {
+					Color = Iris._config.ButtonColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.ButtonHoveredColor,
+					HoveredTransparency = Iris._config.ButtonHoveredTransparency,
+					ActiveColor = Iris._config.ButtonActiveColor,
+					ActiveTransparency = Iris._config.ButtonActiveTransparency,
+				})
+
+				CloseButton.Parent = TitleBar
+
+				local CloseIcon: ImageLabel = Instance.new("ImageLabel")
+				CloseIcon.Name = "Icon"
+				CloseIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+				CloseIcon.Size = UDim2.fromOffset(math.floor(0.7 * TitleButtonSize), math.floor(0.7 * TitleButtonSize))
+				CloseIcon.Position = UDim2.fromScale(0.5, 0.5)
+				CloseIcon.BackgroundTransparency = 1
+				CloseIcon.BorderSizePixel = 0
+				CloseIcon.Image = widgets.ICONS.MULTIPLICATION_SIGN
+				CloseIcon.ImageColor3 = Iris._config.TextColor
+				CloseIcon.ImageTransparency = Iris._config.TextTransparency
+				CloseIcon.Parent = CloseButton
+
+				-- allowing fractional titlebar title location dosent seem useful, as opposed to Enum.LeftRight.
+
+				local Title: TextLabel = Instance.new("TextLabel")
+				Title.Name = "Title"
+				Title.AutomaticSize = Enum.AutomaticSize.XY
+				Title.BorderSizePixel = 0
+				Title.BackgroundTransparency = 1
+				Title.LayoutOrder = 1
+				Title.ClipsDescendants = true
+
+				widgets.UIPadding(Title, Vector2.new(0, Iris._config.FramePadding.Y))
+				widgets.applyTextStyle(Title)
+				Title.TextXAlignment = Enum.TextXAlignment[Iris._config.WindowTitleAlign.Name] :: Enum.TextXAlignment
+
+				local TitleFlexItem: UIFlexItem = Instance.new("UIFlexItem")
+				TitleFlexItem.FlexMode = Enum.UIFlexMode.Fill
+				TitleFlexItem.ItemLineAlignment = Enum.ItemLineAlignment.Center
+
+				TitleFlexItem.Parent = Title
+
+				Title.Parent = TitleBar
+
+				local ResizeButtonSize: number = Iris._config.TextSize + Iris._config.FramePadding.X
+
+				local LeftResizeGrip = Instance.new("ImageButton")
+				LeftResizeGrip.Name = "LeftResizeGrip"
+				LeftResizeGrip.AnchorPoint = Vector2.yAxis
+				LeftResizeGrip.Rotation = 180
+				LeftResizeGrip.Size = UDim2.fromOffset(ResizeButtonSize, ResizeButtonSize)
+				LeftResizeGrip.Position = UDim2.fromScale(0, 1)
+				LeftResizeGrip.BackgroundTransparency = 1
+				LeftResizeGrip.BorderSizePixel = 0
+				LeftResizeGrip.Image = widgets.ICONS.BOTTOM_RIGHT_CORNER
+				LeftResizeGrip.ImageColor3 = Iris._config.ResizeGripColor
+				LeftResizeGrip.ImageTransparency = 1
+				LeftResizeGrip.AutoButtonColor = false
+				LeftResizeGrip.ZIndex = 3
+				LeftResizeGrip.Parent = WindowButton
+
+				widgets.applyInteractionHighlights("Image", LeftResizeGrip, LeftResizeGrip, {
+					Color = Iris._config.ResizeGripColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.ResizeGripHoveredColor,
+					HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
+					ActiveColor = Iris._config.ResizeGripActiveColor,
+					ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
+				})
+
+				widgets.applyButtonDown(LeftResizeGrip, function()
+					if not anyFocusedWindow or not (focusedWindow == thisWidget) then
+						Iris.SetFocusedWindow(thisWidget)
+						-- mitigating wrong focus when clicking on buttons inside of a window without clicking the window itself
+					end
+					isResizing = true
+					resizeFromTopBottom = Enum.TopBottom.Bottom
+					resizeFromLeftRight = Enum.LeftRight.Left
+					resizeWindow = thisWidget
+				end)
+
+				-- each border uses an image, allowing it to have a visible borde which is larger than the UI
+				local RightResizeGrip = Instance.new("ImageButton")
+				RightResizeGrip.Name = "RightResizeGrip"
+				RightResizeGrip.AnchorPoint = Vector2.one
+				RightResizeGrip.Rotation = 90
+				RightResizeGrip.Size = UDim2.fromOffset(ResizeButtonSize, ResizeButtonSize)
+				RightResizeGrip.Position = UDim2.fromScale(1, 1)
+				RightResizeGrip.BackgroundTransparency = 1
+				RightResizeGrip.BorderSizePixel = 0
+				RightResizeGrip.Image = widgets.ICONS.BOTTOM_RIGHT_CORNER
+				RightResizeGrip.ImageColor3 = Iris._config.ResizeGripColor
+				RightResizeGrip.ImageTransparency = Iris._config.ResizeGripTransparency
+				RightResizeGrip.AutoButtonColor = false
+				RightResizeGrip.ZIndex = 3
+				RightResizeGrip.Parent = WindowButton
+
+				widgets.applyInteractionHighlights("Image", RightResizeGrip, RightResizeGrip, {
+					Color = Iris._config.ResizeGripColor,
+					Transparency = Iris._config.ResizeGripTransparency,
+					HoveredColor = Iris._config.ResizeGripHoveredColor,
+					HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
+					ActiveColor = Iris._config.ResizeGripActiveColor,
+					ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
+				})
+
+				widgets.applyButtonDown(RightResizeGrip, function()
+					if not anyFocusedWindow or not (focusedWindow == thisWidget) then
+						Iris.SetFocusedWindow(thisWidget)
+						-- mitigating wrong focus when clicking on buttons inside of a window without clicking the window itself
+					end
+					isResizing = true
+					resizeFromTopBottom = Enum.TopBottom.Bottom
+					resizeFromLeftRight = Enum.LeftRight.Right
+					resizeWindow = thisWidget
+				end)
+
+				local LeftResizeBorder: ImageButton = Instance.new("ImageButton")
+				LeftResizeBorder.Name = "LeftResizeBorder"
+				LeftResizeBorder.AnchorPoint = Vector2.new(1, .5)
+				LeftResizeBorder.Position = UDim2.fromScale(0, .5)
+				LeftResizeBorder.Size = UDim2.new(0, Iris._config.WindowResizePadding.X, 1, 2 * Iris._config.WindowBorderSize)
+				LeftResizeBorder.Transparency = 1
+				LeftResizeBorder.Image = widgets.ICONS.BORDER
+				LeftResizeBorder.ResampleMode = Enum.ResamplerMode.Pixelated
+				LeftResizeBorder.ScaleType = Enum.ScaleType.Slice
+				LeftResizeBorder.SliceCenter = Rect.new(0, 0, 1, 1)
+				LeftResizeBorder.ImageRectOffset = Vector2.new(2, 2)
+				LeftResizeBorder.ImageRectSize = Vector2.new(2, 1)
+				LeftResizeBorder.ImageTransparency = 1
+				LeftResizeBorder.ZIndex = 4
+				LeftResizeBorder.AutoButtonColor = false
+
+				LeftResizeBorder.Parent = WindowButton
+
+				local RightResizeBorder: ImageButton = Instance.new("ImageButton")
+				RightResizeBorder.Name = "RightResizeBorder"
+				RightResizeBorder.AnchorPoint = Vector2.new(0, .5)
+				RightResizeBorder.Position = UDim2.fromScale(1, .5)
+				RightResizeBorder.Size = UDim2.new(0, Iris._config.WindowResizePadding.X, 1, 2 * Iris._config.WindowBorderSize)
+				RightResizeBorder.Transparency = 1
+				RightResizeBorder.Image = widgets.ICONS.BORDER
+				RightResizeBorder.ResampleMode = Enum.ResamplerMode.Pixelated
+				RightResizeBorder.ScaleType = Enum.ScaleType.Slice
+				RightResizeBorder.SliceCenter = Rect.new(1, 0, 2, 1)
+				RightResizeBorder.ImageRectOffset = Vector2.new(1, 2)
+				RightResizeBorder.ImageRectSize = Vector2.new(2, 1)
+				RightResizeBorder.ImageTransparency = 1
+				RightResizeBorder.ZIndex = 4
+				RightResizeBorder.AutoButtonColor = false
+
+				RightResizeBorder.Parent = WindowButton
+
+				local TopResizeBorder: ImageButton = Instance.new("ImageButton")
+				TopResizeBorder.Name = "TopResizeBorder"
+				TopResizeBorder.AnchorPoint = Vector2.new(.5, 1)
+				TopResizeBorder.Position = UDim2.fromScale(.5, 0)
+				TopResizeBorder.Size = UDim2.new(1, 2 * Iris._config.WindowBorderSize, 0, Iris._config.WindowResizePadding.Y)
+				TopResizeBorder.Transparency = 1
+				TopResizeBorder.Image = widgets.ICONS.BORDER
+				TopResizeBorder.ResampleMode = Enum.ResamplerMode.Pixelated
+				TopResizeBorder.ScaleType = Enum.ScaleType.Slice
+				TopResizeBorder.SliceCenter = Rect.new(0, 0, 1, 1)
+				TopResizeBorder.ImageRectOffset = Vector2.new(2, 2)
+				TopResizeBorder.ImageRectSize = Vector2.new(1, 2)
+				TopResizeBorder.ImageTransparency = 1
+				TopResizeBorder.ZIndex = 4
+				TopResizeBorder.AutoButtonColor = false
+
+				TopResizeBorder.Parent = WindowButton
+
+				local BottomResizeBorder: ImageButton = Instance.new("ImageButton")
+				BottomResizeBorder.Name = "BottomResizeBorder"
+				BottomResizeBorder.AnchorPoint = Vector2.new(.5, 0)
+				BottomResizeBorder.Position = UDim2.fromScale(.5, 1)
+				BottomResizeBorder.Size = UDim2.new(1, 2 * Iris._config.WindowBorderSize, 0, Iris._config.WindowResizePadding.Y)
+				BottomResizeBorder.Transparency = 1
+				BottomResizeBorder.Image = widgets.ICONS.BORDER
+				BottomResizeBorder.ResampleMode = Enum.ResamplerMode.Pixelated
+				BottomResizeBorder.ScaleType = Enum.ScaleType.Slice
+				BottomResizeBorder.SliceCenter = Rect.new(0, 1, 1, 2)
+				BottomResizeBorder.ImageRectOffset = Vector2.new(2, 1)
+				BottomResizeBorder.ImageRectSize = Vector2.new(1, 2)
+				BottomResizeBorder.ImageTransparency = 1
+				BottomResizeBorder.ZIndex = 4
+				BottomResizeBorder.AutoButtonColor = false
+
+				BottomResizeBorder.Parent = WindowButton
+
+				widgets.applyInteractionHighlights("Image", LeftResizeBorder, LeftResizeBorder, {
+					Color = Iris._config.ResizeGripColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.ResizeGripHoveredColor,
+					HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
+					ActiveColor = Iris._config.ResizeGripActiveColor,
+					ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
+				})
+
+				widgets.applyInteractionHighlights("Image", RightResizeBorder, RightResizeBorder, {
+					Color = Iris._config.ResizeGripColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.ResizeGripHoveredColor,
+					HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
+					ActiveColor = Iris._config.ResizeGripActiveColor,
+					ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
+				})
+
+				widgets.applyInteractionHighlights("Image", TopResizeBorder, TopResizeBorder, {
+					Color = Iris._config.ResizeGripColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.ResizeGripHoveredColor,
+					HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
+					ActiveColor = Iris._config.ResizeGripActiveColor,
+					ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
+				})
+
+				widgets.applyInteractionHighlights("Image", BottomResizeBorder, BottomResizeBorder, {
+					Color = Iris._config.ResizeGripColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.ResizeGripHoveredColor,
+					HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
+					ActiveColor = Iris._config.ResizeGripActiveColor,
+					ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
+				})
+
+				local ResizeBorder: Frame = Instance.new("Frame")
+				ResizeBorder.Name = "ResizeBorder"
+				ResizeBorder.Size = UDim2.new(1, Iris._config.WindowResizePadding.X * 2, 1, Iris._config.WindowResizePadding.Y * 2)
+				ResizeBorder.Position = UDim2.fromOffset(-Iris._config.WindowResizePadding.X, -Iris._config.WindowResizePadding.Y)
+				ResizeBorder.BackgroundTransparency = 1
+				ResizeBorder.BorderSizePixel = 0
+				ResizeBorder.Active = false
+				ResizeBorder.Selectable = false
+				ResizeBorder.ClipsDescendants = false
+				ResizeBorder.Parent = WindowButton
+
+				widgets.applyMouseEnter(ResizeBorder, function()
+					if focusedWindow == thisWidget then
+						isInsideResize = true
+					end
+				end)
+				widgets.applyMouseLeave(ResizeBorder, function()
+					if focusedWindow == thisWidget then
+						isInsideResize = false
+					end
+				end)
+				widgets.applyInputBegan(ResizeBorder, function(input: InputObject)
+					if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Keyboard then
+						return
+					end
+					if thisWidget.state.isUncollapsed.value then
+						Iris.SetFocusedWindow(thisWidget)
+					end
+				end)
+
+				widgets.applyMouseEnter(WindowButton, function()
+					if focusedWindow == thisWidget then
+						isInsideWindow = true
+					end
+				end)
+				widgets.applyMouseLeave(WindowButton, function()
+					if focusedWindow == thisWidget then
+						isInsideWindow = false
+					end
+				end)
+
+				thisWidget.ChildContainer = ChildContainer
+				return Window
+			end,
+			Update = function(thisWidget: Types.Window)
+				local Window = thisWidget.Instance :: GuiObject
+				local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
+				local WindowButton = Window.WindowButton :: TextButton
+				local Content = WindowButton.Content :: Frame
+				local TitleBar = Content.TitleBar :: Frame
+				local Title: TextLabel = TitleBar.Title
+				local MenuBar: Frame? = Content:FindFirstChild("Iris_MenuBar")
+				local LeftResizeGrip: TextButton = WindowButton.LeftResizeGrip
+				local RightResizeGrip: TextButton = WindowButton.RightResizeGrip
+				local LeftResizeBorder: Frame = WindowButton.LeftResizeBorder
+				local RightResizeBorder: Frame = WindowButton.RightResizeBorder
+				local TopResizeBorder: Frame = WindowButton.TopResizeBorder
+				local BottomResizeBorder: Frame = WindowButton.BottomResizeBorder
+
+				if thisWidget.arguments.NoResize ~= true then
+					LeftResizeGrip.Visible = true
+					RightResizeGrip.Visible = true
+					LeftResizeBorder.Visible = true
+					RightResizeBorder.Visible = true
+					TopResizeBorder.Visible = true
+					BottomResizeBorder.Visible = true
+				else
+					LeftResizeGrip.Visible = false
+					RightResizeGrip.Visible = false
+					LeftResizeBorder.Visible = false
+					RightResizeBorder.Visible = false
+					TopResizeBorder.Visible = false
+					BottomResizeBorder.Visible = false
+				end
+				if thisWidget.arguments.NoScrollbar then
+					ChildContainer.ScrollBarThickness = 0
+				else
+					ChildContainer.ScrollBarThickness = Iris._config.ScrollbarSize
+				end
+				if thisWidget.arguments.NoTitleBar then
+					TitleBar.Visible = false
+				else
+					TitleBar.Visible = true
+				end
+				if MenuBar then
+					if thisWidget.arguments.NoMenu then
+						MenuBar.Visible = false
+					else
+						MenuBar.Visible = true
+					end
+				end
+				if thisWidget.arguments.NoBackground then
+					ChildContainer.BackgroundTransparency = 1
+				else
+					ChildContainer.BackgroundTransparency = Iris._config.WindowBgTransparency
+				end
+
+				-- TitleBar buttons
+				if thisWidget.arguments.NoCollapse then
+					TitleBar.CollapseButton.Visible = false
+				else
+					TitleBar.CollapseButton.Visible = true
+				end
+				if thisWidget.arguments.NoClose then
+					TitleBar.CloseButton.Visible = false
+				else
+					TitleBar.CloseButton.Visible = true
+				end
+
+				Title.Text = thisWidget.arguments.Title or ""
+			end,
+			Discard = function(thisWidget: Types.Window)
+				if focusedWindow == thisWidget then
+					focusedWindow = nil
+					anyFocusedWindow = false
+				end
+				if dragWindow == thisWidget then
+					dragWindow = nil
+					isDragging = false
+				end
+				if resizeWindow == thisWidget then
+					resizeWindow = nil
+					isResizing = false
+				end
+				windowWidgets[thisWidget.ID] = nil
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+			ChildAdded = function(thisWidget: Types.Window, thisChid: Types.Widget)
+				local Window = thisWidget.Instance :: Frame
+				local WindowButton = Window.WindowButton :: TextButton
+				local Content = WindowButton.Content :: Frame
+				if thisChid.type == "MenuBar" then
+					local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
+					thisChid.Instance.ZIndex = ChildContainer.ZIndex + 1
+					thisChid.Instance.LayoutOrder = ChildContainer.LayoutOrder - 1
+					return Content
+				end
+				return thisWidget.ChildContainer
+			end,
+			UpdateState = function(thisWidget: Types.Window)
+				local stateSize: Vector2 = thisWidget.state.size.value
+				local statePosition: Vector2 = thisWidget.state.position.value
+				local stateIsUncollapsed: boolean = thisWidget.state.isUncollapsed.value
+				local stateIsOpened: boolean = thisWidget.state.isOpened.value
+				local stateScrollDistance: number = thisWidget.state.scrollDistance.value
+
+				local Window = thisWidget.Instance :: Frame
+				local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
+				local WindowButton = Window.WindowButton :: TextButton
+				local Content = WindowButton.Content :: Frame
+				local TitleBar = Content.TitleBar :: Frame
+				local MenuBar: Frame? = Content:FindFirstChild("Iris_MenuBar")
+				local LeftResizeGrip: TextButton = WindowButton.LeftResizeGrip
+				local RightResizeGrip: TextButton = WindowButton.RightResizeGrip
+				local LeftResizeBorder: Frame = WindowButton.LeftResizeBorder
+				local RightResizeBorder: Frame = WindowButton.RightResizeBorder
+				local TopResizeBorder: Frame = WindowButton.TopResizeBorder
+				local BottomResizeBorder: Frame = WindowButton.BottomResizeBorder
+
+				WindowButton.Size = UDim2.fromOffset(stateSize.X, stateSize.Y)
+				WindowButton.Position = UDim2.fromOffset(statePosition.X, statePosition.Y)
+
+				if stateIsOpened then
+					if thisWidget.usesScreenGuis then
+						Window.Enabled = true
+						WindowButton.Visible = true
+					else
+						Window.Visible = true
+						WindowButton.Visible = true
+					end
+					thisWidget.lastOpenedTick = Iris._cycleTick + 1
+				else
+					if thisWidget.usesScreenGuis then
+						Window.Enabled = false
+						WindowButton.Visible = false
+					else
+						Window.Visible = false
+						WindowButton.Visible = false
+					end
+					thisWidget.lastClosedTick = Iris._cycleTick + 1
+				end
+
+				if stateIsUncollapsed then
+					TitleBar.CollapseButton.Arrow.Image = widgets.ICONS.DOWN_POINTING_TRIANGLE
+					if MenuBar then
+						MenuBar.Visible = not thisWidget.arguments.NoMenu
+					end
+					ChildContainer.Visible = true
+					if thisWidget.arguments.NoResize ~= true then
+						LeftResizeGrip.Visible = true
+						RightResizeGrip.Visible = true
+						LeftResizeBorder.Visible = true
+						RightResizeBorder.Visible = true
+						TopResizeBorder.Visible = true
+						BottomResizeBorder.Visible = true
+					end
+					WindowButton.AutomaticSize = Enum.AutomaticSize.None
+					thisWidget.lastUncollapsedTick = Iris._cycleTick + 1
+				else
+					local collapsedHeight: number = TitleBar.AbsoluteSize.Y -- Iris._config.TextSize + Iris._config.FramePadding.Y * 2
+					TitleBar.CollapseButton.Arrow.Image = widgets.ICONS.RIGHT_POINTING_TRIANGLE
+
+					if MenuBar then
+						MenuBar.Visible = false
+					end
+					ChildContainer.Visible = false
+					LeftResizeGrip.Visible = false
+					RightResizeGrip.Visible = false
+					LeftResizeBorder.Visible = false
+					RightResizeBorder.Visible = false
+					TopResizeBorder.Visible = false
+					BottomResizeBorder.Visible = false
+					WindowButton.Size = UDim2.fromOffset(stateSize.X, collapsedHeight)
+					thisWidget.lastCollapsedTick = Iris._cycleTick + 1
+				end
+
+				if stateIsOpened and stateIsUncollapsed then
+					Iris.SetFocusedWindow(thisWidget)
+				else
+					TitleBar.BackgroundColor3 = Iris._config.TitleBgCollapsedColor
+					TitleBar.BackgroundTransparency = Iris._config.TitleBgCollapsedTransparency
+					WindowButton.UIStroke.Color = Iris._config.BorderColor
+
+					Iris.SetFocusedWindow(nil)
+				end
+
+				-- cant update canvasPosition in this cycle because scrollingframe isint ready to be changed
+				if stateScrollDistance and stateScrollDistance ~= 0 then
+					local callbackIndex: number = #Iris._postCycleCallbacks + 1
+					local desiredCycleTick: number = Iris._cycleTick + 1
+					Iris._postCycleCallbacks[callbackIndex] = function()
+						if Iris._cycleTick >= desiredCycleTick then
+							if thisWidget.lastCycleTick ~= -1 then
+								ChildContainer.CanvasPosition = Vector2.new(0, stateScrollDistance)
+							end
+							Iris._postCycleCallbacks[callbackIndex] = nil
+						end
+					end
+				end
+			end,
+			GenerateState = function(thisWidget: Types.Window)
+				if thisWidget.state.size == nil then
+					thisWidget.state.size = Iris._widgetState(thisWidget, "size", Vector2.new(400, 300))
+				end
+				if thisWidget.state.position == nil then
+					thisWidget.state.position = Iris._widgetState(thisWidget, "position", if anyFocusedWindow and focusedWindow then focusedWindow.state.position.value + Vector2.new(15, 45) else Vector2.new(150, 250))
+				end
+				thisWidget.state.position.value = fitPositionToWindowBounds(thisWidget, thisWidget.state.position.value)
+				thisWidget.state.size.value = fitSizeToWindowBounds(thisWidget, thisWidget.state.size.value)
+
+				if thisWidget.state.isUncollapsed == nil then
+					thisWidget.state.isUncollapsed = Iris._widgetState(thisWidget, "isUncollapsed", true)
+				end
+				if thisWidget.state.isOpened == nil then
+					thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", true)
+				end
+				if thisWidget.state.scrollDistance == nil then
+					thisWidget.state.scrollDistance = Iris._widgetState(thisWidget, "scrollDistance", 0)
+				end
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local aa = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local AnyMenuOpen: boolean = false
+		local ActiveMenu: Types.Menu? = nil
+		local MenuStack: { Types.Menu } = {}
+
+		local function EmptyMenuStack(menuIndex: number?)
+			for index = #MenuStack, menuIndex and menuIndex + 1 or 1, -1 do
+				local widget: Types.Menu = MenuStack[index]
+				widget.state.isOpened:set(false)
+
+				widget.Instance.BackgroundColor3 = Iris._config.HeaderColor
+				widget.Instance.BackgroundTransparency = 1
+
+				table.remove(MenuStack, index)
 			end
-		end)
-		widgets.applyMouseLeave(WindowButton, function()
-			if focusedWindow == thisWidget then
-				isInsideWindow = false
-			end
-		end)
 
-		thisWidget.ChildContainer = ChildContainer
-		return Window
-	end,
-	Update = function(thisWidget: Window)
-		local Window = thisWidget.Instance :: GuiObject
-		local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
-		local WindowButton = Window.WindowButton :: TextButton
-		local Content = WindowButton.Content :: Frame
-		local TitleBar = Content.TitleBar :: Frame
-		local Title: TextLabel = TitleBar.Title
-		local MenuBar: Frame? = Content:FindFirstChild("Iris_MenuBar")
-		local LeftResizeGrip: TextButton = WindowButton.LeftResizeGrip
-		local RightResizeGrip: TextButton = WindowButton.RightResizeGrip
-		local LeftResizeBorder: Frame = WindowButton.LeftResizeBorder
-		local RightResizeBorder: Frame = WindowButton.RightResizeBorder
-		local TopResizeBorder: Frame = WindowButton.TopResizeBorder
-		local BottomResizeBorder: Frame = WindowButton.BottomResizeBorder
-
-		if thisWidget.arguments.NoResize ~= true then
-			LeftResizeGrip.Visible = true
-			RightResizeGrip.Visible = true
-			LeftResizeBorder.Visible = true
-			RightResizeBorder.Visible = true
-			TopResizeBorder.Visible = true
-			BottomResizeBorder.Visible = true
-		else
-			LeftResizeGrip.Visible = false
-			RightResizeGrip.Visible = false
-			LeftResizeBorder.Visible = false
-			RightResizeBorder.Visible = false
-			TopResizeBorder.Visible = false
-			BottomResizeBorder.Visible = false
-		end
-		if thisWidget.arguments.NoScrollbar then
-			ChildContainer.ScrollBarThickness = 0
-		else
-			ChildContainer.ScrollBarThickness = Iris._config.ScrollbarSize
-		end
-		if thisWidget.arguments.NoTitleBar then
-			TitleBar.Visible = false
-		else
-			TitleBar.Visible = true
-		end
-		if MenuBar then
-			if thisWidget.arguments.NoMenu then
-				MenuBar.Visible = false
-			else
-				MenuBar.Visible = true
+			if #MenuStack == 0 then
+				AnyMenuOpen = false
+				ActiveMenu = nil
 			end
 		end
-		if thisWidget.arguments.NoBackground then
-			ChildContainer.BackgroundTransparency = 1
-		else
-			ChildContainer.BackgroundTransparency = Iris._config.WindowBgTransparency
-		end
 
-		-- TitleBar buttons
-		if thisWidget.arguments.NoCollapse then
-			TitleBar.CollapseButton.Visible = false
-		else
-			TitleBar.CollapseButton.Visible = true
-		end
-		if thisWidget.arguments.NoClose then
-			TitleBar.CloseButton.Visible = false
-		else
-			TitleBar.CloseButton.Visible = true
-		end
+		local function UpdateChildContainerTransform(thisWidget: Types.Menu)
+			local submenu: boolean = thisWidget.parentWidget.type == "Menu"
 
-		Title.Text = thisWidget.arguments.Title or ""
-	end,
-	Discard = function(thisWidget: Window)
-		if focusedWindow == thisWidget then
-			focusedWindow = nil
-			anyFocusedWindow = false
-		end
-		if dragWindow == thisWidget then
-			dragWindow = nil
-			isDragging = false
-		end
-		if resizeWindow == thisWidget then
-			resizeWindow = nil
-			isResizing = false
-		end
-		windowWidgets[thisWidget.ID] = nil
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-	ChildAdded = function(thisWidget: Window, thisChid: Widget)
-		local Window = thisWidget.Instance :: Frame
-		local WindowButton = Window.WindowButton :: TextButton
-		local Content = WindowButton.Content :: Frame
-		if thisChid.type == "MenuBar" then
+			local Menu = thisWidget.Instance :: Frame
 			local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
-			thisChid.Instance.ZIndex = ChildContainer.ZIndex + 1
-			thisChid.Instance.LayoutOrder = ChildContainer.LayoutOrder - 1
-			return Content
-		end
-		return thisWidget.ChildContainer
-	end,
-	UpdateState = function(thisWidget: Window)
-		local stateSize: Vector2 = thisWidget.state.size.value
-		local statePosition: Vector2 = thisWidget.state.position.value
-		local stateIsUncollapsed: boolean = thisWidget.state.isUncollapsed.value
-		local stateIsOpened: boolean = thisWidget.state.isOpened.value
-		local stateScrollDistance: number = thisWidget.state.scrollDistance.value
-
-		local Window = thisWidget.Instance :: Frame
-		local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
-		local WindowButton = Window.WindowButton :: TextButton
-		local Content = WindowButton.Content :: Frame
-		local TitleBar = Content.TitleBar :: Frame
-		local MenuBar: Frame? = Content:FindFirstChild("Iris_MenuBar")
-		local LeftResizeGrip: TextButton = WindowButton.LeftResizeGrip
-		local RightResizeGrip: TextButton = WindowButton.RightResizeGrip
-		local LeftResizeBorder: Frame = WindowButton.LeftResizeBorder
-		local RightResizeBorder: Frame = WindowButton.RightResizeBorder
-		local TopResizeBorder: Frame = WindowButton.TopResizeBorder
-		local BottomResizeBorder: Frame = WindowButton.BottomResizeBorder
-
-		WindowButton.Size = UDim2.fromOffset(stateSize.X, stateSize.Y)
-		WindowButton.Position = UDim2.fromOffset(statePosition.X, statePosition.Y)
-
-		if stateIsOpened then
-			if thisWidget.usesScreenGuis then
-				Window.Enabled = true
-				WindowButton.Visible = true
-			else
-				Window.Visible = true
-				WindowButton.Visible = true
+			ChildContainer.Size = UDim2.fromOffset(Menu.AbsoluteSize.X, 0)
+			if ChildContainer.Parent == nil then
+				return
 			end
-			thisWidget.lastOpenedTick = Iris._cycleTick + 1
-		else
-			if thisWidget.usesScreenGuis then
-				Window.Enabled = false
-				WindowButton.Visible = false
-			else
-				Window.Visible = false
-				WindowButton.Visible = false
-			end
-			thisWidget.lastClosedTick = Iris._cycleTick + 1
-		end
 
-		if stateIsUncollapsed then
-			TitleBar.CollapseButton.Arrow.Image = widgets.ICONS.DOWN_POINTING_TRIANGLE
-			if MenuBar then
-				MenuBar.Visible = not thisWidget.arguments.NoMenu
-			end
-			ChildContainer.Visible = true
-			if thisWidget.arguments.NoResize ~= true then
-				LeftResizeGrip.Visible = true
-				RightResizeGrip.Visible = true
-				LeftResizeBorder.Visible = true
-				RightResizeBorder.Visible = true
-				TopResizeBorder.Visible = true
-				BottomResizeBorder.Visible = true
-			end
-			WindowButton.AutomaticSize = Enum.AutomaticSize.None
-			thisWidget.lastUncollapsedTick = Iris._cycleTick + 1
-		else
-			local collapsedHeight: number = TitleBar.AbsoluteSize.Y -- Iris._config.TextSize + Iris._config.FramePadding.Y * 2
-			TitleBar.CollapseButton.Arrow.Image = widgets.ICONS.RIGHT_POINTING_TRIANGLE
+			local menuPosition: Vector2 = Menu.AbsolutePosition - widgets.GuiOffset
+			local menuSize: Vector2 = Menu.AbsoluteSize
+			local containerSize: Vector2 = ChildContainer.AbsoluteSize
+			local borderSize: number = Iris._config.PopupBorderSize
+			local screenSize: Vector2 = ChildContainer.Parent.AbsoluteSize
 
-			if MenuBar then
-				MenuBar.Visible = false
-			end
-			ChildContainer.Visible = false
-			LeftResizeGrip.Visible = false
-			RightResizeGrip.Visible = false
-			LeftResizeBorder.Visible = false
-			RightResizeBorder.Visible = false
-			TopResizeBorder.Visible = false
-			BottomResizeBorder.Visible = false
-			WindowButton.Size = UDim2.fromOffset(stateSize.X, collapsedHeight)
-			thisWidget.lastCollapsedTick = Iris._cycleTick + 1
-		end
+			local x: number = menuPosition.X
+			local y: number
+			local anchor: Vector2 = Vector2.zero
 
-		if stateIsOpened and stateIsUncollapsed then
-			Iris.SetFocusedWindow(thisWidget)
-		else
-			TitleBar.BackgroundColor3 = Iris._config.TitleBgCollapsedColor
-			TitleBar.BackgroundTransparency = Iris._config.TitleBgCollapsedTransparency
-			WindowButton.UIStroke.Color = Iris._config.BorderColor
-
-			Iris.SetFocusedWindow(nil)
-		end
-
-		-- cant update canvasPosition in this cycle because scrollingframe isint ready to be changed
-		if stateScrollDistance and stateScrollDistance ~= 0 then
-			local callbackIndex: number = #Iris._postCycleCallbacks + 1
-			local desiredCycleTick: number = Iris._cycleTick + 1
-			Iris._postCycleCallbacks[callbackIndex] = function()
-				if Iris._cycleTick >= desiredCycleTick then
-					if thisWidget.lastCycleTick ~= -1 then
-						ChildContainer.CanvasPosition = Vector2.new(0, stateScrollDistance)
-					end
-					Iris._postCycleCallbacks[callbackIndex] = nil
-				end
-			end
-		end
-	end,
-	GenerateState = function(thisWidget: Window)
-		if thisWidget.state.size == nil then
-			thisWidget.state.size = Iris._widgetState(thisWidget, "size", Vector2.new(400, 300))
-		end
-		if thisWidget.state.position == nil then
-			thisWidget.state.position = Iris._widgetState(thisWidget, "position", if anyFocusedWindow and focusedWindow then focusedWindow.state.position.value + Vector2.new(15, 45) else Vector2.new(150, 250))
-		end
-		thisWidget.state.position.value = fitPositionToWindowBounds(thisWidget, thisWidget.state.position.value)
-		thisWidget.state.size.value = fitSizeToWindowBounds(thisWidget, thisWidget.state.size.value)
-
-		if thisWidget.state.isUncollapsed == nil then
-			thisWidget.state.isUncollapsed = Iris._widgetState(thisWidget, "isUncollapsed", true)
-		end
-		if thisWidget.state.isOpened == nil then
-			thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", true)
-		end
-		if thisWidget.state.scrollDistance == nil then
-			thisWidget.state.scrollDistance = Iris._widgetState(thisWidget, "scrollDistance", 0)
-		end
-	end,
-} :: WidgetClass)
-
-local AnyMenuOpen: boolean = false
-local ActiveMenu: Menu? = nil
-local MenuStack: { Menu } = {}
-
-local function EmptyMenuStack(menuIndex: number?)
-	for index = #MenuStack, menuIndex and menuIndex + 1 or 1, -1 do
-		local widget: Menu = MenuStack[index]
-		widget.state.isOpened:set(false)
-
-		widget.Instance.BackgroundColor3 = Iris._config.HeaderColor
-		widget.Instance.BackgroundTransparency = 1
-
-		table.remove(MenuStack, index)
-	end
-
-	if #MenuStack == 0 then
-		AnyMenuOpen = false
-		ActiveMenu = nil
-	end
-end
-
-local function UpdateChildContainerTransform1(thisWidget: Menu)
-	local submenu: boolean = thisWidget.parentWidget.type == "Menu"
-
-	local Menu = thisWidget.Instance :: Frame
-	local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
-	ChildContainer.Size = UDim2.fromOffset(Menu.AbsoluteSize.X, 0)
-	if ChildContainer.Parent == nil then
-		return
-	end
-
-	local menuPosition: Vector2 = Menu.AbsolutePosition - widgets.GuiOffset
-	local menuSize: Vector2 = Menu.AbsoluteSize
-	local containerSize: Vector2 = ChildContainer.AbsoluteSize
-	local borderSize: number = Iris._config.PopupBorderSize
-	local screenSize: Vector2 = ChildContainer.Parent.AbsoluteSize
-
-	local x: number = menuPosition.X
-	local y: number
-	local anchor: Vector2 = Vector2.zero
-
-	if submenu then
-		if menuPosition.X + containerSize.X > screenSize.X then
-			anchor = Vector2.xAxis
-		else
-			x = menuPosition.X + menuSize.X
-		end
-	end
-
-	if menuPosition.Y + containerSize.Y > screenSize.Y then
-		-- too low.
-		y = menuPosition.Y - borderSize + (submenu and menuSize.Y or 0)
-		anchor += Vector2.yAxis
-	else
-		y = menuPosition.Y + borderSize + (submenu and 0 or menuSize.Y)
-	end
-
-	ChildContainer.Position = UDim2.fromOffset(x, y)
-	ChildContainer.AnchorPoint = anchor
-end
-
-widgets.registerEvent("InputBegan", function(inputObject: InputObject)
-	if not Iris._started then
-		return
-	end
-	if inputObject.UserInputType ~= Enum.UserInputType.MouseButton1 and inputObject.UserInputType ~= Enum.UserInputType.MouseButton2 then
-		return
-	end
-	if AnyMenuOpen == false then
-		return
-	end
-	if ActiveMenu == nil then
-		return
-	end
-
-	-- this only checks if we clicked outside all the menus. If we clicked in any menu, then the hover function handles this.
-	local isInMenu: boolean = false
-	local MouseLocation: Vector2 = widgets.getMouseLocation()
-	for _, menu: Menu in MenuStack do
-		for _, container: GuiObject in { menu.ChildContainer, menu.Instance } do
-			local rectMin: Vector2 = container.AbsolutePosition - widgets.GuiOffset
-			local rectMax: Vector2 = rectMin + container.AbsoluteSize
-			if widgets.isPosInsideRect(MouseLocation, rectMin, rectMax) then
-				isInMenu = true
-				break
-			end
-		end
-		if isInMenu then
-			break
-		end
-	end
-
-	if not isInMenu then
-		EmptyMenuStack()
-	end
-end)
-
---stylua: ignore
-Iris.WidgetConstructor("MenuBar", {
-	hasState = false,
-	hasChildren = true,
-	Args = {},
-	Events = {},
-	Generate = function(thisWidget: MenuBar)
-		local MenuBar: Frame = Instance.new("Frame")
-		MenuBar.Name = "Iris_MenuBar"
-		MenuBar.Size = UDim2.fromScale(1, 0)
-		MenuBar.AutomaticSize = Enum.AutomaticSize.Y
-		MenuBar.BackgroundColor3 = Iris._config.MenubarBgColor
-		MenuBar.BackgroundTransparency = Iris._config.MenubarBgTransparency
-		MenuBar.BorderSizePixel = 0
-		MenuBar.LayoutOrder = thisWidget.ZIndex
-		MenuBar.ClipsDescendants = true
-
-		widgets.UIPadding(MenuBar, Vector2.new(Iris._config.WindowPadding.X, 1))
-		widgets.UIListLayout(MenuBar, Enum.FillDirection.Horizontal, UDim.new()).VerticalAlignment = Enum.VerticalAlignment.Center
-		widgets.applyFrameStyle(MenuBar, true, true)
-
-		return MenuBar
-	end,
-	Update = function(_thisWidget: Widget)
-
-	end,
-	ChildAdded = function(thisWidget: MenuBar, _thisChild: Widget)
-		return thisWidget.Instance
-	end,
-	Discard = function(thisWidget: MenuBar)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass)
-
---stylua: ignore
-Iris.WidgetConstructor("Menu", {
-	hasState = true,
-	hasChildren = true,
-	Args = {
-		["Text"] = 1,
-	},
-	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["opened"] = {
-			["Init"] = function(_thisWidget: Menu) end,
-			["Get"] = function(thisWidget: Menu)
-				return thisWidget.lastOpenedTick == Iris._cycleTick
-			end,
-		},
-		["closed"] = {
-			["Init"] = function(_thisWidget: Menu) end,
-			["Get"] = function(thisWidget: Menu)
-				return thisWidget.lastClosedTick == Iris._cycleTick
-			end,
-		},
-	},
-	Generate = function(thisWidget: Menu)
-		local Menu: TextButton
-		thisWidget.ButtonColors = {
-			Color = Iris._config.HeaderColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.HeaderHoveredColor,
-			HoveredTransparency = Iris._config.HeaderHoveredTransparency,
-			ActiveColor = Iris._config.HeaderHoveredColor,
-			ActiveTransparency = Iris._config.HeaderHoveredTransparency,
-		}
-		if thisWidget.parentWidget.type == "Menu" then
-			-- this Menu is a sub-Menu
-			Menu = Instance.new("TextButton")
-			Menu.Name = "Menu"
-			Menu.BackgroundColor3 = Iris._config.HeaderColor
-			Menu.BackgroundTransparency = 1
-			Menu.BorderSizePixel = 0
-			Menu.Size = UDim2.fromScale(1, 0)
-			Menu.Text = ""
-			Menu.AutomaticSize = Enum.AutomaticSize.Y
-			Menu.LayoutOrder = thisWidget.ZIndex
-			Menu.AutoButtonColor = false
-
-			local UIPadding = widgets.UIPadding(Menu, Iris._config.FramePadding)
-			UIPadding.PaddingTop = UIPadding.PaddingTop - UDim.new(0, 1)
-			widgets.UIListLayout(Menu, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X)).VerticalAlignment = Enum.VerticalAlignment.Center
-
-			local TextLabel: TextLabel = Instance.new("TextLabel")
-			TextLabel.Name = "TextLabel"
-			TextLabel.BackgroundTransparency = 1
-			TextLabel.BorderSizePixel = 0
-			TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-
-			widgets.applyTextStyle(TextLabel)
-
-			TextLabel.Parent = Menu
-
-			local frameSize: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
-			local padding: number = math.round(0.2 * frameSize)
-			local iconSize: number = frameSize - 2 * padding
-
-			local Icon: ImageLabel = Instance.new("ImageLabel")
-			Icon.Name = "Icon"
-			Icon.Size = UDim2.fromOffset(iconSize, iconSize)
-			Icon.BackgroundTransparency = 1
-			Icon.BorderSizePixel = 0
-			Icon.ImageColor3 = Iris._config.TextColor
-			Icon.ImageTransparency = Iris._config.TextTransparency
-			Icon.Image = widgets.ICONS.RIGHT_POINTING_TRIANGLE
-			Icon.LayoutOrder = 1
-
-			Icon.Parent = Menu
-		else
-			Menu = Instance.new("TextButton")
-			Menu.Name = "Menu"
-			Menu.AutomaticSize = Enum.AutomaticSize.XY
-			Menu.Size = UDim2.fromScale(0, 0)
-			Menu.BackgroundColor3 = Iris._config.HeaderColor
-			Menu.BackgroundTransparency = 1
-			Menu.BorderSizePixel = 0
-			Menu.Text = ""
-			Menu.LayoutOrder = thisWidget.ZIndex
-			Menu.AutoButtonColor = false
-			Menu.ClipsDescendants = true
-
-			widgets.applyTextStyle(Menu)
-			widgets.UIPadding(Menu, Vector2.new(Iris._config.ItemSpacing.X, Iris._config.FramePadding.Y))
-		end
-		widgets.applyInteractionHighlights("Background", Menu, Menu, thisWidget.ButtonColors)
-
-		widgets.applyButtonClick(Menu, function()
-			local openMenu: boolean = if #MenuStack <= 1 then not thisWidget.state.isOpened.value else true
-			thisWidget.state.isOpened:set(openMenu)
-
-			AnyMenuOpen = openMenu
-			ActiveMenu = openMenu and thisWidget or nil
-			-- the hovering should handle all of the menus after the first one.
-			if #MenuStack <= 1 then
-				if openMenu then
-					table.insert(MenuStack, thisWidget)
+			if submenu then
+				if menuPosition.X + containerSize.X > screenSize.X then
+					anchor = Vector2.xAxis
 				else
-					table.remove(MenuStack)
+					x = menuPosition.X + menuSize.X
 				end
 			end
-		end)
 
-		widgets.applyMouseEnter(Menu, function()
-			if AnyMenuOpen and ActiveMenu and ActiveMenu ~= thisWidget then
-				local parentMenu = thisWidget.parentWidget :: Menu
-				local parentIndex: number? = table.find(MenuStack, parentMenu)
-
-				EmptyMenuStack(parentIndex)
-				thisWidget.state.isOpened:set(true)
-				ActiveMenu = thisWidget
-				AnyMenuOpen = true
-				table.insert(MenuStack, thisWidget)
-			end
-		end)
-
-		local ChildContainer: ScrollingFrame = Instance.new("ScrollingFrame")
-		ChildContainer.Name = "MenuContainer"
-		ChildContainer.BackgroundColor3 = Iris._config.PopupBgColor
-		ChildContainer.BackgroundTransparency = Iris._config.PopupBgTransparency
-		ChildContainer.BorderSizePixel = 0
-		ChildContainer.Size = UDim2.fromOffset(0, 0)
-		ChildContainer.AutomaticSize = Enum.AutomaticSize.XY
-
-		ChildContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-		ChildContainer.ScrollBarImageTransparency = Iris._config.ScrollbarGrabTransparency
-		ChildContainer.ScrollBarImageColor3 = Iris._config.ScrollbarGrabColor
-		ChildContainer.ScrollBarThickness = Iris._config.ScrollbarSize
-		ChildContainer.CanvasSize = UDim2.fromScale(0, 0)
-		ChildContainer.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-		ChildContainer.TopImage = widgets.ICONS.BLANK_SQUARE
-		ChildContainer.MidImage = widgets.ICONS.BLANK_SQUARE
-		ChildContainer.BottomImage = widgets.ICONS.BLANK_SQUARE
-
-		ChildContainer.ZIndex = 6
-		ChildContainer.LayoutOrder = 6
-		ChildContainer.ClipsDescendants = true
-
-		-- Unfortunatley, ScrollingFrame does not work with UICorner
-		-- if Iris._config.PopupRounding > 0 then
-		--     widgets.UICorner(ChildContainer, Iris._config.PopupRounding)
-		-- end
-
-		widgets.UIStroke(ChildContainer, Iris._config.WindowBorderSize, Iris._config.BorderColor, Iris._config.BorderTransparency)
-		widgets.UIPadding(ChildContainer, Vector2.new(2, Iris._config.WindowPadding.Y - Iris._config.ItemSpacing.Y))
-
-		local ChildContainerUIListLayout: UIListLayout = widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, 1))
-		ChildContainerUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-
-		local RootPopupScreenGui = Iris._rootInstance and Iris._rootInstance:FindFirstChild("PopupScreenGui") :: GuiObject
-		ChildContainer.Parent = RootPopupScreenGui
-
-
-		thisWidget.ChildContainer = ChildContainer
-		return Menu
-	end,
-	Update = function(thisWidget: Menu)
-		local Menu = thisWidget.Instance :: TextButton
-		local TextLabel: TextLabel
-		if thisWidget.parentWidget.type == "Menu" then
-			TextLabel = Menu.TextLabel
-		else
-			TextLabel = Menu
-		end
-		TextLabel.Text = thisWidget.arguments.Text or "Menu"
-	end,
-	ChildAdded = function(thisWidget: Menu, _thisChild: Widget)
-		UpdateChildContainerTransform1(thisWidget)
-		return thisWidget.ChildContainer
-	end,
-	ChildDiscarded = function(thisWidget: Menu, _thisChild: Widget)
-		UpdateChildContainerTransform1(thisWidget)
-	end,
-	GenerateState = function(thisWidget: Menu)
-		if thisWidget.state.isOpened == nil then
-			thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", false)
-		end
-	end,
-	UpdateState = function(thisWidget: Menu)
-		local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
-
-		if thisWidget.state.isOpened.value then
-			thisWidget.lastOpenedTick = Iris._cycleTick + 1
-			thisWidget.ButtonColors.Transparency = Iris._config.HeaderTransparency
-			ChildContainer.Visible = true
-
-			UpdateChildContainerTransform1(thisWidget)
-		else
-			thisWidget.lastClosedTick = Iris._cycleTick + 1
-			thisWidget.ButtonColors.Transparency = 1
-			ChildContainer.Visible = false
-		end
-	end,
-	Discard = function(thisWidget: Menu)
-		-- properly handle removing a menu if open and deleted
-		if AnyMenuOpen then
-			local parentMenu = thisWidget.parentWidget :: Menu
-			local parentIndex: number? = table.find(MenuStack, parentMenu)
-			if parentIndex then
-				EmptyMenuStack(parentIndex)
-				if #MenuStack ~= 0 then
-					ActiveMenu = parentMenu
-					AnyMenuOpen = true
-				end
-			end
-		end
-
-		thisWidget.Instance:Destroy()
-		thisWidget.ChildContainer:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-} :: WidgetClass)
-
---stylua: ignore
-Iris.WidgetConstructor("MenuItem", {
-	hasState = false,
-	hasChildren = false,
-	Args = {
-		Text = 1,
-		KeyCode = 2,
-		ModifierKey = 3,
-	},
-	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: MenuItem)
-		local MenuItem: TextButton = Instance.new("TextButton")
-		MenuItem.Name = "MenuItem"
-		MenuItem.BackgroundTransparency = 1
-		MenuItem.BorderSizePixel = 0
-		MenuItem.Size = UDim2.fromScale(1, 0)
-		MenuItem.Text = ""
-		MenuItem.AutomaticSize = Enum.AutomaticSize.Y
-		MenuItem.LayoutOrder = thisWidget.ZIndex
-		MenuItem.AutoButtonColor = false
-
-		local UIPadding = widgets.UIPadding(MenuItem, Iris._config.FramePadding)
-		UIPadding.PaddingTop = UIPadding.PaddingTop - UDim.new(0, 1)
-		widgets.UIListLayout(MenuItem, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-
-		widgets.applyInteractionHighlights("Background", MenuItem, MenuItem, {
-			Color = Iris._config.HeaderColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.HeaderHoveredColor,
-			HoveredTransparency = Iris._config.HeaderHoveredTransparency,
-			ActiveColor = Iris._config.HeaderHoveredColor,
-			ActiveTransparency = Iris._config.HeaderHoveredTransparency,
-		})
-
-		widgets.applyButtonClick(MenuItem, function()
-			EmptyMenuStack()
-		end)
-
-		widgets.applyMouseEnter(MenuItem, function()
-			local parentMenu = thisWidget.parentWidget :: Menu
-			if AnyMenuOpen and ActiveMenu and ActiveMenu ~= parentMenu then
-				local parentIndex: number? = table.find(MenuStack, parentMenu)
-
-				EmptyMenuStack(parentIndex)
-				ActiveMenu = parentMenu
-				AnyMenuOpen = true
-			end
-		end)
-
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-
-		widgets.applyTextStyle(TextLabel)
-
-		TextLabel.Parent = MenuItem
-
-		local Shortcut: TextLabel = Instance.new("TextLabel")
-		Shortcut.Name = "Shortcut"
-		Shortcut.BackgroundTransparency = 1
-		Shortcut.BorderSizePixel = 0
-		Shortcut.LayoutOrder = 1
-		Shortcut.AutomaticSize = Enum.AutomaticSize.XY
-
-		widgets.applyTextStyle(Shortcut)
-
-		Shortcut.Text = ""
-		Shortcut.TextColor3 = Iris._config.TextDisabledColor
-		Shortcut.TextTransparency = Iris._config.TextDisabledTransparency
-
-		Shortcut.Parent = MenuItem
-
-		return MenuItem
-	end,
-	Update = function(thisWidget: MenuItem)
-		local MenuItem = thisWidget.Instance :: TextButton
-		local TextLabel: TextLabel = MenuItem.TextLabel
-		local Shortcut: TextLabel = MenuItem.Shortcut
-
-		TextLabel.Text = thisWidget.arguments.Text
-		if thisWidget.arguments.KeyCode then
-			if thisWidget.arguments.ModifierKey then
-				Shortcut.Text = thisWidget.arguments.ModifierKey.Name .. " + " .. thisWidget.arguments.KeyCode.Name
+			if menuPosition.Y + containerSize.Y > screenSize.Y then
+				-- too low.
+				y = menuPosition.Y - borderSize + (submenu and menuSize.Y or 0)
+				anchor += Vector2.yAxis
 			else
-				Shortcut.Text = thisWidget.arguments.KeyCode.Name
+				y = menuPosition.Y + borderSize + (submenu and 0 or menuSize.Y)
 			end
+
+			ChildContainer.Position = UDim2.fromOffset(x, y)
+			ChildContainer.AnchorPoint = anchor
 		end
-	end,
-	Discard = function(thisWidget: MenuItem)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass)
 
---stylua: ignore
-Iris.WidgetConstructor("MenuToggle", {
-	hasState = true,
-	hasChildren = false,
-	Args = {
-		Text = 1,
-		KeyCode = 2,
-		ModifierKey = 3,
-	},
-	Events = {
-		["checked"] = {
-			["Init"] = function(_thisWidget: MenuToggle) end,
-			["Get"] = function(thisWidget: MenuToggle): boolean
-				return thisWidget.lastCheckedTick == Iris._cycleTick
-			end,
-		},
-		["unchecked"] = {
-			["Init"] = function(_thisWidget: MenuToggle) end,
-			["Get"] = function(thisWidget: MenuToggle): boolean
-				return thisWidget.lastUncheckedTick == Iris._cycleTick
-			end,
-		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: MenuToggle)
-		local MenuItem: TextButton = Instance.new("TextButton")
-		MenuItem.Name = "MenuItem"
-		MenuItem.BackgroundTransparency = 1
-		MenuItem.BorderSizePixel = 0
-		MenuItem.Size = UDim2.fromScale(1, 0)
-		MenuItem.Text = ""
-		MenuItem.AutomaticSize = Enum.AutomaticSize.Y
-		MenuItem.LayoutOrder = thisWidget.ZIndex
-		MenuItem.AutoButtonColor = false
+		widgets.registerEvent("InputBegan", function(inputObject: InputObject)
+			if not Iris._started then
+				return
+			end
+			if inputObject.UserInputType ~= Enum.UserInputType.MouseButton1 and inputObject.UserInputType ~= Enum.UserInputType.MouseButton2 then
+				return
+			end
+			if AnyMenuOpen == false then
+				return
+			end
+			if ActiveMenu == nil then
+				return
+			end
 
-		local UIPadding = widgets.UIPadding(MenuItem, Iris._config.FramePadding)
-		UIPadding.PaddingTop = UIPadding.PaddingTop - UDim.new(0, 1)
-		widgets.UIListLayout(MenuItem, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X)).VerticalAlignment = Enum.VerticalAlignment.Center
+			-- this only checks if we clicked outside all the menus. If we clicked in any menu, then the hover function handles this.
+			local isInMenu: boolean = false
+			local MouseLocation: Vector2 = widgets.getMouseLocation()
+			for _, menu: Types.Menu in MenuStack do
+				for _, container: GuiObject in { menu.ChildContainer, menu.Instance } do
+					local rectMin: Vector2 = container.AbsolutePosition - widgets.GuiOffset
+					local rectMax: Vector2 = rectMin + container.AbsoluteSize
+					if widgets.isPosInsideRect(MouseLocation, rectMin, rectMax) then
+						isInMenu = true
+						break
+					end
+				end
+				if isInMenu then
+					break
+				end
+			end
 
-		widgets.applyInteractionHighlights("Background", MenuItem, MenuItem, {
-			Color = Iris._config.HeaderColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.HeaderHoveredColor,
-			HoveredTransparency = Iris._config.HeaderHoveredTransparency,
-			ActiveColor = Iris._config.HeaderHoveredColor,
-			ActiveTransparency = Iris._config.HeaderHoveredTransparency,
-		})
-
-		widgets.applyButtonClick(MenuItem, function()
-			local wasChecked: boolean = thisWidget.state.isChecked.value
-			thisWidget.state.isChecked:set(not wasChecked)
-			EmptyMenuStack()
-		end)
-
-		widgets.applyMouseEnter(MenuItem, function()
-			local parentMenu = thisWidget.parentWidget :: Menu
-			if AnyMenuOpen and ActiveMenu and ActiveMenu ~= parentMenu then
-				local parentIndex: number? = table.find(MenuStack, parentMenu)
-
-				EmptyMenuStack(parentIndex)
-				ActiveMenu = parentMenu
-				AnyMenuOpen = true
+			if not isInMenu then
+				EmptyMenuStack()
 			end
 		end)
 
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+		--stylua: ignore
+		Iris.WidgetConstructor("MenuBar", {
+			hasState = false,
+			hasChildren = true,
+			Args = {},
+			Events = {},
+			Generate = function(thisWidget: Types.MenuBar)
+				local MenuBar: Frame = Instance.new("Frame")
+				MenuBar.Name = "Iris_MenuBar"
+				MenuBar.Size = UDim2.fromScale(1, 0)
+				MenuBar.AutomaticSize = Enum.AutomaticSize.Y
+				MenuBar.BackgroundColor3 = Iris._config.MenubarBgColor
+				MenuBar.BackgroundTransparency = Iris._config.MenubarBgTransparency
+				MenuBar.BorderSizePixel = 0
+				MenuBar.LayoutOrder = thisWidget.ZIndex
+				MenuBar.ClipsDescendants = true
 
-		widgets.applyTextStyle(TextLabel)
+				widgets.UIPadding(MenuBar, Vector2.new(Iris._config.WindowPadding.X, 1))
+				widgets.UIListLayout(MenuBar, Enum.FillDirection.Horizontal, UDim.new()).VerticalAlignment = Enum.VerticalAlignment.Center
+				widgets.applyFrameStyle(MenuBar, true, true)
 
-		TextLabel.Parent = MenuItem
-
-		local Shortcut: TextLabel = Instance.new("TextLabel")
-		Shortcut.Name = "Shortcut"
-		Shortcut.BackgroundTransparency = 1
-		Shortcut.BorderSizePixel = 0
-		Shortcut.LayoutOrder = 1
-		Shortcut.AutomaticSize = Enum.AutomaticSize.XY
-
-		widgets.applyTextStyle(Shortcut)
-
-		Shortcut.Text = ""
-		Shortcut.TextColor3 = Iris._config.TextDisabledColor
-		Shortcut.TextTransparency = Iris._config.TextDisabledTransparency
-
-		Shortcut.Parent = MenuItem
-
-		local frameSize: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
-		local padding: number = math.round(0.2 * frameSize)
-		local iconSize: number = frameSize - 2 * padding
-
-		local Icon: ImageLabel = Instance.new("ImageLabel")
-		Icon.Name = "Icon"
-		Icon.Size = UDim2.fromOffset(iconSize, iconSize)
-		Icon.BackgroundTransparency = 1
-		Icon.BorderSizePixel = 0
-		Icon.ImageColor3 = Iris._config.TextColor
-		Icon.ImageTransparency = Iris._config.TextTransparency
-		Icon.Image = widgets.ICONS.CHECK_MARK
-		Icon.LayoutOrder = 2
-
-		Icon.Parent = MenuItem
-
-		return MenuItem
-	end,
-	GenerateState = function(thisWidget: MenuToggle)
-		if thisWidget.state.isChecked == nil then
-			thisWidget.state.isChecked = Iris._widgetState(thisWidget, "isChecked", false)
-		end
-	end,
-	Update = function(thisWidget: MenuToggle)
-		local MenuItem = thisWidget.Instance :: TextButton
-		local TextLabel: TextLabel = MenuItem.TextLabel
-		local Shortcut: TextLabel = MenuItem.Shortcut
-
-		TextLabel.Text = thisWidget.arguments.Text
-		if thisWidget.arguments.KeyCode then
-			if thisWidget.arguments.ModifierKey then
-				Shortcut.Text = thisWidget.arguments.ModifierKey.Name .. " + " .. thisWidget.arguments.KeyCode.Name
-			else
-				Shortcut.Text = thisWidget.arguments.KeyCode.Name
-			end
-		end
-	end,
-	UpdateState = function(thisWidget: MenuToggle)
-		local MenuItem = thisWidget.Instance :: TextButton
-		local Icon: ImageLabel = MenuItem.Icon
-
-		if thisWidget.state.isChecked.value then
-			Icon.Image = widgets.ICONS.CHECK_MARK
-			thisWidget.lastCheckedTick = Iris._cycleTick + 1
-		else
-			Icon.Image = ""
-			thisWidget.lastUncheckedTick = Iris._cycleTick + 1
-		end
-	end,
-	Discard = function(thisWidget: MenuToggle)
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-} :: WidgetClass)
-
---stylua: ignore
-Iris.WidgetConstructor("Separator", {
-	hasState = false,
-	hasChildren = false,
-	Args = {},
-	Events = {},
-	Generate = function(thisWidget: Separator)
-		local Separator: Frame = Instance.new("Frame")
-		Separator.Name = "Iris_Separator"
-		Separator.BackgroundColor3 = Iris._config.SeparatorColor
-		Separator.BackgroundTransparency = Iris._config.SeparatorTransparency
-		Separator.BorderSizePixel = 0
-		if thisWidget.parentWidget.type == "SameLine" then
-			Separator.Size = UDim2.new(0, 1, Iris._config.ItemWidth.Scale, Iris._config.ItemWidth.Offset)
-		else
-			Separator.Size = UDim2.new(Iris._config.ItemWidth.Scale, Iris._config.ItemWidth.Offset, 0, 1)
-		end
-		Separator.LayoutOrder = thisWidget.ZIndex
-
-		widgets.UIListLayout(Separator, Enum.FillDirection.Vertical, UDim.new(0, 0))
-		-- this is to prevent a bug of AutomaticLayout edge case when its parent has automaticLayout enabled
-
-		return Separator
-	end,
-	Update = function(_thisWidget: Separator) end,
-	Discard = function(thisWidget: Separator)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass)
-
---stylua: ignore
-Iris.WidgetConstructor("Indent", {
-	hasState = false,
-	hasChildren = true,
-	Args = {
-		["Width"] = 1,
-	},
-	Events = {},
-	Generate = function(thisWidget: Indent)
-		local Indent: Frame = Instance.new("Frame")
-		Indent.Name = "Iris_Indent"
-		Indent.BackgroundTransparency = 1
-		Indent.BorderSizePixel = 0
-		Indent.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-		Indent.AutomaticSize = Enum.AutomaticSize.Y
-		Indent.LayoutOrder = thisWidget.ZIndex
-
-		widgets.UIListLayout(Indent, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
-		widgets.UIPadding(Indent, Vector2.zero)
-
-		return Indent
-	end,
-	Update = function(thisWidget: Indent)
-		local Indent = thisWidget.Instance :: Frame
-
-		local indentWidth: number
-		if thisWidget.arguments.Width then
-			indentWidth = thisWidget.arguments.Width
-		else
-			indentWidth = Iris._config.IndentSpacing
-		end
-		Indent.UIPadding.PaddingLeft = UDim.new(0, indentWidth)
-	end,
-	Discard = function(thisWidget: Indent)
-		thisWidget.Instance:Destroy()
-	end,
-	ChildAdded = function(thisWidget: Indent, _thisChild: Widget)
-		return thisWidget.Instance
-	end,
-} :: WidgetClass)
-
---stylua: ignore
-Iris.WidgetConstructor("SameLine", {
-	hasState = false,
-	hasChildren = true,
-	Args = {
-		["Width"] = 1,
-		["VerticalAlignment"] = 2,
-		["HorizontalAlignment"] = 3,
-	},
-	Events = {},
-	Generate = function(thisWidget: SameLine)
-		local SameLine: Frame = Instance.new("Frame")
-		SameLine.Name = "Iris_SameLine"
-		SameLine.BackgroundTransparency = 1
-		SameLine.BorderSizePixel = 0
-		SameLine.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-		SameLine.AutomaticSize = Enum.AutomaticSize.Y
-		SameLine.LayoutOrder = thisWidget.ZIndex
-
-		widgets.UIListLayout(SameLine, Enum.FillDirection.Horizontal, UDim.new(0, 0))
-
-		return SameLine
-	end,
-	Update = function(thisWidget: SameLine)
-		local Sameline = thisWidget.Instance :: Frame
-		local uiListLayout: UIListLayout = Sameline.UIListLayout
-		local itemWidth: number
-		if thisWidget.arguments.Width then
-			itemWidth = thisWidget.arguments.Width
-		else
-			itemWidth = Iris._config.ItemSpacing.X
-		end
-		uiListLayout.Padding = UDim.new(0, itemWidth)
-		if thisWidget.arguments.VerticalAlignment then
-			uiListLayout.VerticalAlignment = thisWidget.arguments.VerticalAlignment
-		else
-			uiListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-		end
-		if thisWidget.arguments.HorizontalAlignment then
-			uiListLayout.HorizontalAlignment = thisWidget.arguments.HorizontalAlignment
-		else
-			uiListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-		end
-	end,
-	Discard = function(thisWidget: SameLine)
-		thisWidget.Instance:Destroy()
-	end,
-	ChildAdded = function(thisWidget: SameLine, _thisChild: Widget)
-		return thisWidget.Instance
-	end,
-} :: WidgetClass)
-
---stylua: ignore
-Iris.WidgetConstructor("Group", {
-	hasState = false,
-	hasChildren = true,
-	Args = {},
-	Events = {},
-	Generate = function(thisWidget: Group)
-		local Group: Frame = Instance.new("Frame")
-		Group.Name = "Iris_Group"
-		Group.AutomaticSize = Enum.AutomaticSize.XY
-		Group.Size = UDim2.fromOffset(0, 0)
-		Group.BackgroundTransparency = 1
-		Group.BorderSizePixel = 0
-		Group.LayoutOrder = thisWidget.ZIndex
-		Group.ClipsDescendants = false
-
-		widgets.UIListLayout(Group, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
-
-		return Group
-	end,
-	Update = function(_thisWidget: Group) end,
-	Discard = function(thisWidget: Group)
-		thisWidget.Instance:Destroy()
-	end,
-	ChildAdded = function(thisWidget: Group, _thisChild: Widget)
-		return thisWidget.Instance
-	end,
-} :: WidgetClass)
---stylua: ignore
-Iris.WidgetConstructor("Text", {
-	hasState = false,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-		["Wrapped"] = 2,
-		["Color"] = 3,
-		["RichText"] = 4,
-	},
-	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: Text)
-		local Text: TextLabel = Instance.new("TextLabel")
-		Text.Name = "Iris_Text"
-		Text.Size = UDim2.fromOffset(0, 0)
-		Text.BackgroundTransparency = 1
-		Text.BorderSizePixel = 0
-		Text.LayoutOrder = thisWidget.ZIndex
-		Text.AutomaticSize = Enum.AutomaticSize.XY
-
-		widgets.applyTextStyle(Text)
-		widgets.UIPadding(Text, Vector2.new(0, 2))
-
-		return Text
-	end,
-	Update = function(thisWidget: Text)
-		local Text = thisWidget.Instance :: TextLabel
-		if thisWidget.arguments.Text == nil then
-			error("Text argument is needed for Iris.Text().", 5)
-		end
-		if thisWidget.arguments.Wrapped ~= nil then
-			Text.TextWrapped = thisWidget.arguments.Wrapped
-		else
-			Text.TextWrapped = Iris._config.TextWrapped
-		end
-		if thisWidget.arguments.Color then
-			Text.TextColor3 = thisWidget.arguments.Color
-		else
-			Text.TextColor3 = Iris._config.TextColor
-		end
-		if thisWidget.arguments.RichText ~= nil then
-			Text.RichText = thisWidget.arguments.RichText
-		else
-			Text.RichText = Iris._config.RichText
-		end
-
-		Text.Text = thisWidget.arguments.Text
-	end,
-	Discard = function(thisWidget: Text)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass)
-
---stylua: ignore
-Iris.WidgetConstructor("SeparatorText", {
-	hasState = false,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-	},
-	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: SeparatorText)
-		local SeparatorText = Instance.new("Frame")
-		SeparatorText.Name = "Iris_SeparatorText"
-		SeparatorText.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-		SeparatorText.BackgroundTransparency = 1
-		SeparatorText.BorderSizePixel = 0
-		SeparatorText.AutomaticSize = Enum.AutomaticSize.Y
-		SeparatorText.LayoutOrder = thisWidget.ZIndex
-		SeparatorText.ClipsDescendants = true
-
-		widgets.UIPadding(SeparatorText, Vector2.new(0, Iris._config.SeparatorTextPadding.Y))
-		widgets.UIListLayout(SeparatorText, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemSpacing.X))
-
-		SeparatorText.UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-		TextLabel.LayoutOrder = 1
-
-		widgets.applyTextStyle(TextLabel)
-
-		TextLabel.Parent = SeparatorText
-
-		local Left: Frame = Instance.new("Frame")
-		Left.Name = "Left"
-		Left.AnchorPoint = Vector2.new(1, 0.5)
-		Left.BackgroundColor3 = Iris._config.SeparatorColor
-		Left.BackgroundTransparency = Iris._config.SeparatorTransparency
-		Left.BorderSizePixel = 0
-		Left.Size = UDim2.fromOffset(Iris._config.SeparatorTextPadding.X - Iris._config.ItemSpacing.X, Iris._config.SeparatorTextBorderSize)
-
-		Left.Parent = SeparatorText
-
-		local Right: Frame = Instance.new("Frame")
-		Right.Name = "Right"
-		Right.AnchorPoint = Vector2.new(1, 0.5)
-		Right.BackgroundColor3 = Iris._config.SeparatorColor
-		Right.BackgroundTransparency = Iris._config.SeparatorTransparency
-		Right.BorderSizePixel = 0
-		Right.Size = UDim2.new(1, 0, 0, Iris._config.SeparatorTextBorderSize)
-		Right.LayoutOrder = 2
-
-		Right.Parent = SeparatorText
-
-		return SeparatorText
-	end,
-	Update = function(thisWidget: SeparatorText)
-		local SeparatorText = thisWidget.Instance :: Frame
-		local TextLabel: TextLabel = SeparatorText.TextLabel
-		if thisWidget.arguments.Text == nil then
-			error("Text argument is required for Iris.SeparatorText().", 5)
-		end
-		TextLabel.Text = thisWidget.arguments.Text
-	end,
-	Discard = function(thisWidget: SeparatorText)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass)
-
-local abstractButton = {
-	hasState = false,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-		["Size"] = 2,
-	},
-	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: Button)
-		local Button: TextButton = Instance.new("TextButton")
-		Button.Size = UDim2.fromOffset(0, 0)
-		Button.BackgroundColor3 = Iris._config.ButtonColor
-		Button.BackgroundTransparency = Iris._config.ButtonTransparency
-		Button.AutoButtonColor = false
-		Button.AutomaticSize = Enum.AutomaticSize.XY
-
-		widgets.applyTextStyle(Button)
-		Button.TextXAlignment = Enum.TextXAlignment.Center
-
-		widgets.applyFrameStyle(Button)
-
-		widgets.applyInteractionHighlights("Background", Button, Button, {
-			Color = Iris._config.ButtonColor,
-			Transparency = Iris._config.ButtonTransparency,
-			HoveredColor = Iris._config.ButtonHoveredColor,
-			HoveredTransparency = Iris._config.ButtonHoveredTransparency,
-			ActiveColor = Iris._config.ButtonActiveColor,
-			ActiveTransparency = Iris._config.ButtonActiveTransparency,
-		})
-
-		Button.ZIndex = thisWidget.ZIndex
-		Button.LayoutOrder = thisWidget.ZIndex
-
-		return Button
-	end,
-	Update = function(thisWidget: Button)
-		local Button = thisWidget.Instance :: TextButton
-		Button.Text = thisWidget.arguments.Text or "Button"
-		Button.Size = thisWidget.arguments.Size or UDim2.fromOffset(0, 0)
-	end,
-	Discard = function(thisWidget: Button)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass
-widgets.abstractButton = abstractButton
-
---stylua: ignore
-Iris.WidgetConstructor("Button", widgets.extend(abstractButton, {
-	Generate = function(thisWidget: Button)
-		local Button: TextButton = abstractButton.Generate(thisWidget)
-		Button.Name = "Iris_Button"
-
-		return Button
-	end,
-} :: WidgetClass)
-)
-
---stylua: ignore
-Iris.WidgetConstructor("SmallButton", widgets.extend(abstractButton, {
-	Generate = function(thisWidget: Button)
-		local SmallButton = abstractButton.Generate(thisWidget) :: TextButton
-		SmallButton.Name = "Iris_SmallButton"
-
-		local uiPadding: UIPadding = SmallButton.UIPadding
-		uiPadding.PaddingLeft = UDim.new(0, 2)
-		uiPadding.PaddingRight = UDim.new(0, 2)
-		uiPadding.PaddingTop = UDim.new(0, 0)
-		uiPadding.PaddingBottom = UDim.new(0, 0)
-
-		return SmallButton
-	end,
-} :: WidgetClass)
-)
---stylua: ignore
-Iris.WidgetConstructor("Checkbox", {
-	hasState = true,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-	},
-	Events = {
-		["checked"] = {
-			["Init"] = function(_thisWidget: Checkbox) end,
-			["Get"] = function(thisWidget: Checkbox): boolean
-				return thisWidget.lastCheckedTick == Iris._cycleTick
+				return MenuBar
 			end,
-		},
-		["unchecked"] = {
-			["Init"] = function(_thisWidget: Checkbox) end,
-			["Get"] = function(thisWidget: Checkbox): boolean
-				return thisWidget.lastUncheckedTick == Iris._cycleTick
+			Update = function(_thisWidget: Types.Widget)
+
 			end,
-		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: Checkbox)
-		local Checkbox: TextButton = Instance.new("TextButton")
-		Checkbox.Name = "Iris_Checkbox"
-		Checkbox.AutomaticSize = Enum.AutomaticSize.XY
-		Checkbox.Size = UDim2.fromOffset(0, 0)
-		Checkbox.BackgroundTransparency = 1
-		Checkbox.BorderSizePixel = 0
-		Checkbox.Text = ""
-		Checkbox.AutoButtonColor = false
-		Checkbox.ZIndex = thisWidget.ZIndex
-		Checkbox.LayoutOrder = thisWidget.ZIndex
-
-		local UIListLayout: UIListLayout = widgets.UIListLayout(Checkbox, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-		local checkboxSize: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
-
-		local Box: Frame = Instance.new("Frame")
-		Box.Name = "Box"
-		Box.Size = UDim2.fromOffset(checkboxSize, checkboxSize)
-		Box.BackgroundColor3 = Iris._config.FrameBgColor
-		Box.BackgroundTransparency = Iris._config.FrameBgTransparency
-
-		widgets.applyFrameStyle(Box, true)
-		widgets.UIPadding(Box, Vector2.new(math.floor(checkboxSize / 10), math.floor(checkboxSize / 10)))
-
-		widgets.applyInteractionHighlights("Background", Checkbox, Box, {
-			Color = Iris._config.FrameBgColor,
-			Transparency = Iris._config.FrameBgTransparency,
-			HoveredColor = Iris._config.FrameBgHoveredColor,
-			HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
-			ActiveColor = Iris._config.FrameBgActiveColor,
-			ActiveTransparency = Iris._config.FrameBgActiveTransparency,
-		})
-
-		Box.Parent = Checkbox
-
-		local Checkmark: ImageLabel = Instance.new("ImageLabel")
-		Checkmark.Name = "Checkmark"
-		Checkmark.Size = UDim2.fromScale(1, 1)
-		Checkmark.BackgroundTransparency = 1
-		Checkmark.ImageColor3 = Iris._config.CheckMarkColor
-		Checkmark.ImageTransparency = Iris._config.CheckMarkTransparency
-		Checkmark.ScaleType = Enum.ScaleType.Fit
-
-		Checkmark.Parent = Box
-
-		widgets.applyButtonClick(Checkbox, function()
-			local wasChecked: boolean = thisWidget.state.isChecked.value
-			thisWidget.state.isChecked:set(not wasChecked)
-		end)
-
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.LayoutOrder = 1
-
-		widgets.applyTextStyle(TextLabel)
-		TextLabel.Parent = Checkbox
-
-		return Checkbox
-	end,
-	Update = function(thisWidget: Checkbox)
-		local Checkbox = thisWidget.Instance :: TextButton
-		Checkbox.TextLabel.Text = thisWidget.arguments.Text or "Checkbox"
-	end,
-	Discard = function(thisWidget: Checkbox)
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-	GenerateState = function(thisWidget: Checkbox)
-		if thisWidget.state.isChecked == nil then
-			thisWidget.state.isChecked = Iris._widgetState(thisWidget, "checked", false)
-		end
-	end,
-	UpdateState = function(thisWidget: Checkbox)
-		local Checkbox = thisWidget.Instance :: TextButton
-		local Box = Checkbox.Box :: Frame
-		local Checkmark: ImageLabel = Box.Checkmark
-		if thisWidget.state.isChecked.value then
-			Checkmark.Image = widgets.ICONS.CHECK_MARK
-			thisWidget.lastCheckedTick = Iris._cycleTick + 1
-		else
-			Checkmark.Image = ""
-			thisWidget.lastUncheckedTick = Iris._cycleTick + 1
-		end
-	end,
-} :: WidgetClass)
---stylua: ignore
-Iris.WidgetConstructor("RadioButton", {
-	hasState = true,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-		["Index"] = 2,
-	},
-	Events = {
-		["selected"] = {
-			["Init"] = function(_thisWidget: RadioButton) end,
-			["Get"] = function(thisWidget: RadioButton)
-				return thisWidget.lastSelectedTick == Iris._cycleTick
+			ChildAdded = function(thisWidget: Types.MenuBar, _thisChild: Types.Widget)
+				return thisWidget.Instance
 			end,
-		},
-		["unselected"] = {
-			["Init"] = function(_thisWidget: RadioButton) end,
-			["Get"] = function(thisWidget: RadioButton)
-				return thisWidget.lastUnselectedTick == Iris._cycleTick
+			Discard = function(thisWidget: Types.MenuBar)
+				thisWidget.Instance:Destroy()
 			end,
-		},
-		["active"] = {
-			["Init"] = function(_thisWidget: RadioButton) end,
-			["Get"] = function(thisWidget: RadioButton)
-				return thisWidget.state.index.value == thisWidget.arguments.Index
-			end,
-		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: RadioButton)
-		local RadioButton: TextButton = Instance.new("TextButton")
-		RadioButton.Name = "Iris_RadioButton"
-		RadioButton.AutomaticSize = Enum.AutomaticSize.XY
-		RadioButton.Size = UDim2.fromOffset(0, 0)
-		RadioButton.BackgroundTransparency = 1
-		RadioButton.BorderSizePixel = 0
-		RadioButton.Text = ""
-		RadioButton.LayoutOrder = thisWidget.ZIndex
-		RadioButton.AutoButtonColor = false
-		RadioButton.ZIndex = thisWidget.ZIndex
-		RadioButton.LayoutOrder = thisWidget.ZIndex
+		} :: Types.WidgetClass)
 
-		local UIListLayout: UIListLayout = widgets.UIListLayout(RadioButton, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+		--stylua: ignore
+		Iris.WidgetConstructor("Menu", {
+			hasState = true,
+			hasChildren = true,
+			Args = {
+				["Text"] = 1,
+			},
+			Events = {
+				["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["opened"] = {
+					["Init"] = function(_thisWidget: Types.Menu) end,
+					["Get"] = function(thisWidget: Types.Menu)
+						return thisWidget.lastOpenedTick == Iris._cycleTick
+					end,
+				},
+				["closed"] = {
+					["Init"] = function(_thisWidget: Types.Menu) end,
+					["Get"] = function(thisWidget: Types.Menu)
+						return thisWidget.lastClosedTick == Iris._cycleTick
+					end,
+				},
+			},
+			Generate = function(thisWidget: Types.Menu)
+				local Menu: TextButton
+				thisWidget.ButtonColors = {
+					Color = Iris._config.HeaderColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.HeaderHoveredColor,
+					HoveredTransparency = Iris._config.HeaderHoveredTransparency,
+					ActiveColor = Iris._config.HeaderHoveredColor,
+					ActiveTransparency = Iris._config.HeaderHoveredTransparency,
+				}
+				if thisWidget.parentWidget.type == "Menu" then
+					-- this Menu is a sub-Menu
+					Menu = Instance.new("TextButton")
+					Menu.Name = "Menu"
+					Menu.BackgroundColor3 = Iris._config.HeaderColor
+					Menu.BackgroundTransparency = 1
+					Menu.BorderSizePixel = 0
+					Menu.Size = UDim2.fromScale(1, 0)
+					Menu.Text = ""
+					Menu.AutomaticSize = Enum.AutomaticSize.Y
+					Menu.LayoutOrder = thisWidget.ZIndex
+					Menu.AutoButtonColor = false
 
-		local buttonSize: number = Iris._config.TextSize + 2 * (Iris._config.FramePadding.Y - 1)
-		local Button: Frame = Instance.new("Frame")
-		Button.Name = "Button"
-		Button.Size = UDim2.fromOffset(buttonSize, buttonSize)
-		Button.Parent = RadioButton
-		Button.BackgroundColor3 = Iris._config.FrameBgColor
-		Button.BackgroundTransparency = Iris._config.FrameBgTransparency
+					local UIPadding = widgets.UIPadding(Menu, Iris._config.FramePadding)
+					UIPadding.PaddingTop = UIPadding.PaddingTop - UDim.new(0, 1)
+					widgets.UIListLayout(Menu, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X)).VerticalAlignment = Enum.VerticalAlignment.Center
 
-		widgets.UICorner(Button)
-		widgets.UIPadding(Button, Vector2.new(math.max(1, math.floor(buttonSize / 5)), math.max(1, math.floor(buttonSize / 5))))
+					local TextLabel: TextLabel = Instance.new("TextLabel")
+					TextLabel.Name = "TextLabel"
+					TextLabel.BackgroundTransparency = 1
+					TextLabel.BorderSizePixel = 0
+					TextLabel.AutomaticSize = Enum.AutomaticSize.XY
 
-		local Circle: Frame = Instance.new("Frame")
-		Circle.Name = "Circle"
-		Circle.Size = UDim2.fromScale(1, 1)
-		Circle.Parent = Button
-		Circle.BackgroundColor3 = Iris._config.CheckMarkColor
-		Circle.BackgroundTransparency = Iris._config.CheckMarkTransparency
-		widgets.UICorner(Circle)
+					widgets.applyTextStyle(TextLabel)
 
-		widgets.applyInteractionHighlights("Background", RadioButton, Button, {
-			Color = Iris._config.FrameBgColor,
-			Transparency = Iris._config.FrameBgTransparency,
-			HoveredColor = Iris._config.FrameBgHoveredColor,
-			HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
-			ActiveColor = Iris._config.FrameBgActiveColor,
-			ActiveTransparency = Iris._config.FrameBgActiveTransparency,
-		})
+					TextLabel.Parent = Menu
 
-		widgets.applyButtonClick(RadioButton, function()
-			thisWidget.state.index:set(thisWidget.arguments.Index)
-		end)
+					local frameSize: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
+					local padding: number = math.round(0.2 * frameSize)
+					local iconSize: number = frameSize - 2 * padding
 
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.LayoutOrder = 1
+					local Icon: ImageLabel = Instance.new("ImageLabel")
+					Icon.Name = "Icon"
+					Icon.Size = UDim2.fromOffset(iconSize, iconSize)
+					Icon.BackgroundTransparency = 1
+					Icon.BorderSizePixel = 0
+					Icon.ImageColor3 = Iris._config.TextColor
+					Icon.ImageTransparency = Iris._config.TextTransparency
+					Icon.Image = widgets.ICONS.RIGHT_POINTING_TRIANGLE
+					Icon.LayoutOrder = 1
 
-		widgets.applyTextStyle(TextLabel)
-		TextLabel.Parent = RadioButton
+					Icon.Parent = Menu
+				else
+					Menu = Instance.new("TextButton")
+					Menu.Name = "Menu"
+					Menu.AutomaticSize = Enum.AutomaticSize.XY
+					Menu.Size = UDim2.fromScale(0, 0)
+					Menu.BackgroundColor3 = Iris._config.HeaderColor
+					Menu.BackgroundTransparency = 1
+					Menu.BorderSizePixel = 0
+					Menu.Text = ""
+					Menu.LayoutOrder = thisWidget.ZIndex
+					Menu.AutoButtonColor = false
+					Menu.ClipsDescendants = true
 
-		return RadioButton
-	end,
-	Update = function(thisWidget: RadioButton)
-		local RadioButton = thisWidget.Instance :: TextButton
-		local TextLabel: TextLabel = RadioButton.TextLabel
-
-		TextLabel.Text = thisWidget.arguments.Text or "Radio Button"
-		if thisWidget.state then
-			thisWidget.state.index.lastChangeTick = Iris._cycleTick
-			Iris._widgets[thisWidget.type].UpdateState(thisWidget)
-		end
-	end,
-	Discard = function(thisWidget: RadioButton)
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-	GenerateState = function(thisWidget: RadioButton)
-		if thisWidget.state.index == nil then
-			thisWidget.state.index = Iris._widgetState(thisWidget, "index", thisWidget.arguments.Index)
-		end
-	end,
-	UpdateState = function(thisWidget: RadioButton)
-		local RadioButton = thisWidget.Instance :: TextButton
-		local Button = RadioButton.Button :: Frame
-		local Circle: Frame = Button.Circle
-
-		if thisWidget.state.index.value == thisWidget.arguments.Index then
-			-- only need to hide the circle
-			Circle.BackgroundTransparency = Iris._config.CheckMarkTransparency
-			thisWidget.lastSelectedTick = Iris._cycleTick + 1
-		else
-			Circle.BackgroundTransparency = 1
-			thisWidget.lastUnselectedTick = Iris._cycleTick + 1
-		end
-	end,
-} :: WidgetClass)
-local abstractImage = {
-	hasState = false,
-	hasChildren = false,
-	Args = {
-		["Image"] = 1,
-		["Size"] = 2,
-		["Rect"] = 3,
-		["ScaleType"] = 4,
-		["ResampleMode"] = 5,
-		["TileSize"] = 6,
-		["SliceCenter"] = 7,
-		["SliceScale"] = 8,
-	},
-	Discard = function(thisWidget: Image)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass
-
---stylua: ignore
-Iris.WidgetConstructor("Image", widgets.extend(abstractImage, {
-	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: Image)
-		local Image: ImageLabel = Instance.new("ImageLabel")
-		Image.Name = "Iris_Image"
-		Image.BackgroundTransparency = 1
-		Image.BorderSizePixel = 0
-		Image.ImageColor3 = Iris._config.ImageColor
-		Image.ImageTransparency = Iris._config.ImageTransparency
-		Image.LayoutOrder = thisWidget.ZIndex
-
-		widgets.applyFrameStyle(Image, true)
-
-		return Image
-	end,
-	Update = function(thisWidget: Image)
-		local Image = thisWidget.Instance :: ImageLabel
-
-		Image.Image = thisWidget.arguments.Image or widgets.ICONS.UNKNOWN_TEXTURE
-		Image.Size = thisWidget.arguments.Size
-		if thisWidget.arguments.ScaleType then
-			Image.ScaleType = thisWidget.arguments.ScaleType
-			if thisWidget.arguments.ScaleType == Enum.ScaleType.Tile and thisWidget.arguments.TileSize then
-				Image.TileSize = thisWidget.arguments.TileSize
-			elseif thisWidget.arguments.ScaleType == Enum.ScaleType.Slice then
-				if thisWidget.arguments.SliceCenter then
-					Image.SliceCenter = thisWidget.arguments.SliceCenter
+					widgets.applyTextStyle(Menu)
+					widgets.UIPadding(Menu, Vector2.new(Iris._config.ItemSpacing.X, Iris._config.FramePadding.Y))
 				end
-				if thisWidget.arguments.SliceScale then
-					Image.SliceScale = thisWidget.arguments.SliceScale
-				end
-			end
-		end
+				widgets.applyInteractionHighlights("Background", Menu, Menu, thisWidget.ButtonColors)
 
-		if thisWidget.arguments.Rect then
-			Image.ImageRectOffset = thisWidget.arguments.Rect.Min
-			Image.ImageRectSize = Vector2.new(thisWidget.arguments.Rect.Width, thisWidget.arguments.Rect.Height)
-		end
+				widgets.applyButtonClick(Menu, function()
+					local openMenu: boolean = if #MenuStack <= 1 then not thisWidget.state.isOpened.value else true
+					thisWidget.state.isOpened:set(openMenu)
 
-		if thisWidget.arguments.ResampleMode then
-			Image.ResampleMode = thisWidget.arguments.ResampleMode
-		end
-	end,
-} :: WidgetClass)
-)
+					AnyMenuOpen = openMenu
+					ActiveMenu = openMenu and thisWidget or nil
+					-- the hovering should handle all of the menus after the first one.
+					if #MenuStack <= 1 then
+						if openMenu then
+							table.insert(MenuStack, thisWidget)
+						else
+							table.remove(MenuStack)
+						end
+					end
+				end)
 
---stylua: ignore
-Iris.WidgetConstructor("ImageButton", widgets.extend(abstractImage, {
-	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: ImageButton)
-		local Button: ImageButton = Instance.new("ImageButton")
-		Button.Name = "Iris_ImageButton"
-		Button.AutomaticSize = Enum.AutomaticSize.XY
-		Button.BackgroundColor3 = Iris._config.FrameBgColor
-		Button.BackgroundTransparency = Iris._config.FrameBgTransparency
-		Button.BorderSizePixel = 0
-		Button.Image = ""
-		Button.ImageTransparency = 1
-		Button.LayoutOrder = thisWidget.ZIndex
-		Button.AutoButtonColor = false
+				widgets.applyMouseEnter(Menu, function()
+					if AnyMenuOpen and ActiveMenu and ActiveMenu ~= thisWidget then
+						local parentMenu = thisWidget.parentWidget :: Types.Menu
+						local parentIndex: number? = table.find(MenuStack, parentMenu)
 
-		widgets.applyFrameStyle(Button, true)
-		widgets.UIPadding(Button, Vector2.new(Iris._config.ImageBorderSize, Iris._config.ImageBorderSize))
+						EmptyMenuStack(parentIndex)
+						thisWidget.state.isOpened:set(true)
+						ActiveMenu = thisWidget
+						AnyMenuOpen = true
+						table.insert(MenuStack, thisWidget)
+					end
+				end)
 
-		local Image: ImageLabel = Instance.new("ImageLabel")
-		Image.Name = "ImageLabel"
-		Image.BackgroundTransparency = 1
-		Image.BorderSizePixel = 0
-		Image.ImageColor3 = Iris._config.ImageColor
-		Image.ImageTransparency = Iris._config.ImageTransparency
-		Image.Parent = Button
+				local ChildContainer: ScrollingFrame = Instance.new("ScrollingFrame")
+				ChildContainer.Name = "MenuContainer"
+				ChildContainer.BackgroundColor3 = Iris._config.PopupBgColor
+				ChildContainer.BackgroundTransparency = Iris._config.PopupBgTransparency
+				ChildContainer.BorderSizePixel = 0
+				ChildContainer.Size = UDim2.fromOffset(0, 0)
+				ChildContainer.AutomaticSize = Enum.AutomaticSize.XY
 
-		widgets.applyInteractionHighlights("Background", Button, Button, {
-			Color = Iris._config.FrameBgColor,
-			Transparency = Iris._config.FrameBgTransparency,
-			HoveredColor = Iris._config.FrameBgHoveredColor,
-			HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
-			ActiveColor = Iris._config.FrameBgActiveColor,
-			ActiveTransparency = Iris._config.FrameBgActiveTransparency,
-		})
+				ChildContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+				ChildContainer.ScrollBarImageTransparency = Iris._config.ScrollbarGrabTransparency
+				ChildContainer.ScrollBarImageColor3 = Iris._config.ScrollbarGrabColor
+				ChildContainer.ScrollBarThickness = Iris._config.ScrollbarSize
+				ChildContainer.CanvasSize = UDim2.fromScale(0, 0)
+				ChildContainer.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+				ChildContainer.TopImage = widgets.ICONS.BLANK_SQUARE
+				ChildContainer.MidImage = widgets.ICONS.BLANK_SQUARE
+				ChildContainer.BottomImage = widgets.ICONS.BLANK_SQUARE
 
-		return Button
-	end,
-	Update = function(thisWidget: ImageButton)
-		local Button = thisWidget.Instance :: TextButton
-		local Image: ImageLabel = Button.ImageLabel
+				ChildContainer.ZIndex = 6
+				ChildContainer.LayoutOrder = 6
+				ChildContainer.ClipsDescendants = true
 
-		Image.Image = thisWidget.arguments.Image or widgets.ICONS.UNKNOWN_TEXTURE
-		Image.Size = thisWidget.arguments.Size
-		if thisWidget.arguments.ScaleType then
-			Image.ScaleType = thisWidget.arguments.ScaleType
-			if thisWidget.arguments.ScaleType == Enum.ScaleType.Tile and thisWidget.arguments.TileSize then
-				Image.TileSize = thisWidget.arguments.TileSize
-			elseif thisWidget.arguments.ScaleType == Enum.ScaleType.Slice then
-				if thisWidget.arguments.SliceCenter then
-					Image.SliceCenter = thisWidget.arguments.SliceCenter
-				end
-				if thisWidget.arguments.SliceScale then
-					Image.SliceScale = thisWidget.arguments.SliceScale
-				end
-			end
-		end
+				-- Unfortunatley, ScrollingFrame does not work with UICorner
+				-- if Iris._config.PopupRounding > 0 then
+				--     widgets.UICorner(ChildContainer, Iris._config.PopupRounding)
+				-- end
 
-		if thisWidget.arguments.Rect then
-			Image.ImageRectOffset = thisWidget.arguments.Rect.Min
-			Image.ImageRectSize = Vector2.new(thisWidget.arguments.Rect.Width, thisWidget.arguments.Rect.Height)
-		end
+				widgets.UIStroke(ChildContainer, Iris._config.WindowBorderSize, Iris._config.BorderColor, Iris._config.BorderTransparency)
+				widgets.UIPadding(ChildContainer, Vector2.new(2, Iris._config.WindowPadding.Y - Iris._config.ItemSpacing.Y))
 
-		if thisWidget.arguments.ResampleMode then
-			Image.ResampleMode = thisWidget.arguments.ResampleMode
-		end
-	end,
-} :: WidgetClass)
-)
-local abstractTree = {
-	hasState = true,
-	hasChildren = true,
-	Events = {
-		["collapsed"] = {
-			["Init"] = function(_thisWidget: CollapsingHeader) end,
-			["Get"] = function(thisWidget: CollapsingHeader)
-				return thisWidget.lastCollapsedTick == Iris._cycleTick
+				local ChildContainerUIListLayout: UIListLayout = widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, 1))
+				ChildContainerUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+				local RootPopupScreenGui = Iris._rootInstance and Iris._rootInstance:FindFirstChild("PopupScreenGui") :: GuiObject
+				ChildContainer.Parent = RootPopupScreenGui
+
+
+				thisWidget.ChildContainer = ChildContainer
+				return Menu
 			end,
-		},
-		["uncollapsed"] = {
-			["Init"] = function(_thisWidget: CollapsingHeader) end,
-			["Get"] = function(thisWidget: CollapsingHeader)
-				return thisWidget.lastUncollapsedTick == Iris._cycleTick
+			Update = function(thisWidget: Types.Menu)
+				local Menu = thisWidget.Instance :: TextButton
+				local TextLabel: TextLabel
+				if thisWidget.parentWidget.type == "Menu" then
+					TextLabel = Menu.TextLabel
+				else
+					TextLabel = Menu
+				end
+				TextLabel.Text = thisWidget.arguments.Text or "Menu"
 			end,
-		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget)
-			return thisWidget.Instance
-		end),
-	},
-	Discard = function(thisWidget: CollapsingHeader)
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-	ChildAdded = function(thisWidget: CollapsingHeader, _thisChild: Widget)
-		local ChildContainer: Frame = thisWidget.ChildContainer :: Frame
+			ChildAdded = function(thisWidget: Types.Menu, _thisChild: Types.Widget)
+				UpdateChildContainerTransform(thisWidget)
+				return thisWidget.ChildContainer
+			end,
+			ChildDiscarded = function(thisWidget: Types.Menu, _thisChild: Types.Widget)
+				UpdateChildContainerTransform(thisWidget)
+			end,
+			GenerateState = function(thisWidget: Types.Menu)
+				if thisWidget.state.isOpened == nil then
+					thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", false)
+				end
+			end,
+			UpdateState = function(thisWidget: Types.Menu)
+				local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
 
-		ChildContainer.Visible = thisWidget.state.isUncollapsed.value
+				if thisWidget.state.isOpened.value then
+					thisWidget.lastOpenedTick = Iris._cycleTick + 1
+					thisWidget.ButtonColors.Transparency = Iris._config.HeaderTransparency
+					ChildContainer.Visible = true
 
-		return ChildContainer
-	end,
-	UpdateState = function(thisWidget: CollapsingHeader)
-		local isUncollapsed: boolean = thisWidget.state.isUncollapsed.value
-		local Tree = thisWidget.Instance :: Frame
-		local ChildContainer = thisWidget.ChildContainer :: Frame
-		local Header = Tree.Header :: Frame
-		local Button = Header.Button :: TextButton
-		local Arrow: ImageLabel = Button.Arrow
+					UpdateChildContainerTransform(thisWidget)
+				else
+					thisWidget.lastClosedTick = Iris._cycleTick + 1
+					thisWidget.ButtonColors.Transparency = 1
+					ChildContainer.Visible = false
+				end
+			end,
+			Discard = function(thisWidget: Types.Menu)
+				-- properly handle removing a menu if open and deleted
+				if AnyMenuOpen then
+					local parentMenu = thisWidget.parentWidget :: Types.Menu
+					local parentIndex: number? = table.find(MenuStack, parentMenu)
+					if parentIndex then
+						EmptyMenuStack(parentIndex)
+						if #MenuStack ~= 0 then
+							ActiveMenu = parentMenu
+							AnyMenuOpen = true
+						end
+					end
+				end
 
-		Arrow.Image = (isUncollapsed and widgets.ICONS.DOWN_POINTING_TRIANGLE or widgets.ICONS.RIGHT_POINTING_TRIANGLE)
-		if isUncollapsed then
-			thisWidget.lastUncollapsedTick = Iris._cycleTick + 1
-		else
-			thisWidget.lastCollapsedTick = Iris._cycleTick + 1
-		end
+				thisWidget.Instance:Destroy()
+				thisWidget.ChildContainer:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+		} :: Types.WidgetClass)
 
-		ChildContainer.Visible = isUncollapsed
-	end,
-	GenerateState = function(thisWidget: CollapsingHeader)
-		if thisWidget.state.isUncollapsed == nil then
-			thisWidget.state.isUncollapsed = Iris._widgetState(thisWidget, "isUncollapsed", thisWidget.arguments.DefaultOpen or false)
-		end
-	end,
-} :: WidgetClass
+		--stylua: ignore
+		Iris.WidgetConstructor("MenuItem", {
+			hasState = false,
+			hasChildren = false,
+			Args = {
+				Text = 1,
+				KeyCode = 2,
+				ModifierKey = 3,
+			},
+			Events = {
+				["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.MenuItem)
+				local MenuItem: TextButton = Instance.new("TextButton")
+				MenuItem.Name = "MenuItem"
+				MenuItem.BackgroundTransparency = 1
+				MenuItem.BorderSizePixel = 0
+				MenuItem.Size = UDim2.fromScale(1, 0)
+				MenuItem.Text = ""
+				MenuItem.AutomaticSize = Enum.AutomaticSize.Y
+				MenuItem.LayoutOrder = thisWidget.ZIndex
+				MenuItem.AutoButtonColor = false
 
---stylua: ignore
-Iris.WidgetConstructor(
-	"Tree",
-	widgets.extend(abstractTree, {
-		Args = {
-			["Text"] = 1,
-			["SpanAvailWidth"] = 2,
-			["NoIndent"] = 3,
-			["DefaultOpen"] = 4,
-		},
-		Generate = function(thisWidget: Tree)
-			local Tree: Frame = Instance.new("Frame")
-			Tree.Name = "Iris_Tree"
-			Tree.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
-			Tree.AutomaticSize = Enum.AutomaticSize.Y
-			Tree.BackgroundTransparency = 1
-			Tree.BorderSizePixel = 0
-			Tree.LayoutOrder = thisWidget.ZIndex
+				local UIPadding = widgets.UIPadding(MenuItem, Iris._config.FramePadding)
+				UIPadding.PaddingTop = UIPadding.PaddingTop - UDim.new(0, 1)
+				widgets.UIListLayout(MenuItem, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
 
-			widgets.UIListLayout(Tree, Enum.FillDirection.Vertical, UDim.new(0, 0))
+				widgets.applyInteractionHighlights("Background", MenuItem, MenuItem, {
+					Color = Iris._config.HeaderColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.HeaderHoveredColor,
+					HoveredTransparency = Iris._config.HeaderHoveredTransparency,
+					ActiveColor = Iris._config.HeaderHoveredColor,
+					ActiveTransparency = Iris._config.HeaderHoveredTransparency,
+				})
 
-			local ChildContainer: Frame = Instance.new("Frame")
-			ChildContainer.Name = "TreeContainer"
-			ChildContainer.Size = UDim2.fromScale(1, 0)
-			ChildContainer.AutomaticSize = Enum.AutomaticSize.Y
-			ChildContainer.BackgroundTransparency = 1
-			ChildContainer.BorderSizePixel = 0
-			ChildContainer.LayoutOrder = 1
-			ChildContainer.Visible = false
-			-- ChildContainer.ClipsDescendants = true
+				widgets.applyButtonClick(MenuItem, function()
+					EmptyMenuStack()
+				end)
 
-			widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
-			local ChildContainerPadding: UIPadding = widgets.UIPadding(ChildContainer, Vector2.zero)
-			ChildContainerPadding.PaddingTop = UDim.new(0, Iris._config.ItemSpacing.Y)
+				widgets.applyMouseEnter(MenuItem, function()
+					local parentMenu = thisWidget.parentWidget :: Types.Menu
+					if AnyMenuOpen and ActiveMenu and ActiveMenu ~= parentMenu then
+						local parentIndex: number? = table.find(MenuStack, parentMenu)
 
-			ChildContainer.Parent = Tree
+						EmptyMenuStack(parentIndex)
+						ActiveMenu = parentMenu
+						AnyMenuOpen = true
+					end
+				end)
 
-			local Header: Frame = Instance.new("Frame")
-			Header.Name = "Header"
-			Header.Size = UDim2.fromScale(1, 0)
-			Header.AutomaticSize = Enum.AutomaticSize.Y
-			Header.BackgroundTransparency = 1
-			Header.BorderSizePixel = 0
-			Header.Parent = Tree
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
 
-			local Button: TextButton = Instance.new("TextButton")
-			Button.Name = "Button"
-			Button.BackgroundTransparency = 1
-			Button.BorderSizePixel = 0
-			Button.Text = ""
-			Button.AutoButtonColor = false
+				widgets.applyTextStyle(TextLabel)
 
-			widgets.applyInteractionHighlights("Background", Button, Header, {
-				Color = Color3.fromRGB(0, 0, 0),
-				Transparency = 1,
-				HoveredColor = Iris._config.HeaderHoveredColor,
-				HoveredTransparency = Iris._config.HeaderHoveredTransparency,
-				ActiveColor = Iris._config.HeaderActiveColor,
-				ActiveTransparency = Iris._config.HeaderActiveTransparency,
-			})
+				TextLabel.Parent = MenuItem
 
-			local ButtonPadding: UIPadding = widgets.UIPadding(Button, Vector2.zero)
-			ButtonPadding.PaddingLeft = UDim.new(0, Iris._config.FramePadding.X)
-			local ButtonUIListLayout: UIListLayout = widgets.UIListLayout(Button, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.FramePadding.X))
-			ButtonUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+				local Shortcut: TextLabel = Instance.new("TextLabel")
+				Shortcut.Name = "Shortcut"
+				Shortcut.BackgroundTransparency = 1
+				Shortcut.BorderSizePixel = 0
+				Shortcut.LayoutOrder = 1
+				Shortcut.AutomaticSize = Enum.AutomaticSize.XY
 
-			Button.Parent = Header
+				widgets.applyTextStyle(Shortcut)
 
-			local Arrow: ImageLabel = Instance.new("ImageLabel")
-			Arrow.Name = "Arrow"
-			Arrow.Size = UDim2.fromOffset(Iris._config.TextSize, math.floor(Iris._config.TextSize * 0.7))
-			Arrow.BackgroundTransparency = 1
-			Arrow.BorderSizePixel = 0
-			Arrow.ImageColor3 = Iris._config.TextColor
-			Arrow.ImageTransparency = Iris._config.TextTransparency
-			Arrow.ScaleType = Enum.ScaleType.Fit
+				Shortcut.Text = ""
+				Shortcut.TextColor3 = Iris._config.TextDisabledColor
+				Shortcut.TextTransparency = Iris._config.TextDisabledTransparency
 
-			Arrow.Parent = Button
+				Shortcut.Parent = MenuItem
 
-			local TextLabel: TextLabel = Instance.new("TextLabel")
-			TextLabel.Name = "TextLabel"
-			TextLabel.Size = UDim2.fromOffset(0, 0)
-			TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-			TextLabel.BackgroundTransparency = 1
-			TextLabel.BorderSizePixel = 0
+				return MenuItem
+			end,
+			Update = function(thisWidget: Types.MenuItem)
+				local MenuItem = thisWidget.Instance :: TextButton
+				local TextLabel: TextLabel = MenuItem.TextLabel
+				local Shortcut: TextLabel = MenuItem.Shortcut
 
-			local TextPadding: UIPadding = widgets.UIPadding(TextLabel, Vector2.zero)
-			TextPadding.PaddingRight = UDim.new(0, 21)
-			widgets.applyTextStyle(TextLabel)
+				TextLabel.Text = thisWidget.arguments.Text
+				if thisWidget.arguments.KeyCode then
+					if thisWidget.arguments.ModifierKey then
+						Shortcut.Text = thisWidget.arguments.ModifierKey.Name .. " + " .. thisWidget.arguments.KeyCode.Name
+					else
+						Shortcut.Text = thisWidget.arguments.KeyCode.Name
+					end
+				end
+			end,
+			Discard = function(thisWidget: Types.MenuItem)
+				thisWidget.Instance:Destroy()
+			end,
+		} :: Types.WidgetClass)
 
-			TextLabel.Parent = Button
+		--stylua: ignore
+		Iris.WidgetConstructor("MenuToggle", {
+			hasState = true,
+			hasChildren = false,
+			Args = {
+				Text = 1,
+				KeyCode = 2,
+				ModifierKey = 3,
+			},
+			Events = {
+				["checked"] = {
+					["Init"] = function(_thisWidget: Types.MenuToggle) end,
+					["Get"] = function(thisWidget: Types.MenuToggle): boolean
+						return thisWidget.lastCheckedTick == Iris._cycleTick
+					end,
+				},
+				["unchecked"] = {
+					["Init"] = function(_thisWidget: Types.MenuToggle) end,
+					["Get"] = function(thisWidget: Types.MenuToggle): boolean
+						return thisWidget.lastUncheckedTick == Iris._cycleTick
+					end,
+				},
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.MenuToggle)
+				local MenuItem: TextButton = Instance.new("TextButton")
+				MenuItem.Name = "MenuItem"
+				MenuItem.BackgroundTransparency = 1
+				MenuItem.BorderSizePixel = 0
+				MenuItem.Size = UDim2.fromScale(1, 0)
+				MenuItem.Text = ""
+				MenuItem.AutomaticSize = Enum.AutomaticSize.Y
+				MenuItem.LayoutOrder = thisWidget.ZIndex
+				MenuItem.AutoButtonColor = false
 
-			widgets.applyButtonClick(Button, function()
-				thisWidget.state.isUncollapsed:set(not thisWidget.state.isUncollapsed.value)
-			end)
+				local UIPadding = widgets.UIPadding(MenuItem, Iris._config.FramePadding)
+				UIPadding.PaddingTop = UIPadding.PaddingTop - UDim.new(0, 1)
+				widgets.UIListLayout(MenuItem, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X)).VerticalAlignment = Enum.VerticalAlignment.Center
 
-			thisWidget.ChildContainer = ChildContainer
-			return Tree
-		end,
-		Update = function(thisWidget: Tree)
-			local Tree = thisWidget.Instance :: Frame
-			local ChildContainer = thisWidget.ChildContainer :: Frame
-			local Header = Tree.Header :: Frame
-			local Button = Header.Button :: TextButton
-			local TextLabel: TextLabel = Button.TextLabel
-			local Padding: UIPadding = ChildContainer.UIPadding
+				widgets.applyInteractionHighlights("Background", MenuItem, MenuItem, {
+					Color = Iris._config.HeaderColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.HeaderHoveredColor,
+					HoveredTransparency = Iris._config.HeaderHoveredTransparency,
+					ActiveColor = Iris._config.HeaderHoveredColor,
+					ActiveTransparency = Iris._config.HeaderHoveredTransparency,
+				})
 
-			TextLabel.Text = thisWidget.arguments.Text or "Tree"
-			if thisWidget.arguments.SpanAvailWidth then
-				Button.AutomaticSize = Enum.AutomaticSize.Y
-				Button.Size = UDim2.fromScale(1, 0)
-			else
+				widgets.applyButtonClick(MenuItem, function()
+					local wasChecked: boolean = thisWidget.state.isChecked.value
+					thisWidget.state.isChecked:set(not wasChecked)
+					EmptyMenuStack()
+				end)
+
+				widgets.applyMouseEnter(MenuItem, function()
+					local parentMenu = thisWidget.parentWidget :: Types.Menu
+					if AnyMenuOpen and ActiveMenu and ActiveMenu ~= parentMenu then
+						local parentIndex: number? = table.find(MenuStack, parentMenu)
+
+						EmptyMenuStack(parentIndex)
+						ActiveMenu = parentMenu
+						AnyMenuOpen = true
+					end
+				end)
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+
+				widgets.applyTextStyle(TextLabel)
+
+				TextLabel.Parent = MenuItem
+
+				local Shortcut: TextLabel = Instance.new("TextLabel")
+				Shortcut.Name = "Shortcut"
+				Shortcut.BackgroundTransparency = 1
+				Shortcut.BorderSizePixel = 0
+				Shortcut.LayoutOrder = 1
+				Shortcut.AutomaticSize = Enum.AutomaticSize.XY
+
+				widgets.applyTextStyle(Shortcut)
+
+				Shortcut.Text = ""
+				Shortcut.TextColor3 = Iris._config.TextDisabledColor
+				Shortcut.TextTransparency = Iris._config.TextDisabledTransparency
+
+				Shortcut.Parent = MenuItem
+
+				local frameSize: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
+				local padding: number = math.round(0.2 * frameSize)
+				local iconSize: number = frameSize - 2 * padding
+
+				local Icon: ImageLabel = Instance.new("ImageLabel")
+				Icon.Name = "Icon"
+				Icon.Size = UDim2.fromOffset(iconSize, iconSize)
+				Icon.BackgroundTransparency = 1
+				Icon.BorderSizePixel = 0
+				Icon.ImageColor3 = Iris._config.TextColor
+				Icon.ImageTransparency = Iris._config.TextTransparency
+				Icon.Image = widgets.ICONS.CHECK_MARK
+				Icon.LayoutOrder = 2
+
+				Icon.Parent = MenuItem
+
+				return MenuItem
+			end,
+			GenerateState = function(thisWidget: Types.MenuToggle)
+				if thisWidget.state.isChecked == nil then
+					thisWidget.state.isChecked = Iris._widgetState(thisWidget, "isChecked", false)
+				end
+			end,
+			Update = function(thisWidget: Types.MenuToggle)
+				local MenuItem = thisWidget.Instance :: TextButton
+				local TextLabel: TextLabel = MenuItem.TextLabel
+				local Shortcut: TextLabel = MenuItem.Shortcut
+
+				TextLabel.Text = thisWidget.arguments.Text
+				if thisWidget.arguments.KeyCode then
+					if thisWidget.arguments.ModifierKey then
+						Shortcut.Text = thisWidget.arguments.ModifierKey.Name .. " + " .. thisWidget.arguments.KeyCode.Name
+					else
+						Shortcut.Text = thisWidget.arguments.KeyCode.Name
+					end
+				end
+			end,
+			UpdateState = function(thisWidget: Types.MenuToggle)
+				local MenuItem = thisWidget.Instance :: TextButton
+				local Icon: ImageLabel = MenuItem.Icon
+
+				if thisWidget.state.isChecked.value then
+					Icon.Image = widgets.ICONS.CHECK_MARK
+					thisWidget.lastCheckedTick = Iris._cycleTick + 1
+				else
+					Icon.Image = ""
+					thisWidget.lastUncheckedTick = Iris._cycleTick + 1
+				end
+			end,
+			Discard = function(thisWidget: Types.MenuToggle)
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local asdas = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		--stylua: ignore
+		Iris.WidgetConstructor("Separator", {
+			hasState = false,
+			hasChildren = false,
+			Args = {},
+			Events = {},
+			Generate = function(thisWidget: Types.Separator)
+				local Separator: Frame = Instance.new("Frame")
+				Separator.Name = "Iris_Separator"
+				Separator.BackgroundColor3 = Iris._config.SeparatorColor
+				Separator.BackgroundTransparency = Iris._config.SeparatorTransparency
+				Separator.BorderSizePixel = 0
+				if thisWidget.parentWidget.type == "SameLine" then
+					Separator.Size = UDim2.new(0, 1, Iris._config.ItemWidth.Scale, Iris._config.ItemWidth.Offset)
+				else
+					Separator.Size = UDim2.new(Iris._config.ItemWidth.Scale, Iris._config.ItemWidth.Offset, 0, 1)
+				end
+				Separator.LayoutOrder = thisWidget.ZIndex
+
+				widgets.UIListLayout(Separator, Enum.FillDirection.Vertical, UDim.new(0, 0))
+				-- this is to prevent a bug of AutomaticLayout edge case when its parent has automaticLayout enabled
+
+				return Separator
+			end,
+			Update = function(_thisWidget: Types.Separator) end,
+			Discard = function(thisWidget: Types.Separator)
+				thisWidget.Instance:Destroy()
+			end,
+		} :: Types.WidgetClass)
+
+		--stylua: ignore
+		Iris.WidgetConstructor("Indent", {
+			hasState = false,
+			hasChildren = true,
+			Args = {
+				["Width"] = 1,
+			},
+			Events = {},
+			Generate = function(thisWidget: Types.Indent)
+				local Indent: Frame = Instance.new("Frame")
+				Indent.Name = "Iris_Indent"
+				Indent.BackgroundTransparency = 1
+				Indent.BorderSizePixel = 0
+				Indent.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+				Indent.AutomaticSize = Enum.AutomaticSize.Y
+				Indent.LayoutOrder = thisWidget.ZIndex
+
+				widgets.UIListLayout(Indent, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
+				widgets.UIPadding(Indent, Vector2.zero)
+
+				return Indent
+			end,
+			Update = function(thisWidget: Types.Indent)
+				local Indent = thisWidget.Instance :: Frame
+
+				local indentWidth: number
+				if thisWidget.arguments.Width then
+					indentWidth = thisWidget.arguments.Width
+				else
+					indentWidth = Iris._config.IndentSpacing
+				end
+				Indent.UIPadding.PaddingLeft = UDim.new(0, indentWidth)
+			end,
+			Discard = function(thisWidget: Types.Indent)
+				thisWidget.Instance:Destroy()
+			end,
+			ChildAdded = function(thisWidget: Types.Indent, _thisChild: Types.Widget)
+				return thisWidget.Instance
+			end,
+		} :: Types.WidgetClass)
+
+		--stylua: ignore
+		Iris.WidgetConstructor("SameLine", {
+			hasState = false,
+			hasChildren = true,
+			Args = {
+				["Width"] = 1,
+				["VerticalAlignment"] = 2,
+				["HorizontalAlignment"] = 3,
+			},
+			Events = {},
+			Generate = function(thisWidget: Types.SameLine)
+				local SameLine: Frame = Instance.new("Frame")
+				SameLine.Name = "Iris_SameLine"
+				SameLine.BackgroundTransparency = 1
+				SameLine.BorderSizePixel = 0
+				SameLine.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+				SameLine.AutomaticSize = Enum.AutomaticSize.Y
+				SameLine.LayoutOrder = thisWidget.ZIndex
+
+				widgets.UIListLayout(SameLine, Enum.FillDirection.Horizontal, UDim.new(0, 0))
+
+				return SameLine
+			end,
+			Update = function(thisWidget: Types.SameLine)
+				local Sameline = thisWidget.Instance :: Frame
+				local uiListLayout: UIListLayout = Sameline.UIListLayout
+				local itemWidth: number
+				if thisWidget.arguments.Width then
+					itemWidth = thisWidget.arguments.Width
+				else
+					itemWidth = Iris._config.ItemSpacing.X
+				end
+				uiListLayout.Padding = UDim.new(0, itemWidth)
+				if thisWidget.arguments.VerticalAlignment then
+					uiListLayout.VerticalAlignment = thisWidget.arguments.VerticalAlignment
+				else
+					uiListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+				end
+				if thisWidget.arguments.HorizontalAlignment then
+					uiListLayout.HorizontalAlignment = thisWidget.arguments.HorizontalAlignment
+				else
+					uiListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+				end
+			end,
+			Discard = function(thisWidget: Types.SameLine)
+				thisWidget.Instance:Destroy()
+			end,
+			ChildAdded = function(thisWidget: Types.SameLine, _thisChild: Types.Widget)
+				return thisWidget.Instance
+			end,
+		} :: Types.WidgetClass)
+
+		--stylua: ignore
+		Iris.WidgetConstructor("Group", {
+			hasState = false,
+			hasChildren = true,
+			Args = {},
+			Events = {},
+			Generate = function(thisWidget: Types.Group)
+				local Group: Frame = Instance.new("Frame")
+				Group.Name = "Iris_Group"
+				Group.AutomaticSize = Enum.AutomaticSize.XY
+				Group.Size = UDim2.fromOffset(0, 0)
+				Group.BackgroundTransparency = 1
+				Group.BorderSizePixel = 0
+				Group.LayoutOrder = thisWidget.ZIndex
+				Group.ClipsDescendants = false
+
+				widgets.UIListLayout(Group, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
+
+				return Group
+			end,
+			Update = function(_thisWidget: Types.Group) end,
+			Discard = function(thisWidget: Types.Group)
+				thisWidget.Instance:Destroy()
+			end,
+			ChildAdded = function(thisWidget: Types.Group, _thisChild: Types.Widget)
+				return thisWidget.Instance
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local aa = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		--stylua: ignore
+		Iris.WidgetConstructor("Text", {
+			hasState = false,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+				["Wrapped"] = 2,
+				["Color"] = 3,
+				["RichText"] = 4,
+			},
+			Events = {
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.Text)
+				local Text: TextLabel = Instance.new("TextLabel")
+				Text.Name = "Iris_Text"
+				Text.Size = UDim2.fromOffset(0, 0)
+				Text.BackgroundTransparency = 1
+				Text.BorderSizePixel = 0
+				Text.LayoutOrder = thisWidget.ZIndex
+				Text.AutomaticSize = Enum.AutomaticSize.XY
+
+				widgets.applyTextStyle(Text)
+				widgets.UIPadding(Text, Vector2.new(0, 2))
+
+				return Text
+			end,
+			Update = function(thisWidget: Types.Text)
+				local Text = thisWidget.Instance :: TextLabel
+				if thisWidget.arguments.Text == nil then
+					error("Text argument is needed for Iris.Text().", 5)
+				end
+				if thisWidget.arguments.Wrapped ~= nil then
+					Text.TextWrapped = thisWidget.arguments.Wrapped
+				else
+					Text.TextWrapped = Iris._config.TextWrapped
+				end
+				if thisWidget.arguments.Color then
+					Text.TextColor3 = thisWidget.arguments.Color
+				else
+					Text.TextColor3 = Iris._config.TextColor
+				end
+				if thisWidget.arguments.RichText ~= nil then
+					Text.RichText = thisWidget.arguments.RichText
+				else
+					Text.RichText = Iris._config.RichText
+				end
+
+				Text.Text = thisWidget.arguments.Text
+			end,
+			Discard = function(thisWidget: Types.Text)
+				thisWidget.Instance:Destroy()
+			end,
+		} :: Types.WidgetClass)
+
+		--stylua: ignore
+		Iris.WidgetConstructor("SeparatorText", {
+			hasState = false,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+			},
+			Events = {
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.SeparatorText)
+				local SeparatorText = Instance.new("Frame")
+				SeparatorText.Name = "Iris_SeparatorText"
+				SeparatorText.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+				SeparatorText.BackgroundTransparency = 1
+				SeparatorText.BorderSizePixel = 0
+				SeparatorText.AutomaticSize = Enum.AutomaticSize.Y
+				SeparatorText.LayoutOrder = thisWidget.ZIndex
+				SeparatorText.ClipsDescendants = true
+
+				widgets.UIPadding(SeparatorText, Vector2.new(0, Iris._config.SeparatorTextPadding.Y))
+				widgets.UIListLayout(SeparatorText, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemSpacing.X))
+
+				SeparatorText.UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+				TextLabel.LayoutOrder = 1
+
+				widgets.applyTextStyle(TextLabel)
+
+				TextLabel.Parent = SeparatorText
+
+				local Left: Frame = Instance.new("Frame")
+				Left.Name = "Left"
+				Left.AnchorPoint = Vector2.new(1, 0.5)
+				Left.BackgroundColor3 = Iris._config.SeparatorColor
+				Left.BackgroundTransparency = Iris._config.SeparatorTransparency
+				Left.BorderSizePixel = 0
+				Left.Size = UDim2.fromOffset(Iris._config.SeparatorTextPadding.X - Iris._config.ItemSpacing.X, Iris._config.SeparatorTextBorderSize)
+
+				Left.Parent = SeparatorText
+
+				local Right: Frame = Instance.new("Frame")
+				Right.Name = "Right"
+				Right.AnchorPoint = Vector2.new(1, 0.5)
+				Right.BackgroundColor3 = Iris._config.SeparatorColor
+				Right.BackgroundTransparency = Iris._config.SeparatorTransparency
+				Right.BorderSizePixel = 0
+				Right.Size = UDim2.new(1, 0, 0, Iris._config.SeparatorTextBorderSize)
+				Right.LayoutOrder = 2
+
+				Right.Parent = SeparatorText
+
+				return SeparatorText
+			end,
+			Update = function(thisWidget: Types.SeparatorText)
+				local SeparatorText = thisWidget.Instance :: Frame
+				local TextLabel: TextLabel = SeparatorText.TextLabel
+				if thisWidget.arguments.Text == nil then
+					error("Text argument is required for Iris.SeparatorText().", 5)
+				end
+				TextLabel.Text = thisWidget.arguments.Text
+			end,
+			Discard = function(thisWidget: Types.SeparatorText)
+				thisWidget.Instance:Destroy()
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local asdasd = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local abstractButton = {
+			hasState = false,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+				["Size"] = 2,
+			},
+			Events = {
+				["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.Button)
+				local Button: TextButton = Instance.new("TextButton")
+				Button.Size = UDim2.fromOffset(0, 0)
+				Button.BackgroundColor3 = Iris._config.ButtonColor
+				Button.BackgroundTransparency = Iris._config.ButtonTransparency
+				Button.AutoButtonColor = false
 				Button.AutomaticSize = Enum.AutomaticSize.XY
-				Button.Size = UDim2.fromScale(0, 0)
-			end
 
-			if thisWidget.arguments.NoIndent then
-				Padding.PaddingLeft = UDim.new(0, 0)
-			else
-				Padding.PaddingLeft = UDim.new(0, Iris._config.IndentSpacing)
-			end
-		end,
-	})
-)
+				widgets.applyTextStyle(Button)
+				Button.TextXAlignment = Enum.TextXAlignment.Center
 
---stylua: ignore
-Iris.WidgetConstructor(
-	"CollapsingHeader",
-	widgets.extend(abstractTree, {
-		Args = {
-			["Text"] = 1,
-			["DefaultOpen"] = 2
-		},
-		Generate = function(thisWidget: CollapsingHeader)
-			local CollapsingHeader: Frame = Instance.new("Frame")
-			CollapsingHeader.Name = "Iris_CollapsingHeader"
-			CollapsingHeader.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
-			CollapsingHeader.AutomaticSize = Enum.AutomaticSize.Y
-			CollapsingHeader.BackgroundTransparency = 1
-			CollapsingHeader.BorderSizePixel = 0
-			CollapsingHeader.LayoutOrder = thisWidget.ZIndex
+				widgets.applyFrameStyle(Button)
 
-			widgets.UIListLayout(CollapsingHeader, Enum.FillDirection.Vertical, UDim.new(0, 0))
+				widgets.applyInteractionHighlights("Background", Button, Button, {
+					Color = Iris._config.ButtonColor,
+					Transparency = Iris._config.ButtonTransparency,
+					HoveredColor = Iris._config.ButtonHoveredColor,
+					HoveredTransparency = Iris._config.ButtonHoveredTransparency,
+					ActiveColor = Iris._config.ButtonActiveColor,
+					ActiveTransparency = Iris._config.ButtonActiveTransparency,
+				})
 
-			local ChildContainer: Frame = Instance.new("Frame")
-			ChildContainer.Name = "CollapsingHeaderContainer"
-			ChildContainer.Size = UDim2.fromScale(1, 0)
-			ChildContainer.AutomaticSize = Enum.AutomaticSize.Y
-			ChildContainer.BackgroundTransparency = 1
-			ChildContainer.BorderSizePixel = 0
-			ChildContainer.LayoutOrder = 1
-			ChildContainer.Visible = false
-			-- ChildContainer.ClipsDescendants = true
+				Button.ZIndex = thisWidget.ZIndex
+				Button.LayoutOrder = thisWidget.ZIndex
 
-			widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
-			local ChildContainerPadding: UIPadding = widgets.UIPadding(ChildContainer, Vector2.zero)
-			ChildContainerPadding.PaddingTop = UDim.new(0, Iris._config.ItemSpacing.Y)
-
-			ChildContainer.Parent = CollapsingHeader
-
-			local Header: Frame = Instance.new("Frame")
-			Header.Name = "Header"
-			Header.Size = UDim2.fromScale(1, 0)
-			Header.AutomaticSize = Enum.AutomaticSize.Y
-			Header.BackgroundTransparency = 1
-			Header.BorderSizePixel = 0
-			Header.Parent = CollapsingHeader
-
-			local Button = Instance.new("TextButton")
-			Button.Name = "Button"
-			Button.Size = UDim2.new(1, 0, 0, 0)
-			Button.AutomaticSize = Enum.AutomaticSize.Y
-			Button.BackgroundColor3 = Iris._config.HeaderColor
-			Button.BackgroundTransparency = Iris._config.HeaderTransparency
-			Button.BorderSizePixel = 0
-			Button.Text = ""
-			Button.AutoButtonColor = false
-			Button.ClipsDescendants = true
-
-			widgets.UIPadding(Button, Iris._config.FramePadding) -- we add a custom padding because it extends on both sides
-			widgets.applyFrameStyle(Button, true)
-			local ButtonUIListLayout: UIListLayout = widgets.UIListLayout(Button, Enum.FillDirection.Horizontal, UDim.new(0, 2 * Iris._config.FramePadding.X))
-			ButtonUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-			widgets.applyInteractionHighlights("Background", Button, Button, {
-				Color = Iris._config.HeaderColor,
-				Transparency = Iris._config.HeaderTransparency,
-				HoveredColor = Iris._config.HeaderHoveredColor,
-				HoveredTransparency = Iris._config.HeaderHoveredTransparency,
-				ActiveColor = Iris._config.HeaderActiveColor,
-				ActiveTransparency = Iris._config.HeaderActiveTransparency,
-			})
-
-			Button.Parent = Header
-
-			local Arrow: ImageLabel = Instance.new("ImageLabel")
-			Arrow.Name = "Arrow"
-			Arrow.Size = UDim2.fromOffset(Iris._config.TextSize, math.ceil(Iris._config.TextSize * 0.8))
-			Arrow.AutomaticSize = Enum.AutomaticSize.Y
-			Arrow.BackgroundTransparency = 1
-			Arrow.BorderSizePixel = 0
-			Arrow.ImageColor3 = Iris._config.TextColor
-			Arrow.ImageTransparency = Iris._config.TextTransparency
-			Arrow.ScaleType = Enum.ScaleType.Fit
-
-			Arrow.Parent = Button
-
-			local TextLabel: TextLabel = Instance.new("TextLabel")
-			TextLabel.Name = "TextLabel"
-			TextLabel.Size = UDim2.fromOffset(0, 0)
-			TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-			TextLabel.BackgroundTransparency = 1
-			TextLabel.BorderSizePixel = 0
-
-			local TextPadding: UIPadding = widgets.UIPadding(TextLabel, Vector2.zero)
-			TextPadding.PaddingRight = UDim.new(0, 21)
-			widgets.applyTextStyle(TextLabel)
-
-			TextLabel.Parent = Button
-
-			widgets.applyButtonClick(Button, function()
-				thisWidget.state.isUncollapsed:set(not thisWidget.state.isUncollapsed.value)
-			end)
-
-			thisWidget.ChildContainer = ChildContainer
-			return CollapsingHeader
-		end,
-		Update = function(thisWidget: CollapsingHeader)
-			local Tree = thisWidget.Instance :: Frame
-			local Header = Tree.Header :: Frame
-			local Button = Header.Button :: TextButton
-			local TextLabel: TextLabel = Button.TextLabel
-
-			TextLabel.Text = thisWidget.arguments.Text or "Collapsing Header"
-		end,
-	})
-)
-local function openTab(TabBar: TabBar, Index: number)
-	if TabBar.state.index.value > 0 then
-		return
-	end
-
-	TabBar.state.index:set(Index)
-end
-
-local function closeTab(TabBar: TabBar, Index: number)
-	if TabBar.state.index.value ~= Index then
-		return
-	end
-
-	-- search left for open tabs
-	for i = Index - 1, 1, -1 do
-		if TabBar.Tabs[i].state.isOpened.value == true then
-			TabBar.state.index:set(i)
-			return
-		end
-	end
-
-	-- search right for open tabs
-	for i = Index, #TabBar.Tabs do
-		if TabBar.Tabs[i].state.isOpened.value == true then
-			TabBar.state.index:set(i)
-			return
-		end
-	end
-
-	-- no open tabs, so wait for one
-	TabBar.state.index:set(0)
-end
-
---stylua: ignore
-Iris.WidgetConstructor("TabBar", {
-	hasState = true,
-	hasChildren = true,
-	Args = {},
-	Events = {},
-	Generate = function(thisWidget: TabBar)
-		local TabBar: Frame = Instance.new("Frame")
-		TabBar.Name = "Iris_TabBar"
-		TabBar.AutomaticSize = Enum.AutomaticSize.Y
-		TabBar.Size = UDim2.fromScale(1, 0)
-		TabBar.BackgroundTransparency = 1
-		TabBar.BorderSizePixel = 0
-		TabBar.LayoutOrder = thisWidget.ZIndex
-
-		widgets.UIListLayout(TabBar, Enum.FillDirection.Vertical, UDim.new()).VerticalAlignment = Enum.VerticalAlignment.Bottom
-
-		local Bar: Frame = Instance.new("Frame")
-		Bar.Name = "Bar"
-		Bar.AutomaticSize = Enum.AutomaticSize.Y
-		Bar.Size = UDim2.fromScale(1, 0)
-		Bar.BackgroundTransparency = 1
-		Bar.BorderSizePixel = 0
-
-		widgets.UIListLayout(Bar, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-
-		Bar.Parent = TabBar
-
-		local Underline: Frame = Instance.new("Frame")
-		Underline.Name = "Underline"
-		Underline.Size = UDim2.new(1, 0, 0, 1)
-		Underline.BackgroundColor3 = Iris._config.TabActiveColor
-		Underline.BackgroundTransparency = Iris._config.TabActiveTransparency
-		Underline.BorderSizePixel = 0
-		Underline.LayoutOrder = 1
-
-		Underline.Parent = TabBar
-
-		local ChildContainer: Frame = Instance.new("Frame")
-		ChildContainer.Name = "TabContainer"
-		ChildContainer.AutomaticSize = Enum.AutomaticSize.Y
-		ChildContainer.Size = UDim2.fromScale(1, 0)
-		ChildContainer.BackgroundTransparency = 1
-		ChildContainer.BorderSizePixel = 0
-		ChildContainer.LayoutOrder = 2
-		ChildContainer.ClipsDescendants = true
-
-		ChildContainer.Parent = TabBar
-
-		thisWidget.ChildContainer = ChildContainer
-		thisWidget.Tabs = {}
-
-		return TabBar
-	end,
-	Update = function(_thisWidget: TabBar) end,
-	ChildAdded = function(thisWidget: TabBar, thisChild: Tab)
-		assert(thisChild.type == "Tab", "Only Iris.Tab can be parented to Iris.TabBar.")
-		local TabBar = thisWidget.Instance :: Frame
-		thisChild.ChildContainer.Parent = thisWidget.ChildContainer
-		thisChild.Index = #thisWidget.Tabs + 1
-		thisWidget.state.index.ConnectedWidgets[thisChild.ID] = thisChild
-		table.insert(thisWidget.Tabs, thisChild)
-
-		return TabBar.Bar
-	end,
-	ChildDiscarded = function(thisWidget: TabBar, thisChild: Tab)
-		local Index: number = thisChild.Index
-		table.remove(thisWidget.Tabs, Index)
-
-		for i = Index, #thisWidget.Tabs do
-			thisWidget.Tabs[i].Index = i
-		end
-
-		closeTab(thisWidget, Index)
-	end,
-	GenerateState = function(thisWidget: Tab)
-		if thisWidget.state.index == nil then
-			thisWidget.state.index = Iris._widgetState(thisWidget, "index", 1)
-		end
-	end,
-	UpdateState = function(_thisWidget: Tab)
-	end,
-	Discard = function(thisWidget: TabBar)
-		thisWidget.Instance:Destroy()
-	end,
-} :: WidgetClass)
-
---stylua: ignore
-Iris.WidgetConstructor("Tab", {
-	hasState = true,
-	hasChildren = true,
-	Args = {
-		["Text"] = 1,
-		["Hideable"] = 2,
-	},
-	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["selected"] = {
-			["Init"] = function(_thisWidget: Tab) end,
-			["Get"] = function(thisWidget: Tab)
-				return thisWidget.lastSelectedTick == Iris._cycleTick
+				return Button
 			end,
-		},
-		["unselected"] = {
-			["Init"] = function(_thisWidget: Tab) end,
-			["Get"] = function(thisWidget: Tab)
-				return thisWidget.lastUnselectedTick == Iris._cycleTick
+			Update = function(thisWidget: Types.Button)
+				local Button = thisWidget.Instance :: TextButton
+				Button.Text = thisWidget.arguments.Text or "Button"
+				Button.Size = thisWidget.arguments.Size or UDim2.fromOffset(0, 0)
 			end,
-		},
-		["active"] = {
-			["Init"] = function(_thisWidget: Tab) end,
-			["Get"] = function(thisWidget: Tab)
-				return thisWidget.state.index.value == thisWidget.Index
+			Discard = function(thisWidget: Types.Button)
+				thisWidget.Instance:Destroy()
 			end,
-		},
-		["opened"] = {
-			["Init"] = function(_thisWidget: Tab) end,
-			["Get"] = function(thisWidget: Tab)
-				return thisWidget.lastOpenedTick == Iris._cycleTick
+		} :: Types.WidgetClass
+		widgets.abstractButton = abstractButton
+
+		--stylua: ignore
+		Iris.WidgetConstructor("Button", widgets.extend(abstractButton, {
+			Generate = function(thisWidget: Types.Button)
+				local Button: TextButton = abstractButton.Generate(thisWidget)
+				Button.Name = "Iris_Button"
+
+				return Button
 			end,
-		},
-		["closed"] = {
-			["Init"] = function(_thisWidget: Tab) end,
-			["Get"] = function(thisWidget: Tab)
-				return thisWidget.lastClosedTick == Iris._cycleTick
+		} :: Types.WidgetClass)
+		)
+
+		--stylua: ignore
+		Iris.WidgetConstructor("SmallButton", widgets.extend(abstractButton, {
+			Generate = function(thisWidget: Types.Button)
+				local SmallButton = abstractButton.Generate(thisWidget) :: TextButton
+				SmallButton.Name = "Iris_SmallButton"
+
+				local uiPadding: UIPadding = SmallButton.UIPadding
+				uiPadding.PaddingLeft = UDim.new(0, 2)
+				uiPadding.PaddingRight = UDim.new(0, 2)
+				uiPadding.PaddingTop = UDim.new(0, 0)
+				uiPadding.PaddingBottom = UDim.new(0, 0)
+
+				return SmallButton
 			end,
-		},
-	},
-	Generate = function(thisWidget: Tab)
-		local Tab = Instance.new("TextButton")
-		Tab.Name = "Iris_Tab"
-		Tab.AutomaticSize = Enum.AutomaticSize.XY
-		Tab.BackgroundColor3 = Iris._config.TabColor
-		Tab.BackgroundTransparency = Iris._config.TabTransparency
-		Tab.BorderSizePixel = 0
-		Tab.Text = ""
-		Tab.AutoButtonColor = false
-
-		thisWidget.ButtonColors = {
-			Color = Iris._config.TabColor,
-			Transparency = Iris._config.TabTransparency,
-			HoveredColor = Iris._config.TabHoveredColor,
-			HoveredTransparency = Iris._config.TabHoveredTransparency,
-			ActiveColor = Iris._config.TabActiveColor,
-			ActiveTransparency = Iris._config.TabActiveTransparency,
-		}
-
-		widgets.UIPadding(Tab, Vector2.new(Iris._config.FramePadding.X, 0))
-		widgets.applyFrameStyle(Tab, true, true)
-		widgets.UIListLayout(Tab, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X)).VerticalAlignment = Enum.VerticalAlignment.Center
-		widgets.applyInteractionHighlights("Background", Tab, Tab, thisWidget.ButtonColors)
-		widgets.applyButtonClick(Tab, function()
-			thisWidget.state.index:set(thisWidget.Index)
-		end)
-
-		local TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-
-		widgets.applyTextStyle(TextLabel)
-		widgets.UIPadding(TextLabel, Vector2.new(0, Iris._config.FramePadding.Y))
-
-		TextLabel.Parent = Tab
-
-		local ButtonSize: number = Iris._config.TextSize + ((Iris._config.FramePadding.Y - 1) * 2)
-
-		local CloseButton = Instance.new("TextButton")
-		CloseButton.Name = "CloseButton"
-		CloseButton.BackgroundTransparency = 1
-		CloseButton.BorderSizePixel = 0
-		CloseButton.LayoutOrder = 1
-		CloseButton.Size = UDim2.fromOffset(ButtonSize, ButtonSize)
-		CloseButton.Text = ""
-		CloseButton.AutoButtonColor = false
-
-		widgets.UICorner(CloseButton)
-		widgets.applyButtonClick(CloseButton, function()
-			thisWidget.state.isOpened:set(false)
-			closeTab(thisWidget.parentWidget, thisWidget.Index)
-		end)
-
-		widgets.applyInteractionHighlights("Background", CloseButton, CloseButton, {
-			Color = Iris._config.TabColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.ButtonHoveredColor,
-			HoveredTransparency = Iris._config.ButtonHoveredTransparency,
-			ActiveColor = Iris._config.ButtonActiveColor,
-			ActiveTransparency = Iris._config.ButtonActiveTransparency,
-		})
-
-		CloseButton.Parent = Tab
-
-		local Icon = Instance.new("ImageLabel")
-		Icon.Name = "Icon"
-		Icon.AnchorPoint = Vector2.new(0.5, 0.5)
-		Icon.BackgroundTransparency = 1
-		Icon.BorderSizePixel = 0
-		Icon.Image = widgets.ICONS.MULTIPLICATION_SIGN
-		Icon.ImageTransparency = 1
-		Icon.Position = UDim2.fromScale(0.5, 0.5)
-		Icon.Size = UDim2.fromOffset(math.floor(0.7 * ButtonSize), math.floor(0.7 * ButtonSize))
-
-		widgets.applyInteractionHighlights("Image", Tab, Icon, {
-			Color = Iris._config.TextColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.TextColor,
-			HoveredTransparency = Iris._config.TextTransparency,
-			ActiveColor = Iris._config.TextColor,
-			ActiveTransparency = Iris._config.TextTransparency,
-		})
-		Icon.Parent = CloseButton
-
-		local ChildContainer: Frame = Instance.new("Frame")
-		ChildContainer.Name = "TabContainer"
-		ChildContainer.AutomaticSize = Enum.AutomaticSize.Y
-		ChildContainer.Size = UDim2.fromScale(1, 0)
-		ChildContainer.BackgroundTransparency = 1
-		ChildContainer.BorderSizePixel = 0
-
-		ChildContainer.ClipsDescendants = true
-		widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
-		widgets.UIPadding(ChildContainer, Vector2.new(0, Iris._config.ItemSpacing.Y)).PaddingBottom = UDim.new()
-
-		thisWidget.ChildContainer = ChildContainer
-
-		return Tab
-	end,
-	Update = function(thisWidget: Tab)
-		local Tab = thisWidget.Instance :: TextButton
-		local TextLabel: TextLabel = Tab.TextLabel
-		local CloseButton: TextButton = Tab.CloseButton
-
-		TextLabel.Text = thisWidget.arguments.Text
-		CloseButton.Visible = if thisWidget.arguments.Hideable == true then true else false
-	end,
-	ChildAdded = function(thisWidget: Tab, _thisChild: Widget)
-		return thisWidget.ChildContainer
-	end,
-	GenerateState = function(thisWidget: Tab)
-		thisWidget.state.index = thisWidget.parentWidget.state.index
-		thisWidget.state.index.ConnectedWidgets[thisWidget.ID] = thisWidget
-
-		if thisWidget.state.isOpened == nil then
-			thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", true)
-		end
-	end,
-	UpdateState = function(thisWidget: Tab)
-		local Tab = thisWidget.Instance :: TextButton
-		local Container = thisWidget.ChildContainer :: Frame
-
-		if thisWidget.state.isOpened.lastChangeTick == Iris._cycleTick then
-			if thisWidget.state.isOpened.value == true then
-				thisWidget.lastOpenedTick = Iris._cycleTick + 1
-				openTab(thisWidget.parentWidget, thisWidget.Index)
-				Tab.Visible = true
-			else
-				thisWidget.lastClosedTick = Iris._cycleTick + 1
-				closeTab(thisWidget.parentWidget, thisWidget.Index)
-				Tab.Visible = false
-			end
-		end
-
-		if thisWidget.state.index.lastChangeTick == Iris._cycleTick then
-			if thisWidget.state.index.value == thisWidget.Index then
-				thisWidget.ButtonColors.Color = Iris._config.TabActiveColor
-				thisWidget.ButtonColors.Transparency = Iris._config.TabActiveTransparency
-				Tab.BackgroundColor3 = Iris._config.TabActiveColor
-				Tab.BackgroundTransparency = Iris._config.TabActiveTransparency
-				Container.Visible = true
-				thisWidget.lastSelectedTick = Iris._cycleTick + 1
-			else
-				thisWidget.ButtonColors.Color = Iris._config.TabColor
-				thisWidget.ButtonColors.Transparency = Iris._config.TabTransparency
-				Tab.BackgroundColor3 = Iris._config.TabColor
-				Tab.BackgroundTransparency = Iris._config.TabTransparency
-				Container.Visible = false
-				thisWidget.lastUnselectedTick = Iris._cycleTick + 1
-			end
-		end
-	end,
-	Discard = function(thisWidget: Tab)
-		if thisWidget.state.isOpened.value == true then
-			closeTab(thisWidget.parentWidget, thisWidget.Index)
-		end
-
-		thisWidget.Instance:Destroy()
-		thisWidget.ChildContainer:Destroy()
-		widgets.discardState(thisWidget)
-	end
-} :: WidgetClass)
-local numberChanged = {
-	["Init"] = function(_thisWidget: Widget) end,
-	["Get"] = function(thisWidget: Input<any>)
-		return thisWidget.lastNumberChangedTick == Iris._cycleTick
-	end,
-}
-
-local function getValueByIndex<T>(value: T, index: number, arguments: any): number
-	local t: string = typeof(value)
-	local v = value :: any
-	if t == "number" then
-		return v
-	elseif t == "Vector2" then
-		if index == 1 then
-			return v.X
-		elseif index == 2 then
-			return v.Y
-		end
-	elseif t == "Vector3" then
-		if index == 1 then
-			return v.X
-		elseif index == 2 then
-			return v.Y
-		elseif index == 3 then
-			return v.Z
-		end
-	elseif t == "UDim" then
-		if index == 1 then
-			return v.Scale
-		elseif index == 2 then
-			return v.Offset
-		end
-	elseif t == "UDim2" then
-		if index == 1 then
-			return v.X.Scale
-		elseif index == 2 then
-			return v.X.Offset
-		elseif index == 3 then
-			return v.Y.Scale
-		elseif index == 4 then
-			return v.Y.Offset
-		end
-	elseif t == "Color3" then
-		local color: { number } = arguments.UseHSV and { v:ToHSV() } or { v.R, v.G, v.B }
-		if index == 1 then
-			return color[1]
-		elseif index == 2 then
-			return color[2]
-		elseif index == 3 then
-			return color[3]
-		end
-	elseif t == "Rect" then
-		if index == 1 then
-			return v.Min.X
-		elseif index == 2 then
-			return v.Min.Y
-		elseif index == 3 then
-			return v.Max.X
-		elseif index == 4 then
-			return v.Max.Y
-		end
-	elseif t == "table" then
-		return v[index]
-	end
-
-	error(`Incorrect datatype or value: {value} {typeof(value)} {index}.`)
-end
-
-local function updateValueByIndex<T>(value: T, index: number, newValue: number, arguments: Arguments): T
-	if typeof(value) == "number" then
-		return newValue :: any
-	elseif typeof(value) == "Vector2" then
-		if index == 1 then
-			return Vector2.new(newValue, value.Y) :: any
-		elseif index == 2 then
-			return Vector2.new(value.X, newValue) :: any
-		end
-	elseif typeof(value) == "Vector3" then
-		if index == 1 then
-			return Vector3.new(newValue, value.Y, value.Z) :: any
-		elseif index == 2 then
-			return Vector3.new(value.X, newValue, value.Z) :: any
-		elseif index == 3 then
-			return Vector3.new(value.X, value.Y, newValue) :: any
-		end
-	elseif typeof(value) == "UDim" then
-		if index == 1 then
-			return UDim.new(newValue, value.Offset) :: any
-		elseif index == 2 then
-			return UDim.new(value.Scale, newValue) :: any
-		end
-	elseif typeof(value) == "UDim2" then
-		if index == 1 then
-			return UDim2.new(UDim.new(newValue, value.X.Offset), value.Y) :: any
-		elseif index == 2 then
-			return UDim2.new(UDim.new(value.X.Scale, newValue), value.Y) :: any
-		elseif index == 3 then
-			return UDim2.new(value.X, UDim.new(newValue, value.Y.Offset)) :: any
-		elseif index == 4 then
-			return UDim2.new(value.X, UDim.new(value.Y.Scale, newValue)) :: any
-		end
-	elseif typeof(value) == "Rect" then
-		if index == 1 then
-			return Rect.new(Vector2.new(newValue, value.Min.Y), value.Max) :: any
-		elseif index == 2 then
-			return Rect.new(Vector2.new(value.Min.X, newValue), value.Max) :: any
-		elseif index == 3 then
-			return Rect.new(value.Min, Vector2.new(newValue, value.Max.Y)) :: any
-		elseif index == 4 then
-			return Rect.new(value.Min, Vector2.new(value.Max.X, newValue)) :: any
-		end
-	elseif typeof(value) == "Color3" then
-		if arguments.UseHSV then
-			local h: number, s: number, v: number = value:ToHSV()
-			if index == 1 then
-				return Color3.fromHSV(newValue, s, v) :: any
-			elseif index == 2 then
-				return Color3.fromHSV(h, newValue, v) :: any
-			elseif index == 3 then
-				return Color3.fromHSV(h, s, newValue) :: any
-			end
-		end
-		if index == 1 then
-			return Color3.new(newValue, value.G, value.B) :: any
-		elseif index == 2 then
-			return Color3.new(value.R, newValue, value.B) :: any
-		elseif index == 3 then
-			return Color3.new(value.R, value.G, newValue) :: any
-		end
-	end
-
-	error(`Incorrect datatype or value {value} {typeof(value)} {index}.`)
-end
-
-local defaultIncrements: { [InputDataTypes]: { number } } = {
-	Num = { 1 },
-	Vector2 = { 1, 1 },
-	Vector3 = { 1, 1, 1 },
-	UDim = { 0.01, 1 },
-	UDim2 = { 0.01, 1, 0.01, 1 },
-	Color3 = { 1, 1, 1 },
-	Color4 = { 1, 1, 1, 1 },
-	Rect = { 1, 1, 1, 1 },
-}
-
-local defaultMin: { [InputDataTypes]: { number } } = {
-	Num = { 0 },
-	Vector2 = { 0, 0 },
-	Vector3 = { 0, 0, 0 },
-	UDim = { 0, 0 },
-	UDim2 = { 0, 0, 0, 0 },
-	Rect = { 0, 0, 0, 0 },
-}
-
-local defaultMax: { [InputDataTypes]: { number } } = {
-	Num = { 100 },
-	Vector2 = { 100, 100 },
-	Vector3 = { 100, 100, 100 },
-	UDim = { 1, 960 },
-	UDim2 = { 1, 960, 1, 960 },
-	Rect = { 960, 960, 960, 960 },
-}
-
-local defaultPrefx: { [InputDataTypes]: { string } } = {
-	Num = { "" },
-	Vector2 = { "X: ", "Y: " },
-	Vector3 = { "X: ", "Y: ", "Z: " },
-	UDim = { "", "" },
-	UDim2 = { "", "", "", "" },
-	Color3_RGB = { "R: ", "G: ", "B: " },
-	Color3_HSV = { "H: ", "S: ", "V: " },
-	Color4_RGB = { "R: ", "G: ", "B: ", "T: " },
-	Color4_HSV = { "H: ", "S: ", "V: ", "T: " },
-	Rect = { "X: ", "Y: ", "X: ", "Y: " },
-}
-
-local defaultSigFigs: { [InputDataTypes]: { number } } = {
-	Num = { 0 },
-	Vector2 = { 0, 0 },
-	Vector3 = { 0, 0, 0 },
-	UDim = { 3, 0 },
-	UDim2 = { 3, 0, 3, 0 },
-	Color3 = { 0, 0, 0 },
-	Color4 = { 0, 0, 0, 0 },
-	Rect = { 0, 0, 0, 0 },
-}
-
-    --[[
-        Input
-    ]]
-local generateInputScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> WidgetClass
-do
-	local function generateButtons(thisWidget: Input<number>, parent: GuiObject, textHeight: number)
-		local SubButton = widgets.abstractButton.Generate(thisWidget) :: TextButton
-		SubButton.Name = "SubButton"
-		SubButton.ZIndex = 5
-		SubButton.LayoutOrder = 5
-		SubButton.TextXAlignment = Enum.TextXAlignment.Center
-		SubButton.Text = "-"
-		SubButton.Size = UDim2.fromOffset(Iris._config.TextSize + 2 * Iris._config.FramePadding.Y, Iris._config.TextSize)
-		SubButton.Parent = parent
-
-		widgets.applyButtonClick(SubButton, function()
-			local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
-			local changeValue: number = (thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, 1, thisWidget.arguments :: Argument) or 1) * (isCtrlHeld and 100 or 1)
-			local newValue: number = thisWidget.state.number.value - changeValue
-			if thisWidget.arguments.Min ~= nil then
-				newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, 1, thisWidget.arguments :: Argument))
-			end
-			if thisWidget.arguments.Max ~= nil then
-				newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, 1, thisWidget.arguments :: Argument))
-			end
-			thisWidget.state.number:set(newValue)
-			thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
-		end)
-
-		local AddButton = widgets.abstractButton.Generate(thisWidget) :: TextButton
-		AddButton.Name = "AddButton"
-		AddButton.ZIndex = 6
-		AddButton.LayoutOrder = 6
-		AddButton.TextXAlignment = Enum.TextXAlignment.Center
-		AddButton.Text = "+"
-		AddButton.Size = UDim2.fromOffset(Iris._config.TextSize + 2 * Iris._config.FramePadding.Y, Iris._config.TextSize)
-		AddButton.Parent = parent
-
-		widgets.applyButtonClick(AddButton, function()
-			local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
-			local changeValue: number = (thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, 1, thisWidget.arguments :: Argument) or 1) * (isCtrlHeld and 100 or 1)
-			local newValue: number = thisWidget.state.number.value + changeValue
-			if thisWidget.arguments.Min ~= nil then
-				newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, 1, thisWidget.arguments :: Argument))
-			end
-			if thisWidget.arguments.Max ~= nil then
-				newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, 1, thisWidget.arguments :: Argument))
-			end
-			thisWidget.state.number:set(newValue)
-			thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
-		end)
-
-		return 2 * Iris._config.ItemInnerSpacing.X + 2 * textHeight
-	end
-
-	function generateInputScalar<T>(dataType: InputDataTypes, components: number, defaultValue: any)
-		return {
+		} :: Types.WidgetClass)
+		)
+	end)(Iris, widgets)
+	local agoagoa = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		--stylua: ignore
+		Iris.WidgetConstructor("Checkbox", {
 			hasState = true,
 			hasChildren = false,
 			Args = {
 				["Text"] = 1,
-				["Increment"] = 2,
-				["Min"] = 3,
-				["Max"] = 4,
-				["Format"] = 5,
 			},
 			Events = {
-				["numberChanged"] = numberChanged,
-				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
+				["checked"] = {
+					["Init"] = function(_thisWidget: Types.Checkbox) end,
+					["Get"] = function(thisWidget: Types.Checkbox): boolean
+						return thisWidget.lastCheckedTick == Iris._cycleTick
+					end,
+				},
+				["unchecked"] = {
+					["Init"] = function(_thisWidget: Types.Checkbox) end,
+					["Get"] = function(thisWidget: Types.Checkbox): boolean
+						return thisWidget.lastUncheckedTick == Iris._cycleTick
+					end,
+				},
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
 					return thisWidget.Instance
 				end),
 			},
-			Generate = function(thisWidget: Input<T>)
-				local Input: Frame = Instance.new("Frame")
-				Input.Name = "Iris_Input" .. dataType
-				Input.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-				Input.BackgroundTransparency = 1
-				Input.BorderSizePixel = 0
-				Input.LayoutOrder = thisWidget.ZIndex
-				Input.AutomaticSize = Enum.AutomaticSize.Y
-				local UIListLayout: UIListLayout = widgets.UIListLayout(Input, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+			Generate = function(thisWidget: Types.Checkbox)
+				local Checkbox: TextButton = Instance.new("TextButton")
+				Checkbox.Name = "Iris_Checkbox"
+				Checkbox.AutomaticSize = Enum.AutomaticSize.XY
+				Checkbox.Size = UDim2.fromOffset(0, 0)
+				Checkbox.BackgroundTransparency = 1
+				Checkbox.BorderSizePixel = 0
+				Checkbox.Text = ""
+				Checkbox.AutoButtonColor = false
+				Checkbox.ZIndex = thisWidget.ZIndex
+				Checkbox.LayoutOrder = thisWidget.ZIndex
+
+				local UIListLayout: UIListLayout = widgets.UIListLayout(Checkbox, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
 				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 
-				-- we add plus and minus buttons if there is only one box. This can be disabled through the argument.
-				local rightPadding: number = 0
-				local textHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
+				local checkboxSize: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
 
-				if components == 1 then
-					rightPadding = generateButtons(thisWidget :: any, Input, textHeight)
-				end
+				local Box: Frame = Instance.new("Frame")
+				Box.Name = "Box"
+				Box.Size = UDim2.fromOffset(checkboxSize, checkboxSize)
+				Box.BackgroundColor3 = Iris._config.FrameBgColor
+				Box.BackgroundTransparency = Iris._config.FrameBgTransparency
 
-				-- we divide the total area evenly between each field. This includes accounting for any additional boxes and the offset.
-				-- for the final field, we make sure it's flush by calculating the space avaiable for it. This only makes the Vector2 box
-				-- 4 pixels shorter, all for the sake of flush.
-				local componentWidth: UDim = UDim.new(Iris._config.ContentWidth.Scale / components, (Iris._config.ContentWidth.Offset - (Iris._config.ItemInnerSpacing.X * (components - 1)) - rightPadding) / components)
-				local totalWidth: UDim = UDim.new(componentWidth.Scale * (components - 1), (componentWidth.Offset * (components - 1)) + (Iris._config.ItemInnerSpacing.X * (components - 1)) + rightPadding)
-				local lastComponentWidth: UDim = Iris._config.ContentWidth - totalWidth
+				widgets.applyFrameStyle(Box, true)
+				widgets.UIPadding(Box, Vector2.new(math.floor(checkboxSize / 10), math.floor(checkboxSize / 10)))
 
-				-- we handle each component individually since they don't need to interact with each other.
-				for index = 1, components do
-					local InputField: TextBox = Instance.new("TextBox")
-					InputField.Name = "InputField" .. tostring(index)
-					InputField.LayoutOrder = index
-					if index == components then
-						InputField.Size = UDim2.new(lastComponentWidth, Iris._config.ContentHeight)
-					else
-						InputField.Size = UDim2.new(componentWidth, Iris._config.ContentHeight)
-					end
-					InputField.AutomaticSize = Enum.AutomaticSize.Y
-					InputField.BackgroundColor3 = Iris._config.FrameBgColor
-					InputField.BackgroundTransparency = Iris._config.FrameBgTransparency
-					InputField.ClearTextOnFocus = false
-					InputField.TextTruncate = Enum.TextTruncate.AtEnd
-					InputField.ClipsDescendants = true
-
-					widgets.applyFrameStyle(InputField)
-					widgets.applyTextStyle(InputField)
-					widgets.UISizeConstraint(InputField, Vector2.xAxis)
-
-					InputField.Parent = Input
-
-					InputField.FocusLost:Connect(function()
-						local newValue: number? = tonumber(InputField.Text:match("-?%d*%.?%d*"))
-						if newValue ~= nil then
-							if thisWidget.arguments.Min ~= nil then
-								newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments))
-							end
-							if thisWidget.arguments.Max ~= nil then
-								newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments :: any))
-							end
-
-							if thisWidget.arguments.Increment then
-								newValue = math.round(newValue / getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)) * getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
-							end
-
-							thisWidget.state.number:set(updateValueByIndex(thisWidget.state.number.value, index, newValue, thisWidget.arguments :: any))
-							thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
-						end
-						local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
-						if thisWidget.arguments.Prefix then
-							format = thisWidget.arguments.Prefix[index] .. format
-						end
-						InputField.Text = string.format(format, getValueByIndex(thisWidget.state.number.value, index, thisWidget.arguments))
-
-						thisWidget.state.editingText:set(0)
-					end)
-
-					InputField.Focused:Connect(function()
-						-- this highlights the entire field
-						InputField.CursorPosition = #InputField.Text + 1
-						InputField.SelectionStart = 1
-
-						thisWidget.state.editingText:set(index)
-					end)
-				end
-
-				local TextLabel: TextLabel = Instance.new("TextLabel")
-				TextLabel.Name = "TextLabel"
-				TextLabel.BackgroundTransparency = 1
-				TextLabel.BorderSizePixel = 0
-				TextLabel.LayoutOrder = 7
-				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-
-				widgets.applyTextStyle(TextLabel)
-
-				TextLabel.Parent = Input
-
-				return Input
-			end,
-			Update = function(thisWidget: Input<T>)
-				local Input = thisWidget.Instance :: GuiObject
-				local TextLabel: TextLabel = Input.TextLabel
-				TextLabel.Text = thisWidget.arguments.Text or `Input {dataType}`
-
-				if components == 1 then
-					Input.SubButton.Visible = not thisWidget.arguments.NoButtons
-					Input.AddButton.Visible = not thisWidget.arguments.NoButtons
-					local rightPadding: number = if thisWidget.arguments.NoButtons then 0 else (2 * Iris._config.ItemInnerSpacing.X) + (2 * (Iris._config.TextSize + 2 * Iris._config.FramePadding.Y))
-					local InputField: TextBox = Input.InputField1
-					InputField.Size = UDim2.new(UDim.new(Iris._config.ContentWidth.Scale, Iris._config.ContentWidth.Offset - rightPadding), Iris._config.ContentHeight)
-				end
-
-				if thisWidget.arguments.Format and typeof(thisWidget.arguments.Format) ~= "table" then
-					thisWidget.arguments.Format = { thisWidget.arguments.Format }
-				elseif not thisWidget.arguments.Format then
-					-- we calculate the format for the s.f. using the max, min and increment arguments.
-					local format: { string } = {}
-					for index = 1, components do
-						local sigfigs: number = defaultSigFigs[dataType][index]
-
-						if thisWidget.arguments.Increment then
-							local value: number = getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if thisWidget.arguments.Max then
-							local value: number = getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if thisWidget.arguments.Min then
-							local value: number = getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if sigfigs > 0 then
-							-- we know it's a float.
-							format[index] = `%.{sigfigs}f`
-						else
-							format[index] = "%d"
-						end
-					end
-
-					thisWidget.arguments.Format = format
-					thisWidget.arguments.Prefix = defaultPrefx[dataType]
-				end
-			end,
-			Discard = function(thisWidget: Input<T>)
-				thisWidget.Instance:Destroy()
-				widgets.discardState(thisWidget)
-			end,
-			GenerateState = function(thisWidget: Input<T>)
-				if thisWidget.state.number == nil then
-					thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
-				end
-				if thisWidget.state.editingText == nil then
-					thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", 0)
-				end
-			end,
-			UpdateState = function(thisWidget: Input<T>)
-				local Input = thisWidget.Instance :: GuiObject
-
-				for index = 1, components do
-					local InputField: TextBox = Input:FindFirstChild("InputField" .. tostring(index))
-					local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
-					if thisWidget.arguments.Prefix then
-						format = thisWidget.arguments.Prefix[index] .. format
-					end
-					InputField.Text = string.format(format, getValueByIndex(thisWidget.state.number.value, index, thisWidget.arguments))
-				end
-			end,
-		}
-	end
-end
-
-    --[[
-        Drag
-    ]]
-local generateDragScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> WidgetClass
-local generateColorDragScalar: (dataType: InputDataTypes, ...any) -> WidgetClass
-do
-	local PreviouseMouseXPosition: number = 0
-	local AnyActiveDrag: boolean = false
-	local ActiveDrag: Input<InputDataType>? = nil
-	local ActiveIndex: number = 0
-	local ActiveDataType: InputDataTypes | "" = ""
-
-	local function updateActiveDrag()
-		local currentMouseX: number = widgets.getMouseLocation().X
-		local mouseXDelta: number = currentMouseX - PreviouseMouseXPosition
-		PreviouseMouseXPosition = currentMouseX
-		if AnyActiveDrag == false then
-			return
-		end
-		if ActiveDrag == nil then
-			return
-		end
-
-		local state: State<InputDataType> = ActiveDrag.state.number
-		if ActiveDataType == "Color3" or ActiveDataType == "Color4" then
-			local Drag = ActiveDrag :: any
-			state = Drag.state.color
-			if ActiveIndex == 4 then
-				state = Drag.state.transparency
-			end
-		end
-
-		local increment: number = ActiveDrag.arguments.Increment and getValueByIndex(ActiveDrag.arguments.Increment, ActiveIndex, ActiveDrag.arguments) or defaultIncrements[ActiveDataType][ActiveIndex]
-		increment *= (widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightShift)) and 10 or 1
-		increment *= (widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)) and 0.1 or 1
-		-- we increase the speed for Color3 and Color4 since it's too slow because the increment argument needs to be low.
-		increment *= (ActiveDataType == "Color3" or ActiveDataType == "Color4") and 5 or 1
-
-		local value: number = getValueByIndex(state.value, ActiveIndex, ActiveDrag.arguments)
-		local newValue: number = value + (mouseXDelta * increment)
-
-		if ActiveDrag.arguments.Min ~= nil then
-			newValue = math.max(newValue, getValueByIndex(ActiveDrag.arguments.Min, ActiveIndex, ActiveDrag.arguments))
-		end
-		if ActiveDrag.arguments.Max ~= nil then
-			newValue = math.min(newValue, getValueByIndex(ActiveDrag.arguments.Max, ActiveIndex, ActiveDrag.arguments))
-		end
-
-		state:set(updateValueByIndex(state.value, ActiveIndex, newValue, ActiveDrag.arguments :: any))
-		ActiveDrag.lastNumberChangedTick = Iris._cycleTick + 1
-	end
-
-	local function DragMouseDown(thisWidget: Input<InputDataType>, dataTypes: InputDataTypes, index: number, x: number, y: number)
-		local currentTime: number = widgets.getTime()
-		local isTimeValid: boolean = currentTime - thisWidget.lastClickedTime < Iris._config.MouseDoubleClickTime
-		local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
-		if (isTimeValid and (Vector2.new(x, y) - thisWidget.lastClickedPosition).Magnitude < Iris._config.MouseDoubleClickMaxDist) or isCtrlHeld then
-			thisWidget.state.editingText:set(index)
-		else
-			thisWidget.lastClickedTime = currentTime
-			thisWidget.lastClickedPosition = Vector2.new(x, y)
-
-			AnyActiveDrag = true
-			ActiveDrag = thisWidget
-			ActiveIndex = index
-			ActiveDataType = dataTypes
-			updateActiveDrag()
-		end
-	end
-
-	widgets.registerEvent("InputChanged", function()
-		if not Iris._started then
-			return
-		end
-		updateActiveDrag()
-	end)
-
-	widgets.registerEvent("InputEnded", function(inputObject: InputObject)
-		if not Iris._started then
-			return
-		end
-		if inputObject.UserInputType == Enum.UserInputType.MouseButton1 and AnyActiveDrag then
-			AnyActiveDrag = false
-			ActiveDrag = nil
-			ActiveIndex = 0
-		end
-	end)
-
-	function generateDragScalar<T>(dataType: InputDataTypes, components: number, defaultValue: any)
-		return {
-			hasState = true,
-			hasChildren = false,
-			Args = {
-				["Text"] = 1,
-				["Increment"] = 2,
-				["Min"] = 3,
-				["Max"] = 4,
-				["Format"] = 5,
-			},
-			Events = {
-				["numberChanged"] = numberChanged,
-				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-					return thisWidget.Instance
-				end),
-			},
-			Generate = function(thisWidget: Input<T>)
-				thisWidget.lastClickedTime = -1
-				thisWidget.lastClickedPosition = Vector2.zero
-
-				local Drag: Frame = Instance.new("Frame")
-				Drag.Name = "Iris_Drag" .. dataType
-				Drag.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-				Drag.BackgroundTransparency = 1
-				Drag.BorderSizePixel = 0
-				Drag.LayoutOrder = thisWidget.ZIndex
-				Drag.AutomaticSize = Enum.AutomaticSize.Y
-				local UIListLayout: UIListLayout = widgets.UIListLayout(Drag, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-				-- we add a color box if it is Color3 or Color4.
-				local rightPadding: number = 0
-				local textHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
-
-				if dataType == "Color3" or dataType == "Color4" then
-					rightPadding += Iris._config.ItemInnerSpacing.X + textHeight
-
-					local ColorBox: ImageLabel = Instance.new("ImageLabel")
-					ColorBox.Name = "ColorBox"
-					ColorBox.BorderSizePixel = 0
-					ColorBox.Size = UDim2.fromOffset(textHeight, textHeight)
-					ColorBox.LayoutOrder = 5
-					ColorBox.Image = widgets.ICONS.ALPHA_BACKGROUND_TEXTURE
-					ColorBox.ImageTransparency = 1
-
-					widgets.applyFrameStyle(ColorBox, true)
-
-					ColorBox.Parent = Drag
-				end
-
-				-- we divide the total area evenly between each field. This includes accounting for any additional boxes and the offset.
-				-- for the final field, we make sure it's flush by calculating the space avaiable for it. This only makes the Vector2 box
-				-- 4 pixels shorter, all for the sake of flush.
-				local componentWidth: UDim = UDim.new(Iris._config.ContentWidth.Scale / components, (Iris._config.ContentWidth.Offset - (Iris._config.ItemInnerSpacing.X * (components - 1)) - rightPadding) / components)
-				local totalWidth: UDim = UDim.new(componentWidth.Scale * (components - 1), (componentWidth.Offset * (components - 1)) + (Iris._config.ItemInnerSpacing.X * (components - 1)) + rightPadding)
-				local lastComponentWidth: UDim = Iris._config.ContentWidth - totalWidth
-
-				for index = 1, components do
-					local DragField: TextButton = Instance.new("TextButton")
-					DragField.Name = "DragField" .. tostring(index)
-					DragField.LayoutOrder = index
-					if index == components then
-						DragField.Size = UDim2.new(lastComponentWidth, Iris._config.ContentHeight)
-					else
-						DragField.Size = UDim2.new(componentWidth, Iris._config.ContentHeight)
-					end
-					DragField.AutomaticSize = Enum.AutomaticSize.Y
-					DragField.BackgroundColor3 = Iris._config.FrameBgColor
-					DragField.BackgroundTransparency = Iris._config.FrameBgTransparency
-					DragField.AutoButtonColor = false
-					DragField.Text = ""
-					DragField.ClipsDescendants = true
-
-					widgets.applyFrameStyle(DragField)
-					widgets.applyTextStyle(DragField)
-					widgets.UISizeConstraint(DragField, Vector2.xAxis)
-
-					DragField.TextXAlignment = Enum.TextXAlignment.Center
-
-					DragField.Parent = Drag
-
-					widgets.applyInteractionHighlights("Background", DragField, DragField, {
-						Color = Iris._config.FrameBgColor,
-						Transparency = Iris._config.FrameBgTransparency,
-						HoveredColor = Iris._config.FrameBgHoveredColor,
-						HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
-						ActiveColor = Iris._config.FrameBgActiveColor,
-						ActiveTransparency = Iris._config.FrameBgActiveTransparency,
-					})
-
-					local InputField: TextBox = Instance.new("TextBox")
-					InputField.Name = "InputField"
-					InputField.Size = UDim2.new(1, 0, 1, 0)
-					InputField.BackgroundTransparency = 1
-					InputField.ClearTextOnFocus = false
-					InputField.TextTruncate = Enum.TextTruncate.AtEnd
-					InputField.ClipsDescendants = true
-					InputField.Visible = false
-
-					widgets.applyFrameStyle(InputField, true)
-					widgets.applyTextStyle(InputField)
-
-					InputField.Parent = DragField
-
-					InputField.FocusLost:Connect(function()
-						local newValue: number? = tonumber(InputField.Text:match("-?%d*%.?%d*"))
-						local state: State<T> = thisWidget.state.number
-						local widget = thisWidget :: any
-						if dataType == "Color4" and index == 4 then
-							state = widget.state.transparency
-						elseif dataType == "Color3" or dataType == "Color4" then
-							state = widget.state.color
-						end
-						if newValue ~= nil then
-							if dataType == "Color3" or dataType == "Color4" and not widget.arguments.UseFloats then
-								newValue = newValue / 255
-							end
-							if thisWidget.arguments.Min ~= nil then
-								newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments))
-							end
-							if thisWidget.arguments.Max ~= nil then
-								newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments))
-							end
-
-							if thisWidget.arguments.Increment then
-								newValue = math.round(newValue / getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)) * getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
-							end
-
-							state:set(updateValueByIndex(state.value, index, newValue, thisWidget.arguments :: any))
-							thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
-						end
-
-						local value: number = getValueByIndex(state.value, index, thisWidget.arguments)
-						if dataType == "Color3" or dataType == "Color4" and not widget.arguments.UseFloats then
-							value = math.round(value * 255)
-						end
-
-						local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
-						if thisWidget.arguments.Prefix then
-							format = thisWidget.arguments.Prefix[index] .. format
-						end
-						InputField.Text = string.format(format, value)
-
-						thisWidget.state.editingText:set(0)
-						InputField:ReleaseFocus(true)
-					end)
-
-					InputField.Focused:Connect(function()
-						-- this highlights the entire field
-						InputField.CursorPosition = #InputField.Text + 1
-						InputField.SelectionStart = 1
-
-						thisWidget.state.editingText:set(index)
-					end)
-
-					widgets.applyButtonDown(DragField, function(x: number, y: number)
-						DragMouseDown(thisWidget :: any, dataType, index, x, y)
-					end)
-				end
-
-				local TextLabel: TextLabel = Instance.new("TextLabel")
-				TextLabel.Name = "TextLabel"
-				TextLabel.BackgroundTransparency = 1
-				TextLabel.BorderSizePixel = 0
-				TextLabel.LayoutOrder = 6
-				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-
-				widgets.applyTextStyle(TextLabel)
-
-				TextLabel.Parent = Drag
-
-				return Drag
-			end,
-			Update = function(thisWidget: Input<T>)
-				local Input = thisWidget.Instance :: GuiObject
-				local TextLabel: TextLabel = Input.TextLabel
-				TextLabel.Text = thisWidget.arguments.Text or `Drag {dataType}`
-
-				if thisWidget.arguments.Format and typeof(thisWidget.arguments.Format) ~= "table" then
-					thisWidget.arguments.Format = { thisWidget.arguments.Format }
-				elseif not thisWidget.arguments.Format then
-					-- we calculate the format for the s.f. using the max, min and increment arguments.
-					local format: { string } = {}
-					for index = 1, components do
-						local sigfigs: number = defaultSigFigs[dataType][index]
-
-						if thisWidget.arguments.Increment then
-							local value: number = getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if thisWidget.arguments.Max then
-							local value: number = getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if thisWidget.arguments.Min then
-							local value: number = getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if sigfigs > 0 then
-							-- we know it's a float.
-							format[index] = `%.{sigfigs}f`
-						else
-							format[index] = "%d"
-						end
-					end
-
-					thisWidget.arguments.Format = format
-					thisWidget.arguments.Prefix = defaultPrefx[dataType]
-				end
-			end,
-			Discard = function(thisWidget: Input<T>)
-				thisWidget.Instance:Destroy()
-				widgets.discardState(thisWidget)
-			end,
-			GenerateState = function(thisWidget: Input<T>)
-				if thisWidget.state.number == nil then
-					thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
-				end
-				if thisWidget.state.editingText == nil then
-					thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
-				end
-			end,
-			UpdateState = function(thisWidget: Input<T>)
-				local Drag = thisWidget.Instance :: Frame
-
-				local widget = thisWidget :: any
-				for index = 1, components do
-					local state: State<T> = thisWidget.state.number
-					if dataType == "Color3" or dataType == "Color4" then
-						state = widget.state.color
-						if index == 4 then
-							state = widget.state.transparency
-						end
-					end
-					local DragField = Drag:FindFirstChild("DragField" .. tostring(index)) :: TextButton
-					local InputField: TextBox = DragField.InputField
-					local value: number = getValueByIndex(state.value, index, thisWidget.arguments)
-					if (dataType == "Color3" or dataType == "Color4") and not widget.arguments.UseFloats then
-						value = math.round(value * 255)
-					end
-
-					local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
-					if thisWidget.arguments.Prefix then
-						format = thisWidget.arguments.Prefix[index] .. format
-					end
-					DragField.Text = string.format(format, value)
-					InputField.Text = tostring(value)
-
-					if thisWidget.state.editingText.value == index then
-						InputField.Visible = true
-						InputField:CaptureFocus()
-						DragField.TextTransparency = 1
-					else
-						InputField.Visible = false
-						DragField.TextTransparency = Iris._config.TextTransparency
-					end
-				end
-
-				if dataType == "Color3" or dataType == "Color4" then
-					local ColorBox: ImageLabel = Drag.ColorBox
-
-					ColorBox.BackgroundColor3 = widget.state.color.value
-
-					if dataType == "Color4" then
-						ColorBox.ImageTransparency = 1 - widget.state.transparency.value
-					end
-				end
-			end,
-		}
-	end
-
-	function generateColorDragScalar(dataType: InputDataTypes, ...: any)
-		local defaultValues: { any } = { ... }
-		local input: WidgetClass = generateDragScalar(dataType, dataType == "Color4" and 4 or 3, defaultValues[1])
-
-		return widgets.extend(input, {
-			Args = {
-				["Text"] = 1,
-				["UseFloats"] = 2,
-				["UseHSV"] = 3,
-				["Format"] = 4,
-			},
-			Update = function(thisWidget: InputColor4)
-				local Input = thisWidget.Instance :: GuiObject
-				local TextLabel: TextLabel = Input.TextLabel
-				TextLabel.Text = thisWidget.arguments.Text or `Drag {dataType}`
-
-				if thisWidget.arguments.Format and typeof(thisWidget.arguments.Format) ~= "table" then
-					thisWidget.arguments.Format = { thisWidget.arguments.Format }
-				elseif not thisWidget.arguments.Format then
-					if thisWidget.arguments.UseFloats then
-						thisWidget.arguments.Format = { "%.3f" }
-					else
-						thisWidget.arguments.Format = { "%d" }
-					end
-
-					thisWidget.arguments.Prefix = defaultPrefx[dataType .. if thisWidget.arguments.UseHSV then "_HSV" else "_RGB"]
-				end
-
-				thisWidget.arguments.Min = { 0, 0, 0, 0 }
-				thisWidget.arguments.Max = { 1, 1, 1, 1 }
-				thisWidget.arguments.Increment = { 0.001, 0.001, 0.001, 0.001 }
-
-				-- since the state values have changed display, we call an update. The check is because state is not
-				-- initialised on creation, so it would error otherwise.
-				if thisWidget.state then
-					thisWidget.state.color.lastChangeTick = Iris._cycleTick
-					if dataType == "Color4" then
-						thisWidget.state.transparency.lastChangeTick = Iris._cycleTick
-					end
-					Iris._widgets[thisWidget.type].UpdateState(thisWidget)
-				end
-			end,
-			GenerateState = function(thisWidget: InputColor4)
-				if thisWidget.state.color == nil then
-					thisWidget.state.color = Iris._widgetState(thisWidget, "color", defaultValues[1])
-				end
-				if dataType == "Color4" then
-					if thisWidget.state.transparency == nil then
-						thisWidget.state.transparency = Iris._widgetState(thisWidget, "transparency", defaultValues[2])
-					end
-				end
-				if thisWidget.state.editingText == nil then
-					thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
-				end
-			end,
-		})
-	end
-end
-
-    --[[
-        Slider
-    ]]
-local generateSliderScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> WidgetClass
-local generateEnumSliderScalar: (enum: Enum, item: EnumItem) -> WidgetClass
-do
-	local AnyActiveSlider: boolean = false
-	local ActiveSlider: Input<InputDataType>? = nil
-	local ActiveIndex: number = 0
-	local ActiveDataType: InputDataTypes | "" = ""
-
-	local function updateActiveSlider()
-		if AnyActiveSlider == false then
-			return
-		end
-		if ActiveSlider == nil then
-			return
-		end
-
-		local Slider = ActiveSlider.Instance :: Frame
-		local SliderField = Slider:FindFirstChild("SliderField" .. tostring(ActiveIndex)) :: TextButton
-		local GrabBar: Frame = SliderField.GrabBar
-
-		local increment: number = ActiveSlider.arguments.Increment and getValueByIndex(ActiveSlider.arguments.Increment, ActiveIndex, ActiveSlider.arguments) or defaultIncrements[ActiveDataType][ActiveIndex]
-		local min: number = ActiveSlider.arguments.Min and getValueByIndex(ActiveSlider.arguments.Min, ActiveIndex, ActiveSlider.arguments) or defaultMin[ActiveDataType][ActiveIndex]
-		local max: number = ActiveSlider.arguments.Max and getValueByIndex(ActiveSlider.arguments.Max, ActiveIndex, ActiveSlider.arguments) or defaultMax[ActiveDataType][ActiveIndex]
-
-		local GrabWidth: number = GrabBar.AbsoluteSize.X
-		local Offset: number = widgets.getMouseLocation().X - (SliderField.AbsolutePosition.X - widgets.GuiOffset.X + GrabWidth / 2)
-		local Ratio: number = Offset / (SliderField.AbsoluteSize.X - GrabWidth)
-		local Positions: number = math.floor((max - min) / increment)
-		local newValue: number = math.clamp(math.round(Ratio * Positions) * increment + min, min, max)
-
-		ActiveSlider.state.number:set(updateValueByIndex(ActiveSlider.state.number.value, ActiveIndex, newValue, ActiveSlider.arguments :: any))
-		ActiveSlider.lastNumberChangedTick = Iris._cycleTick + 1
-	end
-
-	local function SliderMouseDown(thisWidget: Input<InputDataType>, dataType: InputDataTypes, index: number)
-		local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
-		if isCtrlHeld then
-			thisWidget.state.editingText:set(index)
-		else
-			AnyActiveSlider = true
-			ActiveSlider = thisWidget
-			ActiveIndex = index
-			ActiveDataType = dataType
-			updateActiveSlider()
-		end
-	end
-
-	widgets.registerEvent("InputChanged", function()
-		if not Iris._started then
-			return
-		end
-		updateActiveSlider()
-	end)
-
-	widgets.registerEvent("InputEnded", function(inputObject: InputObject)
-		if not Iris._started then
-			return
-		end
-		if inputObject.UserInputType == Enum.UserInputType.MouseButton1 and AnyActiveSlider then
-			AnyActiveSlider = false
-			ActiveSlider = nil
-			ActiveIndex = 0
-			ActiveDataType = ""
-		end
-	end)
-
-	function generateSliderScalar<T>(dataType: InputDataTypes, components: number, defaultValue: any)
-		return {
-			hasState = true,
-			hasChildren = false,
-			Args = {
-				["Text"] = 1,
-				["Increment"] = 2,
-				["Min"] = 3,
-				["Max"] = 4,
-				["Format"] = 5,
-			},
-			Events = {
-				["numberChanged"] = numberChanged,
-				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-					return thisWidget.Instance
-				end),
-			},
-			Generate = function(thisWidget: Input<T>)
-				local Slider: Frame = Instance.new("Frame")
-				Slider.Name = "Iris_Slider" .. dataType
-				Slider.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-				Slider.BackgroundTransparency = 1
-				Slider.BorderSizePixel = 0
-				Slider.LayoutOrder = thisWidget.ZIndex
-				Slider.AutomaticSize = Enum.AutomaticSize.Y
-				local UIListLayout: UIListLayout = widgets.UIListLayout(Slider, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-				-- we divide the total area evenly between each field. This includes accounting for any additional boxes and the offset.
-				-- for the final field, we make sure it's flush by calculating the space avaiable for it. This only makes the Vector2 box
-				-- 4 pixels shorter, all for the sake of flush.
-				local componentWidth: UDim = UDim.new(Iris._config.ContentWidth.Scale / components, (Iris._config.ContentWidth.Offset - (Iris._config.ItemInnerSpacing.X * (components - 1))) / components)
-				local totalWidth: UDim = UDim.new(componentWidth.Scale * (components - 1), (componentWidth.Offset * (components - 1)) + (Iris._config.ItemInnerSpacing.X * (components - 1)))
-				local lastComponentWidth: UDim = Iris._config.ContentWidth - totalWidth
-
-				for index = 1, components do
-					local SliderField: TextButton = Instance.new("TextButton")
-					SliderField.Name = "SliderField" .. tostring(index)
-					SliderField.LayoutOrder = index
-					if index == components then
-						SliderField.Size = UDim2.new(lastComponentWidth, Iris._config.ContentHeight)
-					else
-						SliderField.Size = UDim2.new(componentWidth, Iris._config.ContentHeight)
-					end
-					SliderField.AutomaticSize = Enum.AutomaticSize.Y
-					SliderField.BackgroundColor3 = Iris._config.FrameBgColor
-					SliderField.BackgroundTransparency = Iris._config.FrameBgTransparency
-					SliderField.AutoButtonColor = false
-					SliderField.Text = ""
-					SliderField.ClipsDescendants = true
-
-					widgets.applyFrameStyle(SliderField)
-					widgets.applyTextStyle(SliderField)
-					widgets.UISizeConstraint(SliderField, Vector2.xAxis)
-
-					SliderField.Parent = Slider
-
-					local OverlayText = Instance.new("TextLabel")
-					OverlayText.Name = "OverlayText"
-					OverlayText.Size = UDim2.fromScale(1, 1)
-					OverlayText.BackgroundTransparency = 1
-					OverlayText.BorderSizePixel = 0
-					OverlayText.ZIndex = 10
-					OverlayText.ClipsDescendants = true
-
-					widgets.applyTextStyle(OverlayText)
-
-					OverlayText.TextXAlignment = Enum.TextXAlignment.Center
-
-					OverlayText.Parent = SliderField
-
-					widgets.applyInteractionHighlights("Background", SliderField, SliderField, {
-						Color = Iris._config.FrameBgColor,
-						Transparency = Iris._config.FrameBgTransparency,
-						HoveredColor = Iris._config.FrameBgHoveredColor,
-						HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
-						ActiveColor = Iris._config.FrameBgActiveColor,
-						ActiveTransparency = Iris._config.FrameBgActiveTransparency,
-					})
-
-					local InputField: TextBox = Instance.new("TextBox")
-					InputField.Name = "InputField"
-					InputField.Size = UDim2.new(1, 0, 1, 0)
-					InputField.BackgroundTransparency = 1
-					InputField.ClearTextOnFocus = false
-					InputField.TextTruncate = Enum.TextTruncate.AtEnd
-					InputField.ClipsDescendants = true
-					InputField.Visible = false
-
-					widgets.applyFrameStyle(InputField, true)
-					widgets.applyTextStyle(InputField)
-
-					InputField.Parent = SliderField
-
-					InputField.FocusLost:Connect(function()
-						local newValue: number? = tonumber(InputField.Text:match("-?%d*%.?%d*"))
-						if newValue ~= nil then
-							if thisWidget.arguments.Min ~= nil then
-								newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments))
-							end
-							if thisWidget.arguments.Max ~= nil then
-								newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments))
-							end
-
-							if thisWidget.arguments.Increment then
-								newValue = math.round(newValue / getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)) * getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
-							end
-
-							thisWidget.state.number:set(updateValueByIndex(thisWidget.state.number.value, index, newValue, thisWidget.arguments :: any))
-							thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
-						end
-
-						local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
-						if thisWidget.arguments.Prefix then
-							format = thisWidget.arguments.Prefix[index] .. format
-						end
-
-						InputField.Text = string.format(format, getValueByIndex(thisWidget.state.number.value, index, thisWidget.arguments))
-
-						thisWidget.state.editingText:set(0)
-						InputField:ReleaseFocus(true)
-					end)
-
-					InputField.Focused:Connect(function()
-						-- this highlights the entire field
-						InputField.CursorPosition = #InputField.Text + 1
-						InputField.SelectionStart = 1
-
-						thisWidget.state.editingText:set(index)
-					end)
-
-					widgets.applyButtonDown(SliderField, function()
-						SliderMouseDown(thisWidget :: any, dataType, index)
-					end)
-
-					local GrabBar: Frame = Instance.new("Frame")
-					GrabBar.Name = "GrabBar"
-					GrabBar.ZIndex = 5
-					GrabBar.AnchorPoint = Vector2.new(0.5, 0.5)
-					GrabBar.Position = UDim2.new(0, 0, 0.5, 0)
-					GrabBar.BorderSizePixel = 0
-					GrabBar.BackgroundColor3 = Iris._config.SliderGrabColor
-					GrabBar.Transparency = Iris._config.SliderGrabTransparency
-					if Iris._config.GrabRounding > 0 then
-						widgets.UICorner(GrabBar, Iris._config.GrabRounding)
-					end
-
-					widgets.UISizeConstraint(GrabBar, Vector2.new(Iris._config.GrabMinSize, 0))
-
-					GrabBar.Parent = SliderField
-				end
-
-				local TextLabel: TextLabel = Instance.new("TextLabel")
-				TextLabel.Name = "TextLabel"
-				TextLabel.BackgroundTransparency = 1
-				TextLabel.BorderSizePixel = 0
-				TextLabel.LayoutOrder = 5
-				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-
-				widgets.applyTextStyle(TextLabel)
-
-				TextLabel.Parent = Slider
-
-				return Slider
-			end,
-			Update = function(thisWidget: Input<T>)
-				local Input = thisWidget.Instance :: GuiObject
-				local TextLabel: TextLabel = Input.TextLabel
-				TextLabel.Text = thisWidget.arguments.Text or `Slider {dataType}`
-
-				if thisWidget.arguments.Format and typeof(thisWidget.arguments.Format) ~= "table" then
-					thisWidget.arguments.Format = { thisWidget.arguments.Format }
-				elseif not thisWidget.arguments.Format then
-					-- we calculate the format for the s.f. using the max, min and increment arguments.
-					local format: { string } = {}
-					for index = 1, components do
-						local sigfigs: number = defaultSigFigs[dataType][index]
-
-						if thisWidget.arguments.Increment then
-							local value: number = getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if thisWidget.arguments.Max then
-							local value: number = getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if thisWidget.arguments.Min then
-							local value: number = getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments)
-							sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
-						end
-
-						if sigfigs > 0 then
-							-- we know it's a float.
-							format[index] = `%.{sigfigs}f`
-						else
-							format[index] = "%d"
-						end
-					end
-
-					thisWidget.arguments.Format = format
-					thisWidget.arguments.Prefix = defaultPrefx[dataType]
-				end
-
-				for index = 1, components do
-					local SliderField = Input:FindFirstChild("SliderField" .. tostring(index)) :: TextButton
-					local GrabBar: Frame = SliderField.GrabBar
-
-					local increment: number = thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments) or defaultIncrements[dataType][index]
-					local min: number = thisWidget.arguments.Min and getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments) or defaultMin[dataType][index]
-					local max: number = thisWidget.arguments.Max and getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments) or defaultMax[dataType][index]
-
-					local grabScaleSize: number = 1 / math.floor((1 + max - min) / increment)
-
-					GrabBar.Size = UDim2.new(grabScaleSize, 0, 1, 0)
-				end
-
-				local callbackIndex: number = #Iris._postCycleCallbacks + 1
-				local desiredCycleTick: number = Iris._cycleTick + 1
-				Iris._postCycleCallbacks[callbackIndex] = function()
-					if Iris._cycleTick >= desiredCycleTick then
-						if thisWidget.lastCycleTick ~= -1 then
-							thisWidget.state.number.lastChangeTick = Iris._cycleTick
-							Iris._widgets[`Slider{dataType}`].UpdateState(thisWidget)
-						end
-						Iris._postCycleCallbacks[callbackIndex] = nil
-					end
-				end
-			end,
-			Discard = function(thisWidget: Input<T>)
-				thisWidget.Instance:Destroy()
-				widgets.discardState(thisWidget)
-			end,
-			GenerateState = function(thisWidget: Input<T>)
-				if thisWidget.state.number == nil then
-					thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
-				end
-				if thisWidget.state.editingText == nil then
-					thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
-				end
-			end,
-			UpdateState = function(thisWidget: Input<T>)
-				local Slider = thisWidget.Instance :: Frame
-
-				for index = 1, components do
-					local SliderField = Slider:FindFirstChild("SliderField" .. tostring(index)) :: TextButton
-					local InputField: TextBox = SliderField.InputField
-					local OverlayText: TextLabel = SliderField.OverlayText
-					local GrabBar: Frame = SliderField.GrabBar
-
-					local value: number = getValueByIndex(thisWidget.state.number.value, index, thisWidget.arguments)
-					local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
-					if thisWidget.arguments.Prefix then
-						format = thisWidget.arguments.Prefix[index] .. format
-					end
-
-					OverlayText.Text = string.format(format, value)
-					InputField.Text = tostring(value)
-
-					local increment: number = thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments) or defaultIncrements[dataType][index]
-					local min: number = thisWidget.arguments.Min and getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments) or defaultMin[dataType][index]
-					local max: number = thisWidget.arguments.Max and getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments) or defaultMax[dataType][index]
-
-					local SliderWidth: number = SliderField.AbsoluteSize.X
-					local PaddedWidth: number = SliderWidth - GrabBar.AbsoluteSize.X
-					local Ratio: number = (value - min) / (max - min)
-					local Positions: number = math.floor((max - min) / increment)
-					local ClampedRatio: number = math.clamp(math.floor((Ratio * Positions)) / Positions, 0, 1)
-					local PaddedRatio: number = ((PaddedWidth / SliderWidth) * ClampedRatio) + ((1 - (PaddedWidth / SliderWidth)) / 2)
-
-					GrabBar.Position = UDim2.new(PaddedRatio, 0, 0.5, 0)
-
-					if thisWidget.state.editingText.value == index then
-						InputField.Visible = true
-						OverlayText.Visible = false
-						GrabBar.Visible = false
-						InputField:CaptureFocus()
-					else
-						InputField.Visible = false
-						OverlayText.Visible = true
-						GrabBar.Visible = true
-					end
-				end
-			end,
-		}
-	end
-
-	function generateEnumSliderScalar(enum: Enum, item: EnumItem)
-		local input: WidgetClass = generateSliderScalar("Enum", 1, item.Value)
-		local valueToName = { string }
-
-		for _, enumItem: EnumItem in enum:GetEnumItems() do
-			valueToName[enumItem.Value] = enumItem.Name
-		end
-
-		return widgets.extend(input, {
-			Args = {
-				["Text"] = 1,
-			},
-			Update = function(thisWidget: InputEnum)
-				local Input = thisWidget.Instance :: GuiObject
-				local TextLabel: TextLabel = Input.TextLabel
-				TextLabel.Text = thisWidget.arguments.Text or "Input Enum"
-
-				thisWidget.arguments.Increment = 1
-				thisWidget.arguments.Min = 0
-				thisWidget.arguments.Max = #enum:GetEnumItems() - 1
-
-				local SliderField = Input:FindFirstChild("SliderField1") :: TextButton
-				local GrabBar: Frame = SliderField.GrabBar
-
-				local grabScaleSize: number = 1 / math.floor(#enum:GetEnumItems())
-
-				GrabBar.Size = UDim2.new(grabScaleSize, 0, 1, 0)
-			end,
-			GenerateState = function(thisWidget: InputEnum)
-				if thisWidget.state.number == nil then
-					thisWidget.state.number = Iris._widgetState(thisWidget, "number", item.Value)
-				end
-				if thisWidget.state.enumItem == nil then
-					thisWidget.state.enumItem = Iris._widgetState(thisWidget, "enumItem", item)
-				end
-				if thisWidget.state.editingText == nil then
-					thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
-				end
-			end,
-		})
-	end
-end
-
-do
-	local inputNum: WidgetClass = generateInputScalar("Num", 1, 0)
-	inputNum.Args["NoButtons"] = 6
-	Iris.WidgetConstructor("InputNum", inputNum)
-end
-Iris.WidgetConstructor("InputVector2", generateInputScalar("Vector2", 2, Vector2.zero))
-Iris.WidgetConstructor("InputVector3", generateInputScalar("Vector3", 3, Vector3.zero))
-Iris.WidgetConstructor("InputUDim", generateInputScalar("UDim", 2, UDim.new()))
-Iris.WidgetConstructor("InputUDim2", generateInputScalar("UDim2", 4, UDim2.new()))
-Iris.WidgetConstructor("InputRect", generateInputScalar("Rect", 4, Rect.new(0, 0, 0, 0)))
-
-Iris.WidgetConstructor("DragNum", generateDragScalar("Num", 1, 0))
-Iris.WidgetConstructor("DragVector2", generateDragScalar("Vector2", 2, Vector2.zero))
-Iris.WidgetConstructor("DragVector3", generateDragScalar("Vector3", 3, Vector3.zero))
-Iris.WidgetConstructor("DragUDim", generateDragScalar("UDim", 2, UDim.new()))
-Iris.WidgetConstructor("DragUDim2", generateDragScalar("UDim2", 4, UDim2.new()))
-Iris.WidgetConstructor("DragRect", generateDragScalar("Rect", 4, Rect.new(0, 0, 0, 0)))
-
-Iris.WidgetConstructor("InputColor3", generateColorDragScalar("Color3", Color3.fromRGB(0, 0, 0)))
-Iris.WidgetConstructor("InputColor4", generateColorDragScalar("Color4", Color3.fromRGB(0, 0, 0), 0))
-
-Iris.WidgetConstructor("SliderNum", generateSliderScalar("Num", 1, 0))
-Iris.WidgetConstructor("SliderVector2", generateSliderScalar("Vector2", 2, Vector2.zero))
-Iris.WidgetConstructor("SliderVector3", generateSliderScalar("Vector3", 3, Vector3.zero))
-Iris.WidgetConstructor("SliderUDim", generateSliderScalar("UDim", 2, UDim.new()))
-Iris.WidgetConstructor("SliderUDim2", generateSliderScalar("UDim2", 4, UDim2.new()))
-Iris.WidgetConstructor("SliderRect", generateSliderScalar("Rect", 4, Rect.new(0, 0, 0, 0)))
--- Iris.WidgetConstructor("SliderEnum", generateSliderScalar("Enum", 4, 0))
-
--- stylua: ignore
-Iris.WidgetConstructor("InputText", {
-	hasState = true,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-		["TextHint"] = 2,
-		["ReadOnly"] = 3,
-		["MultiLine"] = 4,
-	},
-	Events = {
-		["textChanged"] = {
-			["Init"] = function(thisWidget: InputText)
-				thisWidget.lastTextChangedTick = 0
-			end,
-			["Get"] = function(thisWidget: InputText)
-				return thisWidget.lastTextChangedTick == Iris._cycleTick
-			end,
-		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: InputText)
-		local InputText: Frame = Instance.new("Frame")
-		InputText.Name = "Iris_InputText"
-		InputText.AutomaticSize = Enum.AutomaticSize.Y
-		InputText.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-		InputText.BackgroundTransparency = 1
-		InputText.BorderSizePixel = 0
-		InputText.ZIndex = thisWidget.ZIndex
-		InputText.LayoutOrder = thisWidget.ZIndex
-		local UIListLayout: UIListLayout = widgets.UIListLayout(InputText, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-		local InputField: TextBox = Instance.new("TextBox")
-		InputField.Name = "InputField"
-		InputField.Size = UDim2.new(Iris._config.ContentWidth, Iris._config.ContentHeight)
-		InputField.AutomaticSize = Enum.AutomaticSize.Y
-		InputField.BackgroundColor3 = Iris._config.FrameBgColor
-		InputField.BackgroundTransparency = Iris._config.FrameBgTransparency
-		InputField.Text = ""
-		InputField.TextYAlignment = Enum.TextYAlignment.Top
-		InputField.PlaceholderColor3 = Iris._config.TextDisabledColor
-		InputField.ClearTextOnFocus = false
-		InputField.ClipsDescendants = true
-
-		widgets.applyFrameStyle(InputField)
-		widgets.applyTextStyle(InputField)
-		widgets.UISizeConstraint(InputField, Vector2.xAxis) -- prevents sizes beaking when getting too small.
-		-- InputField.UIPadding.PaddingLeft = UDim.new(0, Iris._config.ItemInnerSpacing.X)
-		-- InputField.UIPadding.PaddingRight = UDim.new(0, 0)
-		InputField.Parent = InputText
-
-		InputField.FocusLost:Connect(function()
-			thisWidget.state.text:set(InputField.Text)
-			thisWidget.lastTextChangedTick = Iris._cycleTick + 1
-		end)
-
-		local frameHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
-
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.Size = UDim2.fromOffset(0, frameHeight)
-		TextLabel.AutomaticSize = Enum.AutomaticSize.X
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.LayoutOrder = 1
-
-		widgets.applyTextStyle(TextLabel)
-
-		TextLabel.Parent = InputText
-
-		return InputText
-	end,
-	Update = function(thisWidget: InputText)
-		local InputText = thisWidget.Instance :: Frame
-		local TextLabel: TextLabel = InputText.TextLabel
-		local InputField: TextBox = InputText.InputField
-
-		TextLabel.Text = thisWidget.arguments.Text or "Input Text"
-		InputField.PlaceholderText = thisWidget.arguments.TextHint or ""
-		InputField.TextEditable = not thisWidget.arguments.ReadOnly
-		InputField.MultiLine = thisWidget.arguments.MultiLine or false
-	end,
-	Discard = function(thisWidget: InputText)
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-	GenerateState = function(thisWidget: InputText)
-		if thisWidget.state.text == nil then
-			thisWidget.state.text = Iris._widgetState(thisWidget, "text", "")
-		end
-	end,
-	UpdateState = function(thisWidget: InputText)
-		local InputText = thisWidget.Instance :: Frame
-		local InputField: TextBox = InputText.InputField
-
-		InputField.Text = thisWidget.state.text.value
-	end,
-} :: WidgetClass)
---stylua: ignore
-Iris.WidgetConstructor("Selectable", {
-	hasState = true,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-		["Index"] = 2,
-		["NoClick"] = 3,
-	},
-	Events = {
-		["selected"] = {
-			["Init"] = function(_thisWidget: Selectable) end,
-			["Get"] = function(thisWidget: Selectable)
-				return thisWidget.lastSelectedTick == Iris._cycleTick
-			end,
-		},
-		["unselected"] = {
-			["Init"] = function(_thisWidget: Selectable) end,
-			["Get"] = function(thisWidget: Selectable)
-				return thisWidget.lastUnselectedTick == Iris._cycleTick
-			end,
-		},
-		["active"] = {
-			["Init"] = function(_thisWidget: Selectable) end,
-			["Get"] = function(thisWidget: Selectable)
-				return thisWidget.state.index.value == thisWidget.arguments.Index
-			end,
-		},
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
-			local Selectable = thisWidget.Instance :: Frame
-			return Selectable.SelectableButton
-		end),
-		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Widget)
-			local Selectable = thisWidget.Instance :: Frame
-			return Selectable.SelectableButton
-		end),
-		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Widget)
-			local Selectable = thisWidget.Instance :: Frame
-			return Selectable.SelectableButton
-		end),
-		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Widget)
-			local Selectable = thisWidget.Instance :: Frame
-			return Selectable.SelectableButton
-		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			local Selectable = thisWidget.Instance :: Frame
-			return Selectable.SelectableButton
-		end),
-	},
-	Generate = function(thisWidget: Selectable)
-		local Selectable: Frame = Instance.new("Frame")
-		Selectable.Name = "Iris_Selectable"
-		Selectable.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, Iris._config.TextSize + 2 * Iris._config.FramePadding.Y - Iris._config.ItemSpacing.Y))
-		Selectable.BackgroundTransparency = 1
-		Selectable.BorderSizePixel = 0
-		Selectable.ZIndex = 0
-		Selectable.LayoutOrder = thisWidget.ZIndex
-
-		local SelectableButton: TextButton = Instance.new("TextButton")
-		SelectableButton.Name = "SelectableButton"
-		SelectableButton.Size = UDim2.new(1, 0, 0, Iris._config.TextSize + 2 * Iris._config.FramePadding.Y)
-		SelectableButton.Position = UDim2.fromOffset(0, -bit32.rshift(Iris._config.ItemSpacing.Y, 1)) -- divide by 2
-		SelectableButton.BackgroundColor3 = Iris._config.HeaderColor
-		SelectableButton.ClipsDescendants = true
-
-		widgets.applyFrameStyle(SelectableButton)
-		widgets.applyTextStyle(SelectableButton)
-		widgets.UISizeConstraint(SelectableButton, Vector2.xAxis)
-
-		thisWidget.ButtonColors = {
-			Color = Iris._config.HeaderColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.HeaderHoveredColor,
-			HoveredTransparency = Iris._config.HeaderHoveredTransparency,
-			ActiveColor = Iris._config.HeaderActiveColor,
-			ActiveTransparency = Iris._config.HeaderActiveTransparency,
-		}
-
-		widgets.applyInteractionHighlights("Background", SelectableButton, SelectableButton, thisWidget.ButtonColors)
-
-		widgets.applyButtonClick(SelectableButton, function()
-			if thisWidget.arguments.NoClick ~= true then
-				if type(thisWidget.state.index.value) == "boolean" then
-					thisWidget.state.index:set(not thisWidget.state.index.value)
-				else
-					thisWidget.state.index:set(thisWidget.arguments.Index)
-				end
-			end
-		end)
-
-		SelectableButton.Parent = Selectable
-
-		return Selectable
-	end,
-	Update = function(thisWidget: Selectable)
-		local Selectable = thisWidget.Instance :: Frame
-		local SelectableButton: TextButton = Selectable.SelectableButton
-		SelectableButton.Text = thisWidget.arguments.Text or "Selectable"
-	end,
-	Discard = function(thisWidget: Selectable)
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-	GenerateState = function(thisWidget: Selectable)
-		if thisWidget.state.index == nil then
-			if thisWidget.arguments.Index ~= nil then
-				error("A shared state index is needded for Iris.Selectables() with an Index argument.", 5)
-			end
-			thisWidget.state.index = Iris._widgetState(thisWidget, "index", false)
-		end
-	end,
-	UpdateState = function(thisWidget: Selectable)
-		local Selectable = thisWidget.Instance :: Frame
-		local SelectableButton: TextButton = Selectable.SelectableButton
-		if thisWidget.state.index.value == (thisWidget.arguments.Index or true) then
-			thisWidget.ButtonColors.Transparency = Iris._config.HeaderTransparency
-			SelectableButton.BackgroundTransparency = Iris._config.HeaderTransparency
-			thisWidget.lastSelectedTick = Iris._cycleTick + 1
-		else
-			thisWidget.ButtonColors.Transparency = 1
-			SelectableButton.BackgroundTransparency = 1
-			thisWidget.lastUnselectedTick = Iris._cycleTick + 1
-		end
-	end,
-} :: WidgetClass)
-
-local AnyOpenedCombo: boolean = false
-local ComboOpenedTick: number = -1
-local OpenedCombo: Combo? = nil
-local CachedContentSize: number = 0
-
-local function UpdateChildContainerTransform(thisWidget: Combo)
-	local Combo = thisWidget.Instance :: Frame
-	local PreviewContainer = Combo.PreviewContainer :: TextButton
-	local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
-
-	if ChildContainer.Parent == nil then
-		return
-	end
-
-	local previewPosition: Vector2 = PreviewContainer.AbsolutePosition - widgets.GuiOffset
-	local previewSize: Vector2 = PreviewContainer.AbsoluteSize
-	local borderSize: number = Iris._config.PopupBorderSize
-	local screenSize: Vector2 = ChildContainer.Parent.AbsoluteSize
-
-	local absoluteContentSize = thisWidget.UIListLayout.AbsoluteContentSize.Y
-	CachedContentSize = absoluteContentSize
-
-	local contentsSize: number = absoluteContentSize + 2 * Iris._config.WindowPadding.Y
-
-	local x: number = previewPosition.X
-	local y: number = previewPosition.Y + previewSize.Y + borderSize
-	local anchor: Vector2 = Vector2.zero
-	local distanceToScreen: number = screenSize.Y - y
-
-	-- Only extend upwards if we cannot fully extend downwards, and we are on the bottom half of the screen.
-	--  i.e. there is more space upwards than there is downwards.
-	if contentsSize > distanceToScreen and y > (screenSize.Y / 2) then
-		y = previewPosition.Y - borderSize
-		anchor = Vector2.yAxis
-		distanceToScreen = y -- from 0 to the current position
-	end
-
-	ChildContainer.AnchorPoint = anchor
-	ChildContainer.Position = UDim2.fromOffset(x, y)
-
-	local height = math.min(contentsSize, distanceToScreen)
-	ChildContainer.Size = UDim2.fromOffset(PreviewContainer.AbsoluteSize.X, height)
-end
-
-table.insert(Iris._postCycleCallbacks, function()
-	if AnyOpenedCombo and OpenedCombo and OpenedCombo.lastCycleTick ~= -1 then
-		local contentSize = OpenedCombo.UIListLayout.AbsoluteContentSize.Y
-		if contentSize ~= CachedContentSize then
-			UpdateChildContainerTransform(OpenedCombo)
-		end
-	end
-end)
-
-local function UpdateComboState(input: InputObject)
-	if not Iris._started then
-		return
-	end
-	if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.MouseButton2 and input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseWheel then
-		return
-	end
-	if AnyOpenedCombo == false or not OpenedCombo then
-		return
-	end
-	if ComboOpenedTick == Iris._cycleTick then
-		return
-	end
-
-	local MouseLocation: Vector2 = widgets.getMouseLocation()
-	local Combo = OpenedCombo.Instance :: Frame
-	local PreviewContainer: TextButton = Combo.PreviewContainer
-	local ChildContainer = OpenedCombo.ChildContainer
-	local rectMin: Vector2 = PreviewContainer.AbsolutePosition - widgets.GuiOffset
-	local rectMax: Vector2 = PreviewContainer.AbsolutePosition - widgets.GuiOffset + PreviewContainer.AbsoluteSize
-	if widgets.isPosInsideRect(MouseLocation, rectMin, rectMax) then
-		return
-	end
-
-	rectMin = ChildContainer.AbsolutePosition - widgets.GuiOffset
-	rectMax = ChildContainer.AbsolutePosition - widgets.GuiOffset + ChildContainer.AbsoluteSize
-	if widgets.isPosInsideRect(MouseLocation, rectMin, rectMax) then
-		return
-	end
-
-	OpenedCombo.state.isOpened:set(false)
-end
-
-widgets.registerEvent("InputBegan", UpdateComboState)
-
-widgets.registerEvent("InputChanged", UpdateComboState)
-
---stylua: ignore
-Iris.WidgetConstructor("Combo", {
-	hasState = true,
-	hasChildren = true,
-	Args = {
-		["Text"] = 1,
-		["NoButton"] = 2,
-		["NoPreview"] = 3,
-	},
-	Events = {
-		["opened"] = {
-			["Init"] = function(_thisWidget: Combo) end,
-			["Get"] = function(thisWidget: Combo)
-				return thisWidget.lastOpenedTick == Iris._cycleTick
-			end,
-		},
-		["closed"] = {
-			["Init"] = function(_thisWidget: Combo) end,
-			["Get"] = function(thisWidget: Combo)
-				return thisWidget.lastClosedTick == Iris._cycleTick
-			end,
-		},
-		["changed"] = {
-			["Init"] = function(_thisWidget: Combo) end,
-			["Get"] = function(thisWidget: Combo)
-				return thisWidget.lastChangedTick == Iris._cycleTick
-			end,
-		},
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
-			local Combo = thisWidget.Instance :: Frame
-			return Combo.PreviewContainer
-		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: Combo)
-		local frameHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
-
-		local Combo: Frame = Instance.new("Frame")
-		Combo.Name = "Iris_Combo"
-		Combo.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-		Combo.AutomaticSize = Enum.AutomaticSize.Y
-		Combo.BackgroundTransparency = 1
-		Combo.BorderSizePixel = 0
-		Combo.LayoutOrder = thisWidget.ZIndex
-
-		local UIListLayout: UIListLayout = widgets.UIListLayout(Combo, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-		local PreviewContainer: TextButton = Instance.new("TextButton")
-		PreviewContainer.Name = "PreviewContainer"
-		PreviewContainer.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(0, 0))
-		PreviewContainer.AutomaticSize = Enum.AutomaticSize.Y
-		PreviewContainer.BackgroundTransparency = 1
-		PreviewContainer.Text = ""
-		PreviewContainer.ZIndex = thisWidget.ZIndex + 2
-		PreviewContainer.AutoButtonColor = false
-
-		widgets.applyFrameStyle(PreviewContainer, true)
-		widgets.UIListLayout(PreviewContainer, Enum.FillDirection.Horizontal, UDim.new(0, 0))
-		widgets.UISizeConstraint(PreviewContainer, Vector2.new(frameHeight))
-
-		PreviewContainer.Parent = Combo
-
-		local PreviewLabel: TextLabel = Instance.new("TextLabel")
-		PreviewLabel.Name = "PreviewLabel"
-		PreviewLabel.Size = UDim2.new(UDim.new(1, 0), Iris._config.ContentHeight)
-		PreviewLabel.AutomaticSize = Enum.AutomaticSize.Y
-		PreviewLabel.BackgroundColor3 = Iris._config.FrameBgColor
-		PreviewLabel.BackgroundTransparency = Iris._config.FrameBgTransparency
-		PreviewLabel.BorderSizePixel = 0
-		PreviewLabel.ClipsDescendants = true
-
-		widgets.applyTextStyle(PreviewLabel)
-		widgets.UIPadding(PreviewLabel, Iris._config.FramePadding)
-
-		PreviewLabel.Parent = PreviewContainer
-
-		local DropdownButton: TextLabel = Instance.new("TextLabel")
-		DropdownButton.Name = "DropdownButton"
-		DropdownButton.Size = UDim2.new(0, frameHeight, Iris._config.ContentHeight.Scale, math.max(Iris._config.ContentHeight.Offset, frameHeight))
-		DropdownButton.BorderSizePixel = 0
-		DropdownButton.BackgroundColor3 = Iris._config.ButtonColor
-		DropdownButton.BackgroundTransparency = Iris._config.ButtonTransparency
-		DropdownButton.Text = ""
-
-		local padding: number = math.round(frameHeight * 0.2)
-		local dropdownSize: number = frameHeight - 2 * padding
-
-		local Dropdown: ImageLabel = Instance.new("ImageLabel")
-		Dropdown.Name = "Dropdown"
-		Dropdown.AnchorPoint = Vector2.new(0.5, 0.5)
-		Dropdown.Size = UDim2.fromOffset(dropdownSize, dropdownSize)
-		Dropdown.Position = UDim2.fromScale(0.5, 0.5)
-		Dropdown.BackgroundTransparency = 1
-		Dropdown.BorderSizePixel = 0
-		Dropdown.ImageColor3 = Iris._config.TextColor
-		Dropdown.ImageTransparency = Iris._config.TextTransparency
-
-		Dropdown.Parent = DropdownButton
-
-		DropdownButton.Parent = PreviewContainer
-
-		-- for some reason ImGui Combo has no highlights for Active, only hovered.
-		-- so this deviates from ImGui, but its a good UX change
-		widgets.applyInteractionHighlightsWithMultiHighlightee("Background", PreviewContainer, {
-			{
-				PreviewLabel,
-				{
+				widgets.applyInteractionHighlights("Background", Checkbox, Box, {
 					Color = Iris._config.FrameBgColor,
 					Transparency = Iris._config.FrameBgTransparency,
 					HoveredColor = Iris._config.FrameBgHoveredColor,
 					HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
 					ActiveColor = Iris._config.FrameBgActiveColor,
 					ActiveTransparency = Iris._config.FrameBgActiveTransparency,
-				},
-			},
-			{
-				DropdownButton,
-				{
-					Color = Iris._config.ButtonColor,
-					Transparency = Iris._config.ButtonTransparency,
-					HoveredColor = Iris._config.ButtonHoveredColor,
-					HoveredTransparency = Iris._config.ButtonHoveredTransparency,
-					-- Use hovered for active
-					ActiveColor = Iris._config.ButtonHoveredColor,
-					ActiveTransparency = Iris._config.ButtonHoveredTransparency,
-				},
-			},
-		})
+				})
 
-		widgets.applyButtonClick(PreviewContainer, function()
-			if AnyOpenedCombo and OpenedCombo ~= thisWidget then
+				Box.Parent = Checkbox
+
+				local Checkmark: ImageLabel = Instance.new("ImageLabel")
+				Checkmark.Name = "Checkmark"
+				Checkmark.Size = UDim2.fromScale(1, 1)
+				Checkmark.BackgroundTransparency = 1
+				Checkmark.ImageColor3 = Iris._config.CheckMarkColor
+				Checkmark.ImageTransparency = Iris._config.CheckMarkTransparency
+				Checkmark.ScaleType = Enum.ScaleType.Fit
+
+				Checkmark.Parent = Box
+
+				widgets.applyButtonClick(Checkbox, function()
+					local wasChecked: boolean = thisWidget.state.isChecked.value
+					thisWidget.state.isChecked:set(not wasChecked)
+				end)
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.LayoutOrder = 1
+
+				widgets.applyTextStyle(TextLabel)
+				TextLabel.Parent = Checkbox
+
+				return Checkbox
+			end,
+			Update = function(thisWidget: Types.Checkbox)
+				local Checkbox = thisWidget.Instance :: TextButton
+				Checkbox.TextLabel.Text = thisWidget.arguments.Text or "Checkbox"
+			end,
+			Discard = function(thisWidget: Types.Checkbox)
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+			GenerateState = function(thisWidget: Types.Checkbox)
+				if thisWidget.state.isChecked == nil then
+					thisWidget.state.isChecked = Iris._widgetState(thisWidget, "checked", false)
+				end
+			end,
+			UpdateState = function(thisWidget: Types.Checkbox)
+				local Checkbox = thisWidget.Instance :: TextButton
+				local Box = Checkbox.Box :: Frame
+				local Checkmark: ImageLabel = Box.Checkmark
+				if thisWidget.state.isChecked.value then
+					Checkmark.Image = widgets.ICONS.CHECK_MARK
+					thisWidget.lastCheckedTick = Iris._cycleTick + 1
+				else
+					Checkmark.Image = ""
+					thisWidget.lastUncheckedTick = Iris._cycleTick + 1
+				end
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local dudud = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		--stylua: ignore
+		Iris.WidgetConstructor("RadioButton", {
+			hasState = true,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+				["Index"] = 2,
+			},
+			Events = {
+				["selected"] = {
+					["Init"] = function(_thisWidget: Types.RadioButton) end,
+					["Get"] = function(thisWidget: Types.RadioButton)
+						return thisWidget.lastSelectedTick == Iris._cycleTick
+					end,
+				},
+				["unselected"] = {
+					["Init"] = function(_thisWidget: Types.RadioButton) end,
+					["Get"] = function(thisWidget: Types.RadioButton)
+						return thisWidget.lastUnselectedTick == Iris._cycleTick
+					end,
+				},
+				["active"] = {
+					["Init"] = function(_thisWidget: Types.RadioButton) end,
+					["Get"] = function(thisWidget: Types.RadioButton)
+						return thisWidget.state.index.value == thisWidget.arguments.Index
+					end,
+				},
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.RadioButton)
+				local RadioButton: TextButton = Instance.new("TextButton")
+				RadioButton.Name = "Iris_RadioButton"
+				RadioButton.AutomaticSize = Enum.AutomaticSize.XY
+				RadioButton.Size = UDim2.fromOffset(0, 0)
+				RadioButton.BackgroundTransparency = 1
+				RadioButton.BorderSizePixel = 0
+				RadioButton.Text = ""
+				RadioButton.LayoutOrder = thisWidget.ZIndex
+				RadioButton.AutoButtonColor = false
+				RadioButton.ZIndex = thisWidget.ZIndex
+				RadioButton.LayoutOrder = thisWidget.ZIndex
+
+				local UIListLayout: UIListLayout = widgets.UIListLayout(RadioButton, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+				local buttonSize: number = Iris._config.TextSize + 2 * (Iris._config.FramePadding.Y - 1)
+				local Button: Frame = Instance.new("Frame")
+				Button.Name = "Button"
+				Button.Size = UDim2.fromOffset(buttonSize, buttonSize)
+				Button.Parent = RadioButton
+				Button.BackgroundColor3 = Iris._config.FrameBgColor
+				Button.BackgroundTransparency = Iris._config.FrameBgTransparency
+
+				widgets.UICorner(Button)
+				widgets.UIPadding(Button, Vector2.new(math.max(1, math.floor(buttonSize / 5)), math.max(1, math.floor(buttonSize / 5))))
+
+				local Circle: Frame = Instance.new("Frame")
+				Circle.Name = "Circle"
+				Circle.Size = UDim2.fromScale(1, 1)
+				Circle.Parent = Button
+				Circle.BackgroundColor3 = Iris._config.CheckMarkColor
+				Circle.BackgroundTransparency = Iris._config.CheckMarkTransparency
+				widgets.UICorner(Circle)
+
+				widgets.applyInteractionHighlights("Background", RadioButton, Button, {
+					Color = Iris._config.FrameBgColor,
+					Transparency = Iris._config.FrameBgTransparency,
+					HoveredColor = Iris._config.FrameBgHoveredColor,
+					HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
+					ActiveColor = Iris._config.FrameBgActiveColor,
+					ActiveTransparency = Iris._config.FrameBgActiveTransparency,
+				})
+
+				widgets.applyButtonClick(RadioButton, function()
+					thisWidget.state.index:set(thisWidget.arguments.Index)
+				end)
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.LayoutOrder = 1
+
+				widgets.applyTextStyle(TextLabel)
+				TextLabel.Parent = RadioButton
+
+				return RadioButton
+			end,
+			Update = function(thisWidget: Types.RadioButton)
+				local RadioButton = thisWidget.Instance :: TextButton
+				local TextLabel: TextLabel = RadioButton.TextLabel
+
+				TextLabel.Text = thisWidget.arguments.Text or "Radio Button"
+				if thisWidget.state then
+					thisWidget.state.index.lastChangeTick = Iris._cycleTick
+					Iris._widgets[thisWidget.type].UpdateState(thisWidget)
+				end
+			end,
+			Discard = function(thisWidget: Types.RadioButton)
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+			GenerateState = function(thisWidget: Types.RadioButton)
+				if thisWidget.state.index == nil then
+					thisWidget.state.index = Iris._widgetState(thisWidget, "index", thisWidget.arguments.Index)
+				end
+			end,
+			UpdateState = function(thisWidget: Types.RadioButton)
+				local RadioButton = thisWidget.Instance :: TextButton
+				local Button = RadioButton.Button :: Frame
+				local Circle: Frame = Button.Circle
+
+				if thisWidget.state.index.value == thisWidget.arguments.Index then
+					-- only need to hide the circle
+					Circle.BackgroundTransparency = Iris._config.CheckMarkTransparency
+					thisWidget.lastSelectedTick = Iris._cycleTick + 1
+				else
+					Circle.BackgroundTransparency = 1
+					thisWidget.lastUnselectedTick = Iris._cycleTick + 1
+				end
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local adasdasd = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local abstractImage = {
+			hasState = false,
+			hasChildren = false,
+			Args = {
+				["Image"] = 1,
+				["Size"] = 2,
+				["Rect"] = 3,
+				["ScaleType"] = 4,
+				["ResampleMode"] = 5,
+				["TileSize"] = 6,
+				["SliceCenter"] = 7,
+				["SliceScale"] = 8,
+			},
+			Discard = function(thisWidget: Types.Image)
+				thisWidget.Instance:Destroy()
+			end,
+		} :: Types.WidgetClass
+
+		--stylua: ignore
+		Iris.WidgetConstructor("Image", widgets.extend(abstractImage, {
+			Events = {
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.Image)
+				local Image: ImageLabel = Instance.new("ImageLabel")
+				Image.Name = "Iris_Image"
+				Image.BackgroundTransparency = 1
+				Image.BorderSizePixel = 0
+				Image.ImageColor3 = Iris._config.ImageColor
+				Image.ImageTransparency = Iris._config.ImageTransparency
+				Image.LayoutOrder = thisWidget.ZIndex
+
+				widgets.applyFrameStyle(Image, true)
+
+				return Image
+			end,
+			Update = function(thisWidget: Types.Image)
+				local Image = thisWidget.Instance :: ImageLabel
+
+				Image.Image = thisWidget.arguments.Image or widgets.ICONS.UNKNOWN_TEXTURE
+				Image.Size = thisWidget.arguments.Size
+				if thisWidget.arguments.ScaleType then
+					Image.ScaleType = thisWidget.arguments.ScaleType
+					if thisWidget.arguments.ScaleType == Enum.ScaleType.Tile and thisWidget.arguments.TileSize then
+						Image.TileSize = thisWidget.arguments.TileSize
+					elseif thisWidget.arguments.ScaleType == Enum.ScaleType.Slice then
+						if thisWidget.arguments.SliceCenter then
+							Image.SliceCenter = thisWidget.arguments.SliceCenter
+						end
+						if thisWidget.arguments.SliceScale then
+							Image.SliceScale = thisWidget.arguments.SliceScale
+						end
+					end
+				end
+
+				if thisWidget.arguments.Rect then
+					Image.ImageRectOffset = thisWidget.arguments.Rect.Min
+					Image.ImageRectSize = Vector2.new(thisWidget.arguments.Rect.Width, thisWidget.arguments.Rect.Height)
+				end
+
+				if thisWidget.arguments.ResampleMode then
+					Image.ResampleMode = thisWidget.arguments.ResampleMode
+				end
+			end,
+		} :: Types.WidgetClass)
+		)
+
+		--stylua: ignore
+		Iris.WidgetConstructor("ImageButton", widgets.extend(abstractImage, {
+			Events = {
+				["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.ImageButton)
+				local Button: ImageButton = Instance.new("ImageButton")
+				Button.Name = "Iris_ImageButton"
+				Button.AutomaticSize = Enum.AutomaticSize.XY
+				Button.BackgroundColor3 = Iris._config.FrameBgColor
+				Button.BackgroundTransparency = Iris._config.FrameBgTransparency
+				Button.BorderSizePixel = 0
+				Button.Image = ""
+				Button.ImageTransparency = 1
+				Button.LayoutOrder = thisWidget.ZIndex
+				Button.AutoButtonColor = false
+
+				widgets.applyFrameStyle(Button, true)
+				widgets.UIPadding(Button, Vector2.new(Iris._config.ImageBorderSize, Iris._config.ImageBorderSize))
+
+				local Image: ImageLabel = Instance.new("ImageLabel")
+				Image.Name = "ImageLabel"
+				Image.BackgroundTransparency = 1
+				Image.BorderSizePixel = 0
+				Image.ImageColor3 = Iris._config.ImageColor
+				Image.ImageTransparency = Iris._config.ImageTransparency
+				Image.Parent = Button
+
+				widgets.applyInteractionHighlights("Background", Button, Button, {
+					Color = Iris._config.FrameBgColor,
+					Transparency = Iris._config.FrameBgTransparency,
+					HoveredColor = Iris._config.FrameBgHoveredColor,
+					HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
+					ActiveColor = Iris._config.FrameBgActiveColor,
+					ActiveTransparency = Iris._config.FrameBgActiveTransparency,
+				})
+
+				return Button
+			end,
+			Update = function(thisWidget: Types.ImageButton)
+				local Button = thisWidget.Instance :: TextButton
+				local Image: ImageLabel = Button.ImageLabel
+
+				Image.Image = thisWidget.arguments.Image or widgets.ICONS.UNKNOWN_TEXTURE
+				Image.Size = thisWidget.arguments.Size
+				if thisWidget.arguments.ScaleType then
+					Image.ScaleType = thisWidget.arguments.ScaleType
+					if thisWidget.arguments.ScaleType == Enum.ScaleType.Tile and thisWidget.arguments.TileSize then
+						Image.TileSize = thisWidget.arguments.TileSize
+					elseif thisWidget.arguments.ScaleType == Enum.ScaleType.Slice then
+						if thisWidget.arguments.SliceCenter then
+							Image.SliceCenter = thisWidget.arguments.SliceCenter
+						end
+						if thisWidget.arguments.SliceScale then
+							Image.SliceScale = thisWidget.arguments.SliceScale
+						end
+					end
+				end
+
+				if thisWidget.arguments.Rect then
+					Image.ImageRectOffset = thisWidget.arguments.Rect.Min
+					Image.ImageRectSize = Vector2.new(thisWidget.arguments.Rect.Width, thisWidget.arguments.Rect.Height)
+				end
+
+				if thisWidget.arguments.ResampleMode then
+					Image.ResampleMode = thisWidget.arguments.ResampleMode
+				end
+			end,
+		} :: Types.WidgetClass)
+		)
+	end)(Iris, widgets)
+	local bababa = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local abstractTree = {
+			hasState = true,
+			hasChildren = true,
+			Events = {
+				["collapsed"] = {
+					["Init"] = function(_thisWidget: Types.CollapsingHeader) end,
+					["Get"] = function(thisWidget: Types.CollapsingHeader)
+						return thisWidget.lastCollapsedTick == Iris._cycleTick
+					end,
+				},
+				["uncollapsed"] = {
+					["Init"] = function(_thisWidget: Types.CollapsingHeader) end,
+					["Get"] = function(thisWidget: Types.CollapsingHeader)
+						return thisWidget.lastUncollapsedTick == Iris._cycleTick
+					end,
+				},
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget)
+					return thisWidget.Instance
+				end),
+			},
+			Discard = function(thisWidget: Types.CollapsingHeader)
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+			ChildAdded = function(thisWidget: Types.CollapsingHeader, _thisChild: Types.Widget)
+				local ChildContainer: Frame = thisWidget.ChildContainer :: Frame
+
+				ChildContainer.Visible = thisWidget.state.isUncollapsed.value
+
+				return ChildContainer
+			end,
+			UpdateState = function(thisWidget: Types.CollapsingHeader)
+				local isUncollapsed: boolean = thisWidget.state.isUncollapsed.value
+				local Tree = thisWidget.Instance :: Frame
+				local ChildContainer = thisWidget.ChildContainer :: Frame
+				local Header = Tree.Header :: Frame
+				local Button = Header.Button :: TextButton
+				local Arrow: ImageLabel = Button.Arrow
+
+				Arrow.Image = (isUncollapsed and widgets.ICONS.DOWN_POINTING_TRIANGLE or widgets.ICONS.RIGHT_POINTING_TRIANGLE)
+				if isUncollapsed then
+					thisWidget.lastUncollapsedTick = Iris._cycleTick + 1
+				else
+					thisWidget.lastCollapsedTick = Iris._cycleTick + 1
+				end
+
+				ChildContainer.Visible = isUncollapsed
+			end,
+			GenerateState = function(thisWidget: Types.CollapsingHeader)
+				if thisWidget.state.isUncollapsed == nil then
+					thisWidget.state.isUncollapsed = Iris._widgetState(thisWidget, "isUncollapsed", thisWidget.arguments.DefaultOpen or false)
+				end
+			end,
+		} :: Types.WidgetClass
+
+		--stylua: ignore
+		Iris.WidgetConstructor(
+			"Tree",
+			widgets.extend(abstractTree, {
+				Args = {
+					["Text"] = 1,
+					["SpanAvailWidth"] = 2,
+					["NoIndent"] = 3,
+					["DefaultOpen"] = 4,
+				},
+				Generate = function(thisWidget: Types.Tree)
+					local Tree: Frame = Instance.new("Frame")
+					Tree.Name = "Iris_Tree"
+					Tree.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
+					Tree.AutomaticSize = Enum.AutomaticSize.Y
+					Tree.BackgroundTransparency = 1
+					Tree.BorderSizePixel = 0
+					Tree.LayoutOrder = thisWidget.ZIndex
+
+					widgets.UIListLayout(Tree, Enum.FillDirection.Vertical, UDim.new(0, 0))
+
+					local ChildContainer: Frame = Instance.new("Frame")
+					ChildContainer.Name = "TreeContainer"
+					ChildContainer.Size = UDim2.fromScale(1, 0)
+					ChildContainer.AutomaticSize = Enum.AutomaticSize.Y
+					ChildContainer.BackgroundTransparency = 1
+					ChildContainer.BorderSizePixel = 0
+					ChildContainer.LayoutOrder = 1
+					ChildContainer.Visible = false
+					-- ChildContainer.ClipsDescendants = true
+
+					widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
+					local ChildContainerPadding: UIPadding = widgets.UIPadding(ChildContainer, Vector2.zero)
+					ChildContainerPadding.PaddingTop = UDim.new(0, Iris._config.ItemSpacing.Y)
+
+					ChildContainer.Parent = Tree
+
+					local Header: Frame = Instance.new("Frame")
+					Header.Name = "Header"
+					Header.Size = UDim2.fromScale(1, 0)
+					Header.AutomaticSize = Enum.AutomaticSize.Y
+					Header.BackgroundTransparency = 1
+					Header.BorderSizePixel = 0
+					Header.Parent = Tree
+
+					local Button: TextButton = Instance.new("TextButton")
+					Button.Name = "Button"
+					Button.BackgroundTransparency = 1
+					Button.BorderSizePixel = 0
+					Button.Text = ""
+					Button.AutoButtonColor = false
+
+					widgets.applyInteractionHighlights("Background", Button, Header, {
+						Color = Color3.fromRGB(0, 0, 0),
+						Transparency = 1,
+						HoveredColor = Iris._config.HeaderHoveredColor,
+						HoveredTransparency = Iris._config.HeaderHoveredTransparency,
+						ActiveColor = Iris._config.HeaderActiveColor,
+						ActiveTransparency = Iris._config.HeaderActiveTransparency,
+					})
+
+					local ButtonPadding: UIPadding = widgets.UIPadding(Button, Vector2.zero)
+					ButtonPadding.PaddingLeft = UDim.new(0, Iris._config.FramePadding.X)
+					local ButtonUIListLayout: UIListLayout = widgets.UIListLayout(Button, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.FramePadding.X))
+					ButtonUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+					Button.Parent = Header
+
+					local Arrow: ImageLabel = Instance.new("ImageLabel")
+					Arrow.Name = "Arrow"
+					Arrow.Size = UDim2.fromOffset(Iris._config.TextSize, math.floor(Iris._config.TextSize * 0.7))
+					Arrow.BackgroundTransparency = 1
+					Arrow.BorderSizePixel = 0
+					Arrow.ImageColor3 = Iris._config.TextColor
+					Arrow.ImageTransparency = Iris._config.TextTransparency
+					Arrow.ScaleType = Enum.ScaleType.Fit
+
+					Arrow.Parent = Button
+
+					local TextLabel: TextLabel = Instance.new("TextLabel")
+					TextLabel.Name = "TextLabel"
+					TextLabel.Size = UDim2.fromOffset(0, 0)
+					TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+					TextLabel.BackgroundTransparency = 1
+					TextLabel.BorderSizePixel = 0
+
+					local TextPadding: UIPadding = widgets.UIPadding(TextLabel, Vector2.zero)
+					TextPadding.PaddingRight = UDim.new(0, 21)
+					widgets.applyTextStyle(TextLabel)
+
+					TextLabel.Parent = Button
+
+					widgets.applyButtonClick(Button, function()
+						thisWidget.state.isUncollapsed:set(not thisWidget.state.isUncollapsed.value)
+					end)
+
+					thisWidget.ChildContainer = ChildContainer
+					return Tree
+				end,
+				Update = function(thisWidget: Types.Tree)
+					local Tree = thisWidget.Instance :: Frame
+					local ChildContainer = thisWidget.ChildContainer :: Frame
+					local Header = Tree.Header :: Frame
+					local Button = Header.Button :: TextButton
+					local TextLabel: TextLabel = Button.TextLabel
+					local Padding: UIPadding = ChildContainer.UIPadding
+
+					TextLabel.Text = thisWidget.arguments.Text or "Tree"
+					if thisWidget.arguments.SpanAvailWidth then
+						Button.AutomaticSize = Enum.AutomaticSize.Y
+						Button.Size = UDim2.fromScale(1, 0)
+					else
+						Button.AutomaticSize = Enum.AutomaticSize.XY
+						Button.Size = UDim2.fromScale(0, 0)
+					end
+
+					if thisWidget.arguments.NoIndent then
+						Padding.PaddingLeft = UDim.new(0, 0)
+					else
+						Padding.PaddingLeft = UDim.new(0, Iris._config.IndentSpacing)
+					end
+				end,
+			})
+		)
+
+		--stylua: ignore
+		Iris.WidgetConstructor(
+			"CollapsingHeader",
+			widgets.extend(abstractTree, {
+				Args = {
+					["Text"] = 1,
+					["DefaultOpen"] = 2
+				},
+				Generate = function(thisWidget: Types.CollapsingHeader)
+					local CollapsingHeader: Frame = Instance.new("Frame")
+					CollapsingHeader.Name = "Iris_CollapsingHeader"
+					CollapsingHeader.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
+					CollapsingHeader.AutomaticSize = Enum.AutomaticSize.Y
+					CollapsingHeader.BackgroundTransparency = 1
+					CollapsingHeader.BorderSizePixel = 0
+					CollapsingHeader.LayoutOrder = thisWidget.ZIndex
+
+					widgets.UIListLayout(CollapsingHeader, Enum.FillDirection.Vertical, UDim.new(0, 0))
+
+					local ChildContainer: Frame = Instance.new("Frame")
+					ChildContainer.Name = "CollapsingHeaderContainer"
+					ChildContainer.Size = UDim2.fromScale(1, 0)
+					ChildContainer.AutomaticSize = Enum.AutomaticSize.Y
+					ChildContainer.BackgroundTransparency = 1
+					ChildContainer.BorderSizePixel = 0
+					ChildContainer.LayoutOrder = 1
+					ChildContainer.Visible = false
+					-- ChildContainer.ClipsDescendants = true
+
+					widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
+					local ChildContainerPadding: UIPadding = widgets.UIPadding(ChildContainer, Vector2.zero)
+					ChildContainerPadding.PaddingTop = UDim.new(0, Iris._config.ItemSpacing.Y)
+
+					ChildContainer.Parent = CollapsingHeader
+
+					local Header: Frame = Instance.new("Frame")
+					Header.Name = "Header"
+					Header.Size = UDim2.fromScale(1, 0)
+					Header.AutomaticSize = Enum.AutomaticSize.Y
+					Header.BackgroundTransparency = 1
+					Header.BorderSizePixel = 0
+					Header.Parent = CollapsingHeader
+
+					local Button = Instance.new("TextButton")
+					Button.Name = "Button"
+					Button.Size = UDim2.new(1, 0, 0, 0)
+					Button.AutomaticSize = Enum.AutomaticSize.Y
+					Button.BackgroundColor3 = Iris._config.HeaderColor
+					Button.BackgroundTransparency = Iris._config.HeaderTransparency
+					Button.BorderSizePixel = 0
+					Button.Text = ""
+					Button.AutoButtonColor = false
+					Button.ClipsDescendants = true
+
+					widgets.UIPadding(Button, Iris._config.FramePadding) -- we add a custom padding because it extends on both sides
+					widgets.applyFrameStyle(Button, true)
+					local ButtonUIListLayout: UIListLayout = widgets.UIListLayout(Button, Enum.FillDirection.Horizontal, UDim.new(0, 2 * Iris._config.FramePadding.X))
+					ButtonUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+					widgets.applyInteractionHighlights("Background", Button, Button, {
+						Color = Iris._config.HeaderColor,
+						Transparency = Iris._config.HeaderTransparency,
+						HoveredColor = Iris._config.HeaderHoveredColor,
+						HoveredTransparency = Iris._config.HeaderHoveredTransparency,
+						ActiveColor = Iris._config.HeaderActiveColor,
+						ActiveTransparency = Iris._config.HeaderActiveTransparency,
+					})
+
+					Button.Parent = Header
+
+					local Arrow: ImageLabel = Instance.new("ImageLabel")
+					Arrow.Name = "Arrow"
+					Arrow.Size = UDim2.fromOffset(Iris._config.TextSize, math.ceil(Iris._config.TextSize * 0.8))
+					Arrow.AutomaticSize = Enum.AutomaticSize.Y
+					Arrow.BackgroundTransparency = 1
+					Arrow.BorderSizePixel = 0
+					Arrow.ImageColor3 = Iris._config.TextColor
+					Arrow.ImageTransparency = Iris._config.TextTransparency
+					Arrow.ScaleType = Enum.ScaleType.Fit
+
+					Arrow.Parent = Button
+
+					local TextLabel: TextLabel = Instance.new("TextLabel")
+					TextLabel.Name = "TextLabel"
+					TextLabel.Size = UDim2.fromOffset(0, 0)
+					TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+					TextLabel.BackgroundTransparency = 1
+					TextLabel.BorderSizePixel = 0
+
+					local TextPadding: UIPadding = widgets.UIPadding(TextLabel, Vector2.zero)
+					TextPadding.PaddingRight = UDim.new(0, 21)
+					widgets.applyTextStyle(TextLabel)
+
+					TextLabel.Parent = Button
+
+					widgets.applyButtonClick(Button, function()
+						thisWidget.state.isUncollapsed:set(not thisWidget.state.isUncollapsed.value)
+					end)
+
+					thisWidget.ChildContainer = ChildContainer
+					return CollapsingHeader
+				end,
+				Update = function(thisWidget: Types.CollapsingHeader)
+					local Tree = thisWidget.Instance :: Frame
+					local Header = Tree.Header :: Frame
+					local Button = Header.Button :: TextButton
+					local TextLabel: TextLabel = Button.TextLabel
+
+					TextLabel.Text = thisWidget.arguments.Text or "Collapsing Header"
+				end,
+			})
+		)
+	end)(Iris, widgets)
+	local dadauda = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local function openTab(TabBar: Types.TabBar, Index: number)
+			if TabBar.state.index.value > 0 then
 				return
 			end
-			thisWidget.state.isOpened:set(not thisWidget.state.isOpened.value)
-		end)
 
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.Size = UDim2.fromOffset(0, frameHeight)
-		TextLabel.AutomaticSize = Enum.AutomaticSize.X
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-
-		widgets.applyTextStyle(TextLabel)
-
-		TextLabel.Parent = Combo
-
-		local ChildContainer: ScrollingFrame = Instance.new("ScrollingFrame")
-		ChildContainer.Name = "ComboContainer"
-		ChildContainer.BackgroundColor3 = Iris._config.PopupBgColor
-		ChildContainer.BackgroundTransparency = Iris._config.PopupBgTransparency
-		ChildContainer.BorderSizePixel = 0
-
-		ChildContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-		ChildContainer.ScrollBarImageTransparency = Iris._config.ScrollbarGrabTransparency
-		ChildContainer.ScrollBarImageColor3 = Iris._config.ScrollbarGrabColor
-		ChildContainer.ScrollBarThickness = Iris._config.ScrollbarSize
-		ChildContainer.CanvasSize = UDim2.fromScale(0, 0)
-		ChildContainer.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-		ChildContainer.TopImage = widgets.ICONS.BLANK_SQUARE
-		ChildContainer.MidImage = widgets.ICONS.BLANK_SQUARE
-		ChildContainer.BottomImage = widgets.ICONS.BLANK_SQUARE
-
-		-- appear over everything else
-		ChildContainer.ClipsDescendants = true
-
-		-- Unfortunatley, ScrollingFrame does not work with UICorner
-		-- if Iris._config.PopupRounding > 0 then
-		--     widgets.UICorner(ChildContainer, Iris._config.PopupRounding)
-		-- end
-
-		widgets.UIStroke(ChildContainer, Iris._config.WindowBorderSize, Iris._config.BorderColor, Iris._config.BorderTransparency)
-		widgets.UIPadding(ChildContainer, Vector2.new(2, Iris._config.WindowPadding.Y))
-		widgets.UISizeConstraint(ChildContainer, Vector2.new(100))
-
-		local ChildContainerUIListLayout: UIListLayout = widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
-		ChildContainerUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-
-		local RootPopupScreenGui = Iris._rootInstance and Iris._rootInstance:WaitForChild("PopupScreenGui") :: GuiObject
-		ChildContainer.Parent = RootPopupScreenGui
-
-		thisWidget.ChildContainer = ChildContainer
-		thisWidget.UIListLayout = ChildContainerUIListLayout
-		return Combo
-	end,
-	Update = function(thisWidget: Combo)
-		local Iris_Combo = thisWidget.Instance :: Frame
-		local PreviewContainer = Iris_Combo.PreviewContainer :: TextButton
-		local PreviewLabel: TextLabel = PreviewContainer.PreviewLabel
-		local DropdownButton: TextLabel = PreviewContainer.DropdownButton
-		local TextLabel: TextLabel = Iris_Combo.TextLabel
-
-		TextLabel.Text = thisWidget.arguments.Text or "Combo"
-
-		if thisWidget.arguments.NoButton then
-			DropdownButton.Visible = false
-			PreviewLabel.Size = UDim2.new(UDim.new(1, 0), PreviewLabel.Size.Height)
-		else
-			DropdownButton.Visible = true
-			local DropdownButtonSize = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
-			PreviewLabel.Size = UDim2.new(UDim.new(1, -DropdownButtonSize), PreviewLabel.Size.Height)
+			TabBar.state.index:set(Index)
 		end
 
-		if thisWidget.arguments.NoPreview then
-			PreviewLabel.Visible = false
-			PreviewContainer.Size = UDim2.new(0, 0, 0, 0)
-			PreviewContainer.AutomaticSize = Enum.AutomaticSize.XY
-		else
-			PreviewLabel.Visible = true
-			PreviewContainer.Size = UDim2.new(Iris._config.ContentWidth, Iris._config.ContentHeight)
-			PreviewContainer.AutomaticSize = Enum.AutomaticSize.Y
-		end
-	end,
-	ChildAdded = function(thisWidget: Combo, _thisChild: Widget)
-		UpdateChildContainerTransform(thisWidget)
-		return thisWidget.ChildContainer
-	end,
-	GenerateState = function(thisWidget: Combo)
-		if thisWidget.state.index == nil then
-			thisWidget.state.index = Iris._widgetState(thisWidget, "index", "No Selection")
-		end
-		if thisWidget.state.isOpened == nil then
-			thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", false)
-		end
-
-		thisWidget.state.index:onChange(function()
-			thisWidget.lastChangedTick = Iris._cycleTick + 1
-			if thisWidget.state.isOpened.value then
-				thisWidget.state.isOpened:set(false)
+		local function closeTab(TabBar: Types.TabBar, Index: number)
+			if TabBar.state.index.value ~= Index then
+				return
 			end
-		end)
-	end,
-	UpdateState = function(thisWidget: Combo)
-		local Combo = thisWidget.Instance :: Frame
-		local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
-		local PreviewContainer = Combo.PreviewContainer :: TextButton
-		local PreviewLabel: TextLabel = PreviewContainer.PreviewLabel
-		local DropdownButton = PreviewContainer.DropdownButton :: TextLabel
-		local Dropdown: ImageLabel = DropdownButton.Dropdown
 
-		if thisWidget.state.isOpened.value then
-			AnyOpenedCombo = true
-			OpenedCombo = thisWidget
-			ComboOpenedTick = Iris._cycleTick
-			thisWidget.lastOpenedTick = Iris._cycleTick + 1
-
-			-- ImGui also does not do this, and the Arrow is always facing down
-			Dropdown.Image = widgets.ICONS.RIGHT_POINTING_TRIANGLE
-			ChildContainer.Visible = true
-
-			UpdateChildContainerTransform(thisWidget)
-		else
-			if AnyOpenedCombo then
-				AnyOpenedCombo = false
-				OpenedCombo = nil
-				thisWidget.lastClosedTick = Iris._cycleTick + 1
+			-- search left for open tabs
+			for i = Index - 1, 1, -1 do
+				if TabBar.Tabs[i].state.isOpened.value == true then
+					TabBar.state.index:set(i)
+					return
+				end
 			end
-			Dropdown.Image = widgets.ICONS.DOWN_POINTING_TRIANGLE
-			ChildContainer.Visible = false
+
+			-- search right for open tabs
+			for i = Index, #TabBar.Tabs do
+				if TabBar.Tabs[i].state.isOpened.value == true then
+					TabBar.state.index:set(i)
+					return
+				end
+			end
+
+			-- no open tabs, so wait for one
+			TabBar.state.index:set(0)
 		end
 
-		local stateIndex: any = thisWidget.state.index.value
-		PreviewLabel.Text = if typeof(stateIndex) == "EnumItem" then stateIndex.Name else tostring(stateIndex)
-	end,
-	Discard = function(thisWidget: Combo)
-		-- If we are discarding the current combo active, we need to hide it
-		if OpenedCombo and OpenedCombo == thisWidget then
-			OpenedCombo = nil
-			AnyOpenedCombo = false
-		end
+		--stylua: ignore
+		Iris.WidgetConstructor("TabBar", {
+			hasState = true,
+			hasChildren = true,
+			Args = {},
+			Events = {},
+			Generate = function(thisWidget: Types.TabBar)
+				local TabBar: Frame = Instance.new("Frame")
+				TabBar.Name = "Iris_TabBar"
+				TabBar.AutomaticSize = Enum.AutomaticSize.Y
+				TabBar.Size = UDim2.fromScale(1, 0)
+				TabBar.BackgroundTransparency = 1
+				TabBar.BorderSizePixel = 0
+				TabBar.LayoutOrder = thisWidget.ZIndex
 
-		thisWidget.Instance:Destroy()
-		thisWidget.ChildContainer:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-} :: WidgetClass)
--- stylua: ignore
-Iris.WidgetConstructor("ProgressBar", {
-	hasState = true,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-		["Format"] = 2,
-	},
-	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-		["changed"] = {
-			["Init"] = function(_thisWidget: ProgressBar) end,
-			["Get"] = function(thisWidget: ProgressBar)
-				return thisWidget.lastChangedTick == Iris._cycleTick
+				widgets.UIListLayout(TabBar, Enum.FillDirection.Vertical, UDim.new()).VerticalAlignment = Enum.VerticalAlignment.Bottom
+
+				local Bar: Frame = Instance.new("Frame")
+				Bar.Name = "Bar"
+				Bar.AutomaticSize = Enum.AutomaticSize.Y
+				Bar.Size = UDim2.fromScale(1, 0)
+				Bar.BackgroundTransparency = 1
+				Bar.BorderSizePixel = 0
+
+				widgets.UIListLayout(Bar, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+
+				Bar.Parent = TabBar
+
+				local Underline: Frame = Instance.new("Frame")
+				Underline.Name = "Underline"
+				Underline.Size = UDim2.new(1, 0, 0, 1)
+				Underline.BackgroundColor3 = Iris._config.TabActiveColor
+				Underline.BackgroundTransparency = Iris._config.TabActiveTransparency
+				Underline.BorderSizePixel = 0
+				Underline.LayoutOrder = 1
+
+				Underline.Parent = TabBar
+
+				local ChildContainer: Frame = Instance.new("Frame")
+				ChildContainer.Name = "TabContainer"
+				ChildContainer.AutomaticSize = Enum.AutomaticSize.Y
+				ChildContainer.Size = UDim2.fromScale(1, 0)
+				ChildContainer.BackgroundTransparency = 1
+				ChildContainer.BorderSizePixel = 0
+				ChildContainer.LayoutOrder = 2
+				ChildContainer.ClipsDescendants = true
+
+				ChildContainer.Parent = TabBar
+
+				thisWidget.ChildContainer = ChildContainer
+				thisWidget.Tabs = {}
+
+				return TabBar
 			end,
-		},
-	},
-	Generate = function(thisWidget: ProgressBar)
-		local ProgressBar: Frame = Instance.new("Frame")
-		ProgressBar.Name = "Iris_ProgressBar"
-		ProgressBar.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-		ProgressBar.BackgroundTransparency = 1
-		ProgressBar.AutomaticSize = Enum.AutomaticSize.Y
-		ProgressBar.LayoutOrder = thisWidget.ZIndex
+			Update = function(_thisWidget: Types.TabBar) end,
+			ChildAdded = function(thisWidget: Types.TabBar, thisChild: Types.Tab)
+				assert(thisChild.type == "Tab", "Only Iris.Tab can be parented to Iris.TabBar.")
+				local TabBar = thisWidget.Instance :: Frame
+				thisChild.ChildContainer.Parent = thisWidget.ChildContainer
+				thisChild.Index = #thisWidget.Tabs + 1
+				thisWidget.state.index.ConnectedWidgets[thisChild.ID] = thisChild
+				table.insert(thisWidget.Tabs, thisChild)
 
-		local UIListLayout: UIListLayout = widgets.UIListLayout(ProgressBar, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+				return TabBar.Bar
+			end,
+			ChildDiscarded = function(thisWidget: Types.TabBar, thisChild: Types.Tab)
+				local Index: number = thisChild.Index
+				table.remove(thisWidget.Tabs, Index)
 
-		local Bar: Frame = Instance.new("Frame")
-		Bar.Name = "Bar"
-		Bar.Size = UDim2.new(Iris._config.ContentWidth, Iris._config.ContentHeight)
-		Bar.BackgroundColor3 = Iris._config.FrameBgColor
-		Bar.BackgroundTransparency = Iris._config.FrameBgTransparency
-		Bar.BorderSizePixel = 0
-		Bar.AutomaticSize = Enum.AutomaticSize.Y
-		Bar.ClipsDescendants = true
+				for i = Index, #thisWidget.Tabs do
+					thisWidget.Tabs[i].Index = i
+				end
 
-		widgets.applyFrameStyle(Bar, true)
+				closeTab(thisWidget, Index)
+			end,
+			GenerateState = function(thisWidget: Types.Tab)
+				if thisWidget.state.index == nil then
+					thisWidget.state.index = Iris._widgetState(thisWidget, "index", 1)
+				end
+			end,
+			UpdateState = function(_thisWidget: Types.Tab)
+			end,
+			Discard = function(thisWidget: Types.TabBar)
+				thisWidget.Instance:Destroy()
+			end,
+		} :: Types.WidgetClass)
 
-		Bar.Parent = ProgressBar
+		--stylua: ignore
+		Iris.WidgetConstructor("Tab", {
+			hasState = true,
+			hasChildren = true,
+			Args = {
+				["Text"] = 1,
+				["Hideable"] = 2,
+			},
+			Events = {
+				["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["selected"] = {
+					["Init"] = function(_thisWidget: Types.Tab) end,
+					["Get"] = function(thisWidget: Types.Tab)
+						return thisWidget.lastSelectedTick == Iris._cycleTick
+					end,
+				},
+				["unselected"] = {
+					["Init"] = function(_thisWidget: Types.Tab) end,
+					["Get"] = function(thisWidget: Types.Tab)
+						return thisWidget.lastUnselectedTick == Iris._cycleTick
+					end,
+				},
+				["active"] = {
+					["Init"] = function(_thisWidget: Types.Tab) end,
+					["Get"] = function(thisWidget: Types.Tab)
+						return thisWidget.state.index.value == thisWidget.Index
+					end,
+				},
+				["opened"] = {
+					["Init"] = function(_thisWidget: Types.Tab) end,
+					["Get"] = function(thisWidget: Types.Tab)
+						return thisWidget.lastOpenedTick == Iris._cycleTick
+					end,
+				},
+				["closed"] = {
+					["Init"] = function(_thisWidget: Types.Tab) end,
+					["Get"] = function(thisWidget: Types.Tab)
+						return thisWidget.lastClosedTick == Iris._cycleTick
+					end,
+				},
+			},
+			Generate = function(thisWidget: Types.Tab)
+				local Tab = Instance.new("TextButton")
+				Tab.Name = "Iris_Tab"
+				Tab.AutomaticSize = Enum.AutomaticSize.XY
+				Tab.BackgroundColor3 = Iris._config.TabColor
+				Tab.BackgroundTransparency = Iris._config.TabTransparency
+				Tab.BorderSizePixel = 0
+				Tab.Text = ""
+				Tab.AutoButtonColor = false
 
-		local Progress: TextLabel = Instance.new("TextLabel")
-		Progress.Name = "Progress"
-		Progress.AutomaticSize = Enum.AutomaticSize.Y
-		Progress.Size = UDim2.new(UDim.new(0, 0), Iris._config.ContentHeight)
-		Progress.BackgroundColor3 = Iris._config.PlotHistogramColor
-		Progress.BackgroundTransparency = Iris._config.PlotHistogramTransparency
-		Progress.BorderSizePixel = 0
+				thisWidget.ButtonColors = {
+					Color = Iris._config.TabColor,
+					Transparency = Iris._config.TabTransparency,
+					HoveredColor = Iris._config.TabHoveredColor,
+					HoveredTransparency = Iris._config.TabHoveredTransparency,
+					ActiveColor = Iris._config.TabActiveColor,
+					ActiveTransparency = Iris._config.TabActiveTransparency,
+				}
 
-		widgets.applyTextStyle(Progress)
-		widgets.UIPadding(Progress, Iris._config.FramePadding)
-		widgets.UICorner(Progress, Iris._config.FrameRounding)
+				widgets.UIPadding(Tab, Vector2.new(Iris._config.FramePadding.X, 0))
+				widgets.applyFrameStyle(Tab, true, true)
+				widgets.UIListLayout(Tab, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X)).VerticalAlignment = Enum.VerticalAlignment.Center
+				widgets.applyInteractionHighlights("Background", Tab, Tab, thisWidget.ButtonColors)
+				widgets.applyButtonClick(Tab, function()
+					thisWidget.state.index:set(thisWidget.Index)
+				end)
 
-		Progress.Text = ""
-		Progress.Parent = Bar
+				local TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
 
-		local Value: TextLabel = Instance.new("TextLabel")
-		Value.Name = "Value"
-		Value.AutomaticSize = Enum.AutomaticSize.XY
-		Value.Size = UDim2.new(UDim.new(0, 0), Iris._config.ContentHeight)
-		Value.BackgroundTransparency = 1
-		Value.BorderSizePixel = 0
-		Value.ZIndex = 1
+				widgets.applyTextStyle(TextLabel)
+				widgets.UIPadding(TextLabel, Vector2.new(0, Iris._config.FramePadding.Y))
 
-		widgets.applyTextStyle(Value)
-		widgets.UIPadding(Value, Iris._config.FramePadding)
+				TextLabel.Parent = Tab
 
-		Value.Parent = Bar
+				local ButtonSize: number = Iris._config.TextSize + ((Iris._config.FramePadding.Y - 1) * 2)
 
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-		TextLabel.AnchorPoint = Vector2.new(0, 0.5)
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.LayoutOrder = 1
+				local CloseButton = Instance.new("TextButton")
+				CloseButton.Name = "CloseButton"
+				CloseButton.BackgroundTransparency = 1
+				CloseButton.BorderSizePixel = 0
+				CloseButton.LayoutOrder = 1
+				CloseButton.Size = UDim2.fromOffset(ButtonSize, ButtonSize)
+				CloseButton.Text = ""
+				CloseButton.AutoButtonColor = false
 
-		widgets.applyTextStyle(TextLabel)
-		widgets.UIPadding(Value, Iris._config.FramePadding)
+				widgets.UICorner(CloseButton)
+				widgets.applyButtonClick(CloseButton, function()
+					thisWidget.state.isOpened:set(false)
+					closeTab(thisWidget.parentWidget, thisWidget.Index)
+				end)
 
-		TextLabel.Parent = ProgressBar
+				widgets.applyInteractionHighlights("Background", CloseButton, CloseButton, {
+					Color = Iris._config.TabColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.ButtonHoveredColor,
+					HoveredTransparency = Iris._config.ButtonHoveredTransparency,
+					ActiveColor = Iris._config.ButtonActiveColor,
+					ActiveTransparency = Iris._config.ButtonActiveTransparency,
+				})
 
-		return ProgressBar
-	end,
-	GenerateState = function(thisWidget: ProgressBar)
-		if thisWidget.state.progress == nil then
-			thisWidget.state.progress = Iris._widgetState(thisWidget, "Progress", 0)
+				CloseButton.Parent = Tab
+
+				local Icon = Instance.new("ImageLabel")
+				Icon.Name = "Icon"
+				Icon.AnchorPoint = Vector2.new(0.5, 0.5)
+				Icon.BackgroundTransparency = 1
+				Icon.BorderSizePixel = 0
+				Icon.Image = widgets.ICONS.MULTIPLICATION_SIGN
+				Icon.ImageTransparency = 1
+				Icon.Position = UDim2.fromScale(0.5, 0.5)
+				Icon.Size = UDim2.fromOffset(math.floor(0.7 * ButtonSize), math.floor(0.7 * ButtonSize))
+
+				widgets.applyInteractionHighlights("Image", Tab, Icon, {
+					Color = Iris._config.TextColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.TextColor,
+					HoveredTransparency = Iris._config.TextTransparency,
+					ActiveColor = Iris._config.TextColor,
+					ActiveTransparency = Iris._config.TextTransparency,
+				})
+				Icon.Parent = CloseButton
+
+				local ChildContainer: Frame = Instance.new("Frame")
+				ChildContainer.Name = "TabContainer"
+				ChildContainer.AutomaticSize = Enum.AutomaticSize.Y
+				ChildContainer.Size = UDim2.fromScale(1, 0)
+				ChildContainer.BackgroundTransparency = 1
+				ChildContainer.BorderSizePixel = 0
+
+				ChildContainer.ClipsDescendants = true
+				widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
+				widgets.UIPadding(ChildContainer, Vector2.new(0, Iris._config.ItemSpacing.Y)).PaddingBottom = UDim.new()
+
+				thisWidget.ChildContainer = ChildContainer
+
+				return Tab
+			end,
+			Update = function(thisWidget: Types.Tab)
+				local Tab = thisWidget.Instance :: TextButton
+				local TextLabel: TextLabel = Tab.TextLabel
+				local CloseButton: TextButton = Tab.CloseButton
+
+				TextLabel.Text = thisWidget.arguments.Text
+				CloseButton.Visible = if thisWidget.arguments.Hideable == true then true else false
+			end,
+			ChildAdded = function(thisWidget: Types.Tab, _thisChild: Types.Widget)
+				return thisWidget.ChildContainer
+			end,
+			GenerateState = function(thisWidget: Types.Tab)
+				thisWidget.state.index = thisWidget.parentWidget.state.index
+				thisWidget.state.index.ConnectedWidgets[thisWidget.ID] = thisWidget
+
+				if thisWidget.state.isOpened == nil then
+					thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", true)
+				end
+			end,
+			UpdateState = function(thisWidget: Types.Tab)
+				local Tab = thisWidget.Instance :: TextButton
+				local Container = thisWidget.ChildContainer :: Frame
+
+				if thisWidget.state.isOpened.lastChangeTick == Iris._cycleTick then
+					if thisWidget.state.isOpened.value == true then
+						thisWidget.lastOpenedTick = Iris._cycleTick + 1
+						openTab(thisWidget.parentWidget, thisWidget.Index)
+						Tab.Visible = true
+					else
+						thisWidget.lastClosedTick = Iris._cycleTick + 1
+						closeTab(thisWidget.parentWidget, thisWidget.Index)
+						Tab.Visible = false
+					end
+				end
+
+				if thisWidget.state.index.lastChangeTick == Iris._cycleTick then
+					if thisWidget.state.index.value == thisWidget.Index then
+						thisWidget.ButtonColors.Color = Iris._config.TabActiveColor
+						thisWidget.ButtonColors.Transparency = Iris._config.TabActiveTransparency
+						Tab.BackgroundColor3 = Iris._config.TabActiveColor
+						Tab.BackgroundTransparency = Iris._config.TabActiveTransparency
+						Container.Visible = true
+						thisWidget.lastSelectedTick = Iris._cycleTick + 1
+					else
+						thisWidget.ButtonColors.Color = Iris._config.TabColor
+						thisWidget.ButtonColors.Transparency = Iris._config.TabTransparency
+						Tab.BackgroundColor3 = Iris._config.TabColor
+						Tab.BackgroundTransparency = Iris._config.TabTransparency
+						Container.Visible = false
+						thisWidget.lastUnselectedTick = Iris._cycleTick + 1
+					end
+				end
+			end,
+			Discard = function(thisWidget: Types.Tab)
+				if thisWidget.state.isOpened.value == true then
+					closeTab(thisWidget.parentWidget, thisWidget.Index)
+				end
+
+				thisWidget.Instance:Destroy()
+				thisWidget.ChildContainer:Destroy()
+				widgets.discardState(thisWidget)
+			end
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local xddd = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local numberChanged = {
+			["Init"] = function(_thisWidget: Types.Widget) end,
+			["Get"] = function(thisWidget: Types.Input<any>)
+				return thisWidget.lastNumberChangedTick == Iris._cycleTick
+			end,
+		}
+
+		local function getValueByIndex<T>(value: T, index: number, arguments: any): number
+			local t: string = typeof(value)
+			local v = value :: any
+			if t == "number" then
+				return v
+			elseif t == "Vector2" then
+				if index == 1 then
+					return v.X
+				elseif index == 2 then
+					return v.Y
+				end
+			elseif t == "Vector3" then
+				if index == 1 then
+					return v.X
+				elseif index == 2 then
+					return v.Y
+				elseif index == 3 then
+					return v.Z
+				end
+			elseif t == "UDim" then
+				if index == 1 then
+					return v.Scale
+				elseif index == 2 then
+					return v.Offset
+				end
+			elseif t == "UDim2" then
+				if index == 1 then
+					return v.X.Scale
+				elseif index == 2 then
+					return v.X.Offset
+				elseif index == 3 then
+					return v.Y.Scale
+				elseif index == 4 then
+					return v.Y.Offset
+				end
+			elseif t == "Color3" then
+				local color: { number } = arguments.UseHSV and { v:ToHSV() } or { v.R, v.G, v.B }
+				if index == 1 then
+					return color[1]
+				elseif index == 2 then
+					return color[2]
+				elseif index == 3 then
+					return color[3]
+				end
+			elseif t == "Rect" then
+				if index == 1 then
+					return v.Min.X
+				elseif index == 2 then
+					return v.Min.Y
+				elseif index == 3 then
+					return v.Max.X
+				elseif index == 4 then
+					return v.Max.Y
+				end
+			elseif t == "table" then
+				return v[index]
+			end
+
+			error(`Incorrect datatype or value: {value} {typeof(value)} {index}.`)
 		end
-	end,
-	Update = function(thisWidget: ProgressBar)
-		local Progress = thisWidget.Instance :: Frame
-		local TextLabel: TextLabel = Progress.TextLabel
-		local Bar = Progress.Bar :: Frame
-		local Value: TextLabel = Bar.Value
 
-		if thisWidget.arguments.Format ~= nil and typeof(thisWidget.arguments.Format) == "string" then
-			Value.Text = thisWidget.arguments.Format
+		local function updateValueByIndex<T>(value: T, index: number, newValue: number, arguments: Types.Arguments): T
+			if typeof(value) == "number" then
+				return newValue :: any
+			elseif typeof(value) == "Vector2" then
+				if index == 1 then
+					return Vector2.new(newValue, value.Y) :: any
+				elseif index == 2 then
+					return Vector2.new(value.X, newValue) :: any
+				end
+			elseif typeof(value) == "Vector3" then
+				if index == 1 then
+					return Vector3.new(newValue, value.Y, value.Z) :: any
+				elseif index == 2 then
+					return Vector3.new(value.X, newValue, value.Z) :: any
+				elseif index == 3 then
+					return Vector3.new(value.X, value.Y, newValue) :: any
+				end
+			elseif typeof(value) == "UDim" then
+				if index == 1 then
+					return UDim.new(newValue, value.Offset) :: any
+				elseif index == 2 then
+					return UDim.new(value.Scale, newValue) :: any
+				end
+			elseif typeof(value) == "UDim2" then
+				if index == 1 then
+					return UDim2.new(UDim.new(newValue, value.X.Offset), value.Y) :: any
+				elseif index == 2 then
+					return UDim2.new(UDim.new(value.X.Scale, newValue), value.Y) :: any
+				elseif index == 3 then
+					return UDim2.new(value.X, UDim.new(newValue, value.Y.Offset)) :: any
+				elseif index == 4 then
+					return UDim2.new(value.X, UDim.new(value.Y.Scale, newValue)) :: any
+				end
+			elseif typeof(value) == "Rect" then
+				if index == 1 then
+					return Rect.new(Vector2.new(newValue, value.Min.Y), value.Max) :: any
+				elseif index == 2 then
+					return Rect.new(Vector2.new(value.Min.X, newValue), value.Max) :: any
+				elseif index == 3 then
+					return Rect.new(value.Min, Vector2.new(newValue, value.Max.Y)) :: any
+				elseif index == 4 then
+					return Rect.new(value.Min, Vector2.new(value.Max.X, newValue)) :: any
+				end
+			elseif typeof(value) == "Color3" then
+				if arguments.UseHSV then
+					local h: number, s: number, v: number = value:ToHSV()
+					if index == 1 then
+						return Color3.fromHSV(newValue, s, v) :: any
+					elseif index == 2 then
+						return Color3.fromHSV(h, newValue, v) :: any
+					elseif index == 3 then
+						return Color3.fromHSV(h, s, newValue) :: any
+					end
+				end
+				if index == 1 then
+					return Color3.new(newValue, value.G, value.B) :: any
+				elseif index == 2 then
+					return Color3.new(value.R, newValue, value.B) :: any
+				elseif index == 3 then
+					return Color3.new(value.R, value.G, newValue) :: any
+				end
+			end
+
+			error(`Incorrect datatype or value {value} {typeof(value)} {index}.`)
 		end
 
-		TextLabel.Text = thisWidget.arguments.Text or "Progress Bar"
-	end,
-	UpdateState = function(thisWidget: ProgressBar)
-		local ProgressBar = thisWidget.Instance :: Frame
-		local Bar = ProgressBar.Bar :: Frame
-		local Progress: TextLabel = Bar.Progress
-		local Value: TextLabel = Bar.Value
+		local defaultIncrements: { [InputDataTypes]: { number } } = {
+			Num = { 1 },
+			Vector2 = { 1, 1 },
+			Vector3 = { 1, 1, 1 },
+			UDim = { 0.01, 1 },
+			UDim2 = { 0.01, 1, 0.01, 1 },
+			Color3 = { 1, 1, 1 },
+			Color4 = { 1, 1, 1, 1 },
+			Rect = { 1, 1, 1, 1 },
+		}
 
-		local progress: number = thisWidget.state.progress.value
-		progress = math.clamp(progress, 0, 1)
-		local totalWidth: number = Bar.AbsoluteSize.X
-		local textWidth: number = Value.AbsoluteSize.X
-		if totalWidth * (1 - progress) < textWidth then
-			Value.AnchorPoint = Vector2.xAxis
-			Value.Position = UDim2.fromScale(1, 0)
-		else
-			Value.AnchorPoint = Vector2.zero
-			Value.Position = UDim2.new(progress, 0, 0, 0)
-		end
+		local defaultMin: { [InputDataTypes]: { number } } = {
+			Num = { 0 },
+			Vector2 = { 0, 0 },
+			Vector3 = { 0, 0, 0 },
+			UDim = { 0, 0 },
+			UDim2 = { 0, 0, 0, 0 },
+			Rect = { 0, 0, 0, 0 },
+		}
 
-		Progress.Size = UDim2.new(UDim.new(progress, 0), Progress.Size.Height)
-		if thisWidget.arguments.Format ~= nil and typeof(thisWidget.arguments.Format) == "string" then
-			Value.Text = thisWidget.arguments.Format
-		else
-			Value.Text = string.format("%d%%", progress * 100)
-		end
-		thisWidget.lastChangedTick = Iris._cycleTick + 1
-	end,
-	Discard = function(thisWidget: ProgressBar)
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-} :: WidgetClass)
+		local defaultMax: { [InputDataTypes]: { number } } = {
+			Num = { 100 },
+			Vector2 = { 100, 100 },
+			Vector3 = { 100, 100, 100 },
+			UDim = { 1, 960 },
+			UDim2 = { 1, 960, 1, 960 },
+			Rect = { 960, 960, 960, 960 },
+		}
 
-local function createLine(parent: Frame, index: number): Frame
-	local Block: Frame = Instance.new("Frame")
-	Block.Name = tostring(index)
-	Block.AnchorPoint = Vector2.new(0.5, 0.5)
-	Block.BackgroundColor3 = Iris._config.PlotLinesColor
-	Block.BackgroundTransparency = Iris._config.PlotLinesTransparency
-	Block.BorderSizePixel = 0
+		local defaultPrefx: { [InputDataTypes]: { string } } = {
+			Num = { "" },
+			Vector2 = { "X: ", "Y: " },
+			Vector3 = { "X: ", "Y: ", "Z: " },
+			UDim = { "", "" },
+			UDim2 = { "", "", "", "" },
+			Color3_RGB = { "R: ", "G: ", "B: " },
+			Color3_HSV = { "H: ", "S: ", "V: " },
+			Color4_RGB = { "R: ", "G: ", "B: ", "T: " },
+			Color4_HSV = { "H: ", "S: ", "V: ", "T: " },
+			Rect = { "X: ", "Y: ", "X: ", "Y: " },
+		}
 
-	Block.Parent = parent
+		local defaultSigFigs: { [InputDataTypes]: { number } } = {
+			Num = { 0 },
+			Vector2 = { 0, 0 },
+			Vector3 = { 0, 0, 0 },
+			UDim = { 3, 0 },
+			UDim2 = { 3, 0, 3, 0 },
+			Color3 = { 0, 0, 0 },
+			Color4 = { 0, 0, 0, 0 },
+			Rect = { 0, 0, 0, 0 },
+		}
 
-	return Block
-end
+    --[[
+        Input
+    ]]
+		local generateInputScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> Types.WidgetClass
+		do
+			local function generateButtons(thisWidget: Types.Input<number>, parent: GuiObject, textHeight: number)
+				local SubButton = widgets.abstractButton.Generate(thisWidget) :: TextButton
+				SubButton.Name = "SubButton"
+				SubButton.ZIndex = 5
+				SubButton.LayoutOrder = 5
+				SubButton.TextXAlignment = Enum.TextXAlignment.Center
+				SubButton.Text = "-"
+				SubButton.Size = UDim2.fromOffset(Iris._config.TextSize + 2 * Iris._config.FramePadding.Y, Iris._config.TextSize)
+				SubButton.Parent = parent
 
-local function clearLine(thisWidget: PlotLines)
-	if thisWidget.HoveredLine then
-		thisWidget.HoveredLine.BackgroundColor3 = Iris._config.PlotLinesColor
-		thisWidget.HoveredLine.BackgroundTransparency = Iris._config.PlotLinesTransparency
-		thisWidget.HoveredLine = false
-		thisWidget.state.hovered:set(nil)
-	end
-end
+				widgets.applyButtonClick(SubButton, function()
+					local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+					local changeValue: number = (thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, 1, thisWidget.arguments :: Types.Argument) or 1) * (isCtrlHeld and 100 or 1)
+					local newValue: number = thisWidget.state.number.value - changeValue
+					if thisWidget.arguments.Min ~= nil then
+						newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, 1, thisWidget.arguments :: Types.Argument))
+					end
+					if thisWidget.arguments.Max ~= nil then
+						newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, 1, thisWidget.arguments :: Types.Argument))
+					end
+					thisWidget.state.number:set(newValue)
+					thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
+				end)
 
-local function updateLine(thisWidget: PlotLines, silent: true?)
-	local PlotLines = thisWidget.Instance :: Frame
-	local Background = PlotLines.Background :: Frame
-	local Plot = Background.Plot :: Frame
+				local AddButton = widgets.abstractButton.Generate(thisWidget) :: TextButton
+				AddButton.Name = "AddButton"
+				AddButton.ZIndex = 6
+				AddButton.LayoutOrder = 6
+				AddButton.TextXAlignment = Enum.TextXAlignment.Center
+				AddButton.Text = "+"
+				AddButton.Size = UDim2.fromOffset(Iris._config.TextSize + 2 * Iris._config.FramePadding.Y, Iris._config.TextSize)
+				AddButton.Parent = parent
 
-	local mousePosition: Vector2 = widgets.getMouseLocation()
+				widgets.applyButtonClick(AddButton, function()
+					local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+					local changeValue: number = (thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, 1, thisWidget.arguments :: Types.Argument) or 1) * (isCtrlHeld and 100 or 1)
+					local newValue: number = thisWidget.state.number.value + changeValue
+					if thisWidget.arguments.Min ~= nil then
+						newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, 1, thisWidget.arguments :: Types.Argument))
+					end
+					if thisWidget.arguments.Max ~= nil then
+						newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, 1, thisWidget.arguments :: Types.Argument))
+					end
+					thisWidget.state.number:set(newValue)
+					thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
+				end)
 
-	local position: Vector2 = Plot.AbsolutePosition - widgets.GuiOffset
-	local scale: number = (mousePosition.X - position.X) / Plot.AbsoluteSize.X
-	local index: number = math.ceil(scale * #thisWidget.Lines)
-	local line: Frame? = thisWidget.Lines[index]
+				return 2 * Iris._config.ItemInnerSpacing.X + 2 * textHeight
+			end
 
-	if line then
-		if line ~= thisWidget.HoveredLine and not silent then
-			clearLine(thisWidget)
-		end
-		local start: number? = thisWidget.state.values.value[index]
-		local stop: number? = thisWidget.state.values.value[index + 1]
-		if start and stop then
-			if math.floor(start) == start and math.floor(stop) == stop then
-				thisWidget.Tooltip.Text = ("%d: %d\n%d: %d"):format(index, start, index + 1, stop)
-			else
-				thisWidget.Tooltip.Text = ("%d: %.3f\n%d: %.3f"):format(index, start, index + 1, stop)
+			function generateInputScalar<T>(dataType: InputDataTypes, components: number, defaultValue: any)
+				return {
+					hasState = true,
+					hasChildren = false,
+					Args = {
+						["Text"] = 1,
+						["Increment"] = 2,
+						["Min"] = 3,
+						["Max"] = 4,
+						["Format"] = 5,
+					},
+					Events = {
+						["numberChanged"] = numberChanged,
+						["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+							return thisWidget.Instance
+						end),
+					},
+					Generate = function(thisWidget: Types.Input<T>)
+						local Input: Frame = Instance.new("Frame")
+						Input.Name = "Iris_Input" .. dataType
+						Input.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+						Input.BackgroundTransparency = 1
+						Input.BorderSizePixel = 0
+						Input.LayoutOrder = thisWidget.ZIndex
+						Input.AutomaticSize = Enum.AutomaticSize.Y
+						local UIListLayout: UIListLayout = widgets.UIListLayout(Input, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+						UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+						-- we add plus and minus buttons if there is only one box. This can be disabled through the argument.
+						local rightPadding: number = 0
+						local textHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
+
+						if components == 1 then
+							rightPadding = generateButtons(thisWidget :: any, Input, textHeight)
+						end
+
+						-- we divide the total area evenly between each field. This includes accounting for any additional boxes and the offset.
+						-- for the final field, we make sure it's flush by calculating the space avaiable for it. This only makes the Vector2 box
+						-- 4 pixels shorter, all for the sake of flush.
+						local componentWidth: UDim = UDim.new(Iris._config.ContentWidth.Scale / components, (Iris._config.ContentWidth.Offset - (Iris._config.ItemInnerSpacing.X * (components - 1)) - rightPadding) / components)
+						local totalWidth: UDim = UDim.new(componentWidth.Scale * (components - 1), (componentWidth.Offset * (components - 1)) + (Iris._config.ItemInnerSpacing.X * (components - 1)) + rightPadding)
+						local lastComponentWidth: UDim = Iris._config.ContentWidth - totalWidth
+
+						-- we handle each component individually since they don't need to interact with each other.
+						for index = 1, components do
+							local InputField: TextBox = Instance.new("TextBox")
+							InputField.Name = "InputField" .. tostring(index)
+							InputField.LayoutOrder = index
+							if index == components then
+								InputField.Size = UDim2.new(lastComponentWidth, Iris._config.ContentHeight)
+							else
+								InputField.Size = UDim2.new(componentWidth, Iris._config.ContentHeight)
+							end
+							InputField.AutomaticSize = Enum.AutomaticSize.Y
+							InputField.BackgroundColor3 = Iris._config.FrameBgColor
+							InputField.BackgroundTransparency = Iris._config.FrameBgTransparency
+							InputField.ClearTextOnFocus = false
+							InputField.TextTruncate = Enum.TextTruncate.AtEnd
+							InputField.ClipsDescendants = true
+
+							widgets.applyFrameStyle(InputField)
+							widgets.applyTextStyle(InputField)
+							widgets.UISizeConstraint(InputField, Vector2.xAxis)
+
+							InputField.Parent = Input
+
+							InputField.FocusLost:Connect(function()
+								local newValue: number? = tonumber(InputField.Text:match("-?%d*%.?%d*"))
+								if newValue ~= nil then
+									if thisWidget.arguments.Min ~= nil then
+										newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments))
+									end
+									if thisWidget.arguments.Max ~= nil then
+										newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments :: any))
+									end
+
+									if thisWidget.arguments.Increment then
+										newValue = math.round(newValue / getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)) * getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
+									end
+
+									thisWidget.state.number:set(updateValueByIndex(thisWidget.state.number.value, index, newValue, thisWidget.arguments :: any))
+									thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
+								end
+								local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
+								if thisWidget.arguments.Prefix then
+									format = thisWidget.arguments.Prefix[index] .. format
+								end
+								InputField.Text = string.format(format, getValueByIndex(thisWidget.state.number.value, index, thisWidget.arguments))
+
+								thisWidget.state.editingText:set(0)
+							end)
+
+							InputField.Focused:Connect(function()
+								-- this highlights the entire field
+								InputField.CursorPosition = #InputField.Text + 1
+								InputField.SelectionStart = 1
+
+								thisWidget.state.editingText:set(index)
+							end)
+						end
+
+						local TextLabel: TextLabel = Instance.new("TextLabel")
+						TextLabel.Name = "TextLabel"
+						TextLabel.BackgroundTransparency = 1
+						TextLabel.BorderSizePixel = 0
+						TextLabel.LayoutOrder = 7
+						TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+
+						widgets.applyTextStyle(TextLabel)
+
+						TextLabel.Parent = Input
+
+						return Input
+					end,
+					Update = function(thisWidget: Types.Input<T>)
+						local Input = thisWidget.Instance :: GuiObject
+						local TextLabel: TextLabel = Input.TextLabel
+						TextLabel.Text = thisWidget.arguments.Text or `Input {dataType}`
+
+						if components == 1 then
+							Input.SubButton.Visible = not thisWidget.arguments.NoButtons
+							Input.AddButton.Visible = not thisWidget.arguments.NoButtons
+							local rightPadding: number = if thisWidget.arguments.NoButtons then 0 else (2 * Iris._config.ItemInnerSpacing.X) + (2 * (Iris._config.TextSize + 2 * Iris._config.FramePadding.Y))
+							local InputField: TextBox = Input.InputField1
+							InputField.Size = UDim2.new(UDim.new(Iris._config.ContentWidth.Scale, Iris._config.ContentWidth.Offset - rightPadding), Iris._config.ContentHeight)
+						end
+
+						if thisWidget.arguments.Format and typeof(thisWidget.arguments.Format) ~= "table" then
+							thisWidget.arguments.Format = { thisWidget.arguments.Format }
+						elseif not thisWidget.arguments.Format then
+							-- we calculate the format for the s.f. using the max, min and increment arguments.
+							local format: { string } = {}
+							for index = 1, components do
+								local sigfigs: number = defaultSigFigs[dataType][index]
+
+								if thisWidget.arguments.Increment then
+									local value: number = getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if thisWidget.arguments.Max then
+									local value: number = getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if thisWidget.arguments.Min then
+									local value: number = getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if sigfigs > 0 then
+									-- we know it's a float.
+									format[index] = `%.{sigfigs}f`
+								else
+									format[index] = "%d"
+								end
+							end
+
+							thisWidget.arguments.Format = format
+							thisWidget.arguments.Prefix = defaultPrefx[dataType]
+						end
+					end,
+					Discard = function(thisWidget: Types.Input<T>)
+						thisWidget.Instance:Destroy()
+						widgets.discardState(thisWidget)
+					end,
+					GenerateState = function(thisWidget: Types.Input<T>)
+						if thisWidget.state.number == nil then
+							thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
+						end
+						if thisWidget.state.editingText == nil then
+							thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", 0)
+						end
+					end,
+					UpdateState = function(thisWidget: Types.Input<T>)
+						local Input = thisWidget.Instance :: GuiObject
+
+						for index = 1, components do
+							local InputField: TextBox = Input:FindFirstChild("InputField" .. tostring(index))
+							local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
+							if thisWidget.arguments.Prefix then
+								format = thisWidget.arguments.Prefix[index] .. format
+							end
+							InputField.Text = string.format(format, getValueByIndex(thisWidget.state.number.value, index, thisWidget.arguments))
+						end
+					end,
+				}
 			end
 		end
-		thisWidget.HoveredLine = line
-		line.BackgroundColor3 = Iris._config.PlotLinesHoveredColor
-		line.BackgroundTransparency = Iris._config.PlotLinesHoveredTransparency
-		if silent then
-			thisWidget.state.hovered.value = { start, stop }
-		else
-			thisWidget.state.hovered:set({ start, stop })
-		end
-	end
-end
 
--- stylua: ignore
-Iris.WidgetConstructor("PlotLines", {
-	hasState = true,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-		["Height"] = 2,
-		["Min"] = 3,
-		["Max"] = 4,
-		["TextOverlay"] = 5,
-	},
-	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: PlotLines)
-		local PlotLines: Frame = Instance.new("Frame")
-		PlotLines.Name = "Iris_PlotLines"
-		PlotLines.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-		PlotLines.BackgroundTransparency = 1
-		PlotLines.BorderSizePixel = 0
-		PlotLines.ZIndex = thisWidget.ZIndex
-		PlotLines.LayoutOrder = thisWidget.ZIndex
+    --[[
+        Drag
+    ]]
+		local generateDragScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> Types.WidgetClass
+		local generateColorDragScalar: (dataType: InputDataTypes, ...any) -> Types.WidgetClass
+		do
+			local PreviouseMouseXPosition: number = 0
+			local AnyActiveDrag: boolean = false
+			local ActiveDrag: Types.Input<Types.InputDataType>? = nil
+			local ActiveIndex: number = 0
+			local ActiveDataType: InputDataTypes | "" = ""
 
-		local UIListLayout: UIListLayout = widgets.UIListLayout(PlotLines, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+			local function updateActiveDrag()
+				local currentMouseX: number = widgets.getMouseLocation().X
+				local mouseXDelta: number = currentMouseX - PreviouseMouseXPosition
+				PreviouseMouseXPosition = currentMouseX
+				if AnyActiveDrag == false then
+					return
+				end
+				if ActiveDrag == nil then
+					return
+				end
 
-		local Background: Frame = Instance.new("Frame")
-		Background.Name = "Background"
-		Background.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(1, 0))
-		Background.BackgroundColor3 = Iris._config.FrameBgColor
-		Background.BackgroundTransparency = Iris._config.FrameBgTransparency
-		widgets.applyFrameStyle(Background)
+				local state: Types.State<Types.InputDataType> = ActiveDrag.state.number
+				if ActiveDataType == "Color3" or ActiveDataType == "Color4" then
+					local Drag = ActiveDrag :: any
+					state = Drag.state.color
+					if ActiveIndex == 4 then
+						state = Drag.state.transparency
+					end
+				end
 
-		Background.Parent = PlotLines
+				local increment: number = ActiveDrag.arguments.Increment and getValueByIndex(ActiveDrag.arguments.Increment, ActiveIndex, ActiveDrag.arguments) or defaultIncrements[ActiveDataType][ActiveIndex]
+				increment *= (widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightShift)) and 10 or 1
+				increment *= (widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)) and 0.1 or 1
+				-- we increase the speed for Color3 and Color4 since it's too slow because the increment argument needs to be low.
+				increment *= (ActiveDataType == "Color3" or ActiveDataType == "Color4") and 5 or 1
 
-		local Plot: Frame = Instance.new("Frame")
-		Plot.Name = "Plot"
-		Plot.Size = UDim2.fromScale(1, 1)
-		Plot.BackgroundTransparency = 1
-		Plot.BorderSizePixel = 0
-		Plot.ClipsDescendants = true
+				local value: number = getValueByIndex(state.value, ActiveIndex, ActiveDrag.arguments)
+				local newValue: number = value + (mouseXDelta * increment)
 
-		Plot:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-			thisWidget.state.values.lastChangeTick = Iris._cycleTick
-			Iris._widgets.PlotLines.UpdateState(thisWidget)
-		end)
+				if ActiveDrag.arguments.Min ~= nil then
+					newValue = math.max(newValue, getValueByIndex(ActiveDrag.arguments.Min, ActiveIndex, ActiveDrag.arguments))
+				end
+				if ActiveDrag.arguments.Max ~= nil then
+					newValue = math.min(newValue, getValueByIndex(ActiveDrag.arguments.Max, ActiveIndex, ActiveDrag.arguments))
+				end
 
-		local OverlayText: TextLabel = Instance.new("TextLabel")
-		OverlayText.Name = "OverlayText"
-		OverlayText.AutomaticSize = Enum.AutomaticSize.XY
-		OverlayText.AnchorPoint = Vector2.new(0.5, 0)
-		OverlayText.Size = UDim2.fromOffset(0, 0)
-		OverlayText.Position = UDim2.fromScale(0.5, 0)
-		OverlayText.BackgroundTransparency = 1
-		OverlayText.BorderSizePixel = 0
-		OverlayText.ZIndex = 2
+				state:set(updateValueByIndex(state.value, ActiveIndex, newValue, ActiveDrag.arguments :: any))
+				ActiveDrag.lastNumberChangedTick = Iris._cycleTick + 1
+			end
 
-		widgets.applyTextStyle(OverlayText)
+			local function DragMouseDown(thisWidget: Types.Input<Types.InputDataType>, dataTypes: InputDataTypes, index: number, x: number, y: number)
+				local currentTime: number = widgets.getTime()
+				local isTimeValid: boolean = currentTime - thisWidget.lastClickedTime < Iris._config.MouseDoubleClickTime
+				local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+				if (isTimeValid and (Vector2.new(x, y) - thisWidget.lastClickedPosition).Magnitude < Iris._config.MouseDoubleClickMaxDist) or isCtrlHeld then
+					thisWidget.state.editingText:set(index)
+				else
+					thisWidget.lastClickedTime = currentTime
+					thisWidget.lastClickedPosition = Vector2.new(x, y)
 
-		OverlayText.Parent = Plot
+					AnyActiveDrag = true
+					ActiveDrag = thisWidget
+					ActiveIndex = index
+					ActiveDataType = dataTypes
+					updateActiveDrag()
+				end
+			end
 
-		local Tooltip: TextLabel = Instance.new("TextLabel")
-		Tooltip.Name = "Iris_Tooltip"
-		Tooltip.AutomaticSize = Enum.AutomaticSize.XY
-		Tooltip.Size = UDim2.fromOffset(0, 0)
-		Tooltip.BackgroundColor3 = Iris._config.PopupBgColor
-		Tooltip.BackgroundTransparency = Iris._config.PopupBgTransparency
-		Tooltip.BorderSizePixel = 0
-		Tooltip.Visible = false
+			widgets.registerEvent("InputChanged", function()
+				if not Iris._started then
+					return
+				end
+				updateActiveDrag()
+			end)
 
-		widgets.applyTextStyle(Tooltip)
-		widgets.UIStroke(Tooltip, Iris._config.PopupBorderSize, Iris._config.BorderActiveColor, Iris._config.BorderActiveTransparency)
-		widgets.UIPadding(Tooltip, Iris._config.WindowPadding)
-		if Iris._config.PopupRounding > 0 then
-			widgets.UICorner(Tooltip, Iris._config.PopupRounding)
-		end
+			widgets.registerEvent("InputEnded", function(inputObject: InputObject)
+				if not Iris._started then
+					return
+				end
+				if inputObject.UserInputType == Enum.UserInputType.MouseButton1 and AnyActiveDrag then
+					AnyActiveDrag = false
+					ActiveDrag = nil
+					ActiveIndex = 0
+				end
+			end)
 
-		local popup: Instance? = Iris._rootInstance and Iris._rootInstance:FindFirstChild("PopupScreenGui")
-		Tooltip.Parent = popup and popup:FindFirstChild("TooltipContainer")
+			function generateDragScalar<T>(dataType: InputDataTypes, components: number, defaultValue: any)
+				return {
+					hasState = true,
+					hasChildren = false,
+					Args = {
+						["Text"] = 1,
+						["Increment"] = 2,
+						["Min"] = 3,
+						["Max"] = 4,
+						["Format"] = 5,
+					},
+					Events = {
+						["numberChanged"] = numberChanged,
+						["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+							return thisWidget.Instance
+						end),
+					},
+					Generate = function(thisWidget: Types.Input<T>)
+						thisWidget.lastClickedTime = -1
+						thisWidget.lastClickedPosition = Vector2.zero
 
-		thisWidget.Tooltip = Tooltip
+						local Drag: Frame = Instance.new("Frame")
+						Drag.Name = "Iris_Drag" .. dataType
+						Drag.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+						Drag.BackgroundTransparency = 1
+						Drag.BorderSizePixel = 0
+						Drag.LayoutOrder = thisWidget.ZIndex
+						Drag.AutomaticSize = Enum.AutomaticSize.Y
+						local UIListLayout: UIListLayout = widgets.UIListLayout(Drag, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+						UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 
-		widgets.applyMouseMoved(Plot, function()
-			updateLine(thisWidget)
-		end)
+						-- we add a color box if it is Color3 or Color4.
+						local rightPadding: number = 0
+						local textHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
 
-		widgets.applyMouseLeave(Plot, function()
-			clearLine(thisWidget)
-		end)
+						if dataType == "Color3" or dataType == "Color4" then
+							rightPadding += Iris._config.ItemInnerSpacing.X + textHeight
 
-		Plot.Parent = Background
+							local ColorBox: ImageLabel = Instance.new("ImageLabel")
+							ColorBox.Name = "ColorBox"
+							ColorBox.BorderSizePixel = 0
+							ColorBox.Size = UDim2.fromOffset(textHeight, textHeight)
+							ColorBox.LayoutOrder = 5
+							ColorBox.Image = widgets.ICONS.ALPHA_BACKGROUND_TEXTURE
+							ColorBox.ImageTransparency = 1
 
-		thisWidget.Lines = {}
-		thisWidget.HoveredLine = false
+							widgets.applyFrameStyle(ColorBox, true)
 
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-		TextLabel.Size = UDim2.fromOffset(0, 0)
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.ZIndex = thisWidget.ZIndex + 3
-		TextLabel.LayoutOrder = thisWidget.ZIndex + 3
+							ColorBox.Parent = Drag
+						end
 
-		widgets.applyTextStyle(TextLabel)
+						-- we divide the total area evenly between each field. This includes accounting for any additional boxes and the offset.
+						-- for the final field, we make sure it's flush by calculating the space avaiable for it. This only makes the Vector2 box
+						-- 4 pixels shorter, all for the sake of flush.
+						local componentWidth: UDim = UDim.new(Iris._config.ContentWidth.Scale / components, (Iris._config.ContentWidth.Offset - (Iris._config.ItemInnerSpacing.X * (components - 1)) - rightPadding) / components)
+						local totalWidth: UDim = UDim.new(componentWidth.Scale * (components - 1), (componentWidth.Offset * (components - 1)) + (Iris._config.ItemInnerSpacing.X * (components - 1)) + rightPadding)
+						local lastComponentWidth: UDim = Iris._config.ContentWidth - totalWidth
 
-		TextLabel.Parent = PlotLines
+						for index = 1, components do
+							local DragField: TextButton = Instance.new("TextButton")
+							DragField.Name = "DragField" .. tostring(index)
+							DragField.LayoutOrder = index
+							if index == components then
+								DragField.Size = UDim2.new(lastComponentWidth, Iris._config.ContentHeight)
+							else
+								DragField.Size = UDim2.new(componentWidth, Iris._config.ContentHeight)
+							end
+							DragField.AutomaticSize = Enum.AutomaticSize.Y
+							DragField.BackgroundColor3 = Iris._config.FrameBgColor
+							DragField.BackgroundTransparency = Iris._config.FrameBgTransparency
+							DragField.AutoButtonColor = false
+							DragField.Text = ""
+							DragField.ClipsDescendants = true
 
-		return PlotLines
-	end,
-	GenerateState = function(thisWidget: PlotLines)
-		if thisWidget.state.values == nil then
-			thisWidget.state.values = Iris._widgetState(thisWidget, "values", { 0, 1 })
-		end
-		if thisWidget.state.hovered == nil then
-			thisWidget.state.hovered = Iris._widgetState(thisWidget, "hovered", nil)
-		end
-	end,
-	Update = function(thisWidget: PlotLines)
-		local PlotLines = thisWidget.Instance :: Frame
-		local TextLabel: TextLabel = PlotLines.TextLabel
-		local Background = PlotLines.Background :: Frame
-		local Plot = Background.Plot :: Frame
-		local OverlayText: TextLabel = Plot.OverlayText
+							widgets.applyFrameStyle(DragField)
+							widgets.applyTextStyle(DragField)
+							widgets.UISizeConstraint(DragField, Vector2.xAxis)
 
-		TextLabel.Text = thisWidget.arguments.Text or "Plot Lines"
-		OverlayText.Text = thisWidget.arguments.TextOverlay or ""
-		PlotLines.Size = UDim2.new(1, 0, 0, thisWidget.arguments.Height or 0)
-	end,
-	UpdateState = function(thisWidget: PlotLines)
-		if thisWidget.state.hovered.lastChangeTick == Iris._cycleTick then
-			if thisWidget.state.hovered.value then
-				thisWidget.Tooltip.Visible = true
-			else
-				thisWidget.Tooltip.Visible = false
+							DragField.TextXAlignment = Enum.TextXAlignment.Center
+
+							DragField.Parent = Drag
+
+							widgets.applyInteractionHighlights("Background", DragField, DragField, {
+								Color = Iris._config.FrameBgColor,
+								Transparency = Iris._config.FrameBgTransparency,
+								HoveredColor = Iris._config.FrameBgHoveredColor,
+								HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
+								ActiveColor = Iris._config.FrameBgActiveColor,
+								ActiveTransparency = Iris._config.FrameBgActiveTransparency,
+							})
+
+							local InputField: TextBox = Instance.new("TextBox")
+							InputField.Name = "InputField"
+							InputField.Size = UDim2.new(1, 0, 1, 0)
+							InputField.BackgroundTransparency = 1
+							InputField.ClearTextOnFocus = false
+							InputField.TextTruncate = Enum.TextTruncate.AtEnd
+							InputField.ClipsDescendants = true
+							InputField.Visible = false
+
+							widgets.applyFrameStyle(InputField, true)
+							widgets.applyTextStyle(InputField)
+
+							InputField.Parent = DragField
+
+							InputField.FocusLost:Connect(function()
+								local newValue: number? = tonumber(InputField.Text:match("-?%d*%.?%d*"))
+								local state: Types.State<T> = thisWidget.state.number
+								local widget = thisWidget :: any
+								if dataType == "Color4" and index == 4 then
+									state = widget.state.transparency
+								elseif dataType == "Color3" or dataType == "Color4" then
+									state = widget.state.color
+								end
+								if newValue ~= nil then
+									if dataType == "Color3" or dataType == "Color4" and not widget.arguments.UseFloats then
+										newValue = newValue / 255
+									end
+									if thisWidget.arguments.Min ~= nil then
+										newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments))
+									end
+									if thisWidget.arguments.Max ~= nil then
+										newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments))
+									end
+
+									if thisWidget.arguments.Increment then
+										newValue = math.round(newValue / getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)) * getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
+									end
+
+									state:set(updateValueByIndex(state.value, index, newValue, thisWidget.arguments :: any))
+									thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
+								end
+
+								local value: number = getValueByIndex(state.value, index, thisWidget.arguments)
+								if dataType == "Color3" or dataType == "Color4" and not widget.arguments.UseFloats then
+									value = math.round(value * 255)
+								end
+
+								local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
+								if thisWidget.arguments.Prefix then
+									format = thisWidget.arguments.Prefix[index] .. format
+								end
+								InputField.Text = string.format(format, value)
+
+								thisWidget.state.editingText:set(0)
+								InputField:ReleaseFocus(true)
+							end)
+
+							InputField.Focused:Connect(function()
+								-- this highlights the entire field
+								InputField.CursorPosition = #InputField.Text + 1
+								InputField.SelectionStart = 1
+
+								thisWidget.state.editingText:set(index)
+							end)
+
+							widgets.applyButtonDown(DragField, function(x: number, y: number)
+								DragMouseDown(thisWidget :: any, dataType, index, x, y)
+							end)
+						end
+
+						local TextLabel: TextLabel = Instance.new("TextLabel")
+						TextLabel.Name = "TextLabel"
+						TextLabel.BackgroundTransparency = 1
+						TextLabel.BorderSizePixel = 0
+						TextLabel.LayoutOrder = 6
+						TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+
+						widgets.applyTextStyle(TextLabel)
+
+						TextLabel.Parent = Drag
+
+						return Drag
+					end,
+					Update = function(thisWidget: Types.Input<T>)
+						local Input = thisWidget.Instance :: GuiObject
+						local TextLabel: TextLabel = Input.TextLabel
+						TextLabel.Text = thisWidget.arguments.Text or `Drag {dataType}`
+
+						if thisWidget.arguments.Format and typeof(thisWidget.arguments.Format) ~= "table" then
+							thisWidget.arguments.Format = { thisWidget.arguments.Format }
+						elseif not thisWidget.arguments.Format then
+							-- we calculate the format for the s.f. using the max, min and increment arguments.
+							local format: { string } = {}
+							for index = 1, components do
+								local sigfigs: number = defaultSigFigs[dataType][index]
+
+								if thisWidget.arguments.Increment then
+									local value: number = getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if thisWidget.arguments.Max then
+									local value: number = getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if thisWidget.arguments.Min then
+									local value: number = getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if sigfigs > 0 then
+									-- we know it's a float.
+									format[index] = `%.{sigfigs}f`
+								else
+									format[index] = "%d"
+								end
+							end
+
+							thisWidget.arguments.Format = format
+							thisWidget.arguments.Prefix = defaultPrefx[dataType]
+						end
+					end,
+					Discard = function(thisWidget: Types.Input<T>)
+						thisWidget.Instance:Destroy()
+						widgets.discardState(thisWidget)
+					end,
+					GenerateState = function(thisWidget: Types.Input<T>)
+						if thisWidget.state.number == nil then
+							thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
+						end
+						if thisWidget.state.editingText == nil then
+							thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
+						end
+					end,
+					UpdateState = function(thisWidget: Types.Input<T>)
+						local Drag = thisWidget.Instance :: Frame
+
+						local widget = thisWidget :: any
+						for index = 1, components do
+							local state: Types.State<T> = thisWidget.state.number
+							if dataType == "Color3" or dataType == "Color4" then
+								state = widget.state.color
+								if index == 4 then
+									state = widget.state.transparency
+								end
+							end
+							local DragField = Drag:FindFirstChild("DragField" .. tostring(index)) :: TextButton
+							local InputField: TextBox = DragField.InputField
+							local value: number = getValueByIndex(state.value, index, thisWidget.arguments)
+							if (dataType == "Color3" or dataType == "Color4") and not widget.arguments.UseFloats then
+								value = math.round(value * 255)
+							end
+
+							local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
+							if thisWidget.arguments.Prefix then
+								format = thisWidget.arguments.Prefix[index] .. format
+							end
+							DragField.Text = string.format(format, value)
+							InputField.Text = tostring(value)
+
+							if thisWidget.state.editingText.value == index then
+								InputField.Visible = true
+								InputField:CaptureFocus()
+								DragField.TextTransparency = 1
+							else
+								InputField.Visible = false
+								DragField.TextTransparency = Iris._config.TextTransparency
+							end
+						end
+
+						if dataType == "Color3" or dataType == "Color4" then
+							local ColorBox: ImageLabel = Drag.ColorBox
+
+							ColorBox.BackgroundColor3 = widget.state.color.value
+
+							if dataType == "Color4" then
+								ColorBox.ImageTransparency = 1 - widget.state.transparency.value
+							end
+						end
+					end,
+				}
+			end
+
+			function generateColorDragScalar(dataType: InputDataTypes, ...: any)
+				local defaultValues: { any } = { ... }
+				local input: Types.WidgetClass = generateDragScalar(dataType, dataType == "Color4" and 4 or 3, defaultValues[1])
+
+				return widgets.extend(input, {
+					Args = {
+						["Text"] = 1,
+						["UseFloats"] = 2,
+						["UseHSV"] = 3,
+						["Format"] = 4,
+					},
+					Update = function(thisWidget: Types.InputColor4)
+						local Input = thisWidget.Instance :: GuiObject
+						local TextLabel: TextLabel = Input.TextLabel
+						TextLabel.Text = thisWidget.arguments.Text or `Drag {dataType}`
+
+						if thisWidget.arguments.Format and typeof(thisWidget.arguments.Format) ~= "table" then
+							thisWidget.arguments.Format = { thisWidget.arguments.Format }
+						elseif not thisWidget.arguments.Format then
+							if thisWidget.arguments.UseFloats then
+								thisWidget.arguments.Format = { "%.3f" }
+							else
+								thisWidget.arguments.Format = { "%d" }
+							end
+
+							thisWidget.arguments.Prefix = defaultPrefx[dataType .. if thisWidget.arguments.UseHSV then "_HSV" else "_RGB"]
+						end
+
+						thisWidget.arguments.Min = { 0, 0, 0, 0 }
+						thisWidget.arguments.Max = { 1, 1, 1, 1 }
+						thisWidget.arguments.Increment = { 0.001, 0.001, 0.001, 0.001 }
+
+						-- since the state values have changed display, we call an update. The check is because state is not
+						-- initialised on creation, so it would error otherwise.
+						if thisWidget.state then
+							thisWidget.state.color.lastChangeTick = Iris._cycleTick
+							if dataType == "Color4" then
+								thisWidget.state.transparency.lastChangeTick = Iris._cycleTick
+							end
+							Iris._widgets[thisWidget.type].UpdateState(thisWidget)
+						end
+					end,
+					GenerateState = function(thisWidget: Types.InputColor4)
+						if thisWidget.state.color == nil then
+							thisWidget.state.color = Iris._widgetState(thisWidget, "color", defaultValues[1])
+						end
+						if dataType == "Color4" then
+							if thisWidget.state.transparency == nil then
+								thisWidget.state.transparency = Iris._widgetState(thisWidget, "transparency", defaultValues[2])
+							end
+						end
+						if thisWidget.state.editingText == nil then
+							thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
+						end
+					end,
+				})
 			end
 		end
 
-		if thisWidget.state.values.lastChangeTick == Iris._cycleTick then
+    --[[
+        Slider
+    ]]
+		local generateSliderScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> Types.WidgetClass
+		local generateEnumSliderScalar: (enum: Enum, item: EnumItem) -> Types.WidgetClass
+		do
+			local AnyActiveSlider: boolean = false
+			local ActiveSlider: Types.Input<Types.InputDataType>? = nil
+			local ActiveIndex: number = 0
+			local ActiveDataType: InputDataTypes | "" = ""
+
+			local function updateActiveSlider()
+				if AnyActiveSlider == false then
+					return
+				end
+				if ActiveSlider == nil then
+					return
+				end
+
+				local Slider = ActiveSlider.Instance :: Frame
+				local SliderField = Slider:FindFirstChild("SliderField" .. tostring(ActiveIndex)) :: TextButton
+				local GrabBar: Frame = SliderField.GrabBar
+
+				local increment: number = ActiveSlider.arguments.Increment and getValueByIndex(ActiveSlider.arguments.Increment, ActiveIndex, ActiveSlider.arguments) or defaultIncrements[ActiveDataType][ActiveIndex]
+				local min: number = ActiveSlider.arguments.Min and getValueByIndex(ActiveSlider.arguments.Min, ActiveIndex, ActiveSlider.arguments) or defaultMin[ActiveDataType][ActiveIndex]
+				local max: number = ActiveSlider.arguments.Max and getValueByIndex(ActiveSlider.arguments.Max, ActiveIndex, ActiveSlider.arguments) or defaultMax[ActiveDataType][ActiveIndex]
+
+				local GrabWidth: number = GrabBar.AbsoluteSize.X
+				local Offset: number = widgets.getMouseLocation().X - (SliderField.AbsolutePosition.X - widgets.GuiOffset.X + GrabWidth / 2)
+				local Ratio: number = Offset / (SliderField.AbsoluteSize.X - GrabWidth)
+				local Positions: number = math.floor((max - min) / increment)
+				local newValue: number = math.clamp(math.round(Ratio * Positions) * increment + min, min, max)
+
+				ActiveSlider.state.number:set(updateValueByIndex(ActiveSlider.state.number.value, ActiveIndex, newValue, ActiveSlider.arguments :: any))
+				ActiveSlider.lastNumberChangedTick = Iris._cycleTick + 1
+			end
+
+			local function SliderMouseDown(thisWidget: Types.Input<Types.InputDataType>, dataType: InputDataTypes, index: number)
+				local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+				if isCtrlHeld then
+					thisWidget.state.editingText:set(index)
+				else
+					AnyActiveSlider = true
+					ActiveSlider = thisWidget
+					ActiveIndex = index
+					ActiveDataType = dataType
+					updateActiveSlider()
+				end
+			end
+
+			widgets.registerEvent("InputChanged", function()
+				if not Iris._started then
+					return
+				end
+				updateActiveSlider()
+			end)
+
+			widgets.registerEvent("InputEnded", function(inputObject: InputObject)
+				if not Iris._started then
+					return
+				end
+				if inputObject.UserInputType == Enum.UserInputType.MouseButton1 and AnyActiveSlider then
+					AnyActiveSlider = false
+					ActiveSlider = nil
+					ActiveIndex = 0
+					ActiveDataType = ""
+				end
+			end)
+
+			function generateSliderScalar<T>(dataType: InputDataTypes, components: number, defaultValue: any)
+				return {
+					hasState = true,
+					hasChildren = false,
+					Args = {
+						["Text"] = 1,
+						["Increment"] = 2,
+						["Min"] = 3,
+						["Max"] = 4,
+						["Format"] = 5,
+					},
+					Events = {
+						["numberChanged"] = numberChanged,
+						["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+							return thisWidget.Instance
+						end),
+					},
+					Generate = function(thisWidget: Types.Input<T>)
+						local Slider: Frame = Instance.new("Frame")
+						Slider.Name = "Iris_Slider" .. dataType
+						Slider.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+						Slider.BackgroundTransparency = 1
+						Slider.BorderSizePixel = 0
+						Slider.LayoutOrder = thisWidget.ZIndex
+						Slider.AutomaticSize = Enum.AutomaticSize.Y
+						local UIListLayout: UIListLayout = widgets.UIListLayout(Slider, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+						UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+						-- we divide the total area evenly between each field. This includes accounting for any additional boxes and the offset.
+						-- for the final field, we make sure it's flush by calculating the space avaiable for it. This only makes the Vector2 box
+						-- 4 pixels shorter, all for the sake of flush.
+						local componentWidth: UDim = UDim.new(Iris._config.ContentWidth.Scale / components, (Iris._config.ContentWidth.Offset - (Iris._config.ItemInnerSpacing.X * (components - 1))) / components)
+						local totalWidth: UDim = UDim.new(componentWidth.Scale * (components - 1), (componentWidth.Offset * (components - 1)) + (Iris._config.ItemInnerSpacing.X * (components - 1)))
+						local lastComponentWidth: UDim = Iris._config.ContentWidth - totalWidth
+
+						for index = 1, components do
+							local SliderField: TextButton = Instance.new("TextButton")
+							SliderField.Name = "SliderField" .. tostring(index)
+							SliderField.LayoutOrder = index
+							if index == components then
+								SliderField.Size = UDim2.new(lastComponentWidth, Iris._config.ContentHeight)
+							else
+								SliderField.Size = UDim2.new(componentWidth, Iris._config.ContentHeight)
+							end
+							SliderField.AutomaticSize = Enum.AutomaticSize.Y
+							SliderField.BackgroundColor3 = Iris._config.FrameBgColor
+							SliderField.BackgroundTransparency = Iris._config.FrameBgTransparency
+							SliderField.AutoButtonColor = false
+							SliderField.Text = ""
+							SliderField.ClipsDescendants = true
+
+							widgets.applyFrameStyle(SliderField)
+							widgets.applyTextStyle(SliderField)
+							widgets.UISizeConstraint(SliderField, Vector2.xAxis)
+
+							SliderField.Parent = Slider
+
+							local OverlayText = Instance.new("TextLabel")
+							OverlayText.Name = "OverlayText"
+							OverlayText.Size = UDim2.fromScale(1, 1)
+							OverlayText.BackgroundTransparency = 1
+							OverlayText.BorderSizePixel = 0
+							OverlayText.ZIndex = 10
+							OverlayText.ClipsDescendants = true
+
+							widgets.applyTextStyle(OverlayText)
+
+							OverlayText.TextXAlignment = Enum.TextXAlignment.Center
+
+							OverlayText.Parent = SliderField
+
+							widgets.applyInteractionHighlights("Background", SliderField, SliderField, {
+								Color = Iris._config.FrameBgColor,
+								Transparency = Iris._config.FrameBgTransparency,
+								HoveredColor = Iris._config.FrameBgHoveredColor,
+								HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
+								ActiveColor = Iris._config.FrameBgActiveColor,
+								ActiveTransparency = Iris._config.FrameBgActiveTransparency,
+							})
+
+							local InputField: TextBox = Instance.new("TextBox")
+							InputField.Name = "InputField"
+							InputField.Size = UDim2.new(1, 0, 1, 0)
+							InputField.BackgroundTransparency = 1
+							InputField.ClearTextOnFocus = false
+							InputField.TextTruncate = Enum.TextTruncate.AtEnd
+							InputField.ClipsDescendants = true
+							InputField.Visible = false
+
+							widgets.applyFrameStyle(InputField, true)
+							widgets.applyTextStyle(InputField)
+
+							InputField.Parent = SliderField
+
+							InputField.FocusLost:Connect(function()
+								local newValue: number? = tonumber(InputField.Text:match("-?%d*%.?%d*"))
+								if newValue ~= nil then
+									if thisWidget.arguments.Min ~= nil then
+										newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments))
+									end
+									if thisWidget.arguments.Max ~= nil then
+										newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments))
+									end
+
+									if thisWidget.arguments.Increment then
+										newValue = math.round(newValue / getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)) * getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
+									end
+
+									thisWidget.state.number:set(updateValueByIndex(thisWidget.state.number.value, index, newValue, thisWidget.arguments :: any))
+									thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
+								end
+
+								local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
+								if thisWidget.arguments.Prefix then
+									format = thisWidget.arguments.Prefix[index] .. format
+								end
+
+								InputField.Text = string.format(format, getValueByIndex(thisWidget.state.number.value, index, thisWidget.arguments))
+
+								thisWidget.state.editingText:set(0)
+								InputField:ReleaseFocus(true)
+							end)
+
+							InputField.Focused:Connect(function()
+								-- this highlights the entire field
+								InputField.CursorPosition = #InputField.Text + 1
+								InputField.SelectionStart = 1
+
+								thisWidget.state.editingText:set(index)
+							end)
+
+							widgets.applyButtonDown(SliderField, function()
+								SliderMouseDown(thisWidget :: any, dataType, index)
+							end)
+
+							local GrabBar: Frame = Instance.new("Frame")
+							GrabBar.Name = "GrabBar"
+							GrabBar.ZIndex = 5
+							GrabBar.AnchorPoint = Vector2.new(0.5, 0.5)
+							GrabBar.Position = UDim2.new(0, 0, 0.5, 0)
+							GrabBar.BorderSizePixel = 0
+							GrabBar.BackgroundColor3 = Iris._config.SliderGrabColor
+							GrabBar.Transparency = Iris._config.SliderGrabTransparency
+							if Iris._config.GrabRounding > 0 then
+								widgets.UICorner(GrabBar, Iris._config.GrabRounding)
+							end
+
+							widgets.UISizeConstraint(GrabBar, Vector2.new(Iris._config.GrabMinSize, 0))
+
+							GrabBar.Parent = SliderField
+						end
+
+						local TextLabel: TextLabel = Instance.new("TextLabel")
+						TextLabel.Name = "TextLabel"
+						TextLabel.BackgroundTransparency = 1
+						TextLabel.BorderSizePixel = 0
+						TextLabel.LayoutOrder = 5
+						TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+
+						widgets.applyTextStyle(TextLabel)
+
+						TextLabel.Parent = Slider
+
+						return Slider
+					end,
+					Update = function(thisWidget: Types.Input<T>)
+						local Input = thisWidget.Instance :: GuiObject
+						local TextLabel: TextLabel = Input.TextLabel
+						TextLabel.Text = thisWidget.arguments.Text or `Slider {dataType}`
+
+						if thisWidget.arguments.Format and typeof(thisWidget.arguments.Format) ~= "table" then
+							thisWidget.arguments.Format = { thisWidget.arguments.Format }
+						elseif not thisWidget.arguments.Format then
+							-- we calculate the format for the s.f. using the max, min and increment arguments.
+							local format: { string } = {}
+							for index = 1, components do
+								local sigfigs: number = defaultSigFigs[dataType][index]
+
+								if thisWidget.arguments.Increment then
+									local value: number = getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if thisWidget.arguments.Max then
+									local value: number = getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if thisWidget.arguments.Min then
+									local value: number = getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments)
+									sigfigs = math.max(sigfigs, math.ceil(-math.log10(value == 0 and 1 or value)), sigfigs)
+								end
+
+								if sigfigs > 0 then
+									-- we know it's a float.
+									format[index] = `%.{sigfigs}f`
+								else
+									format[index] = "%d"
+								end
+							end
+
+							thisWidget.arguments.Format = format
+							thisWidget.arguments.Prefix = defaultPrefx[dataType]
+						end
+
+						for index = 1, components do
+							local SliderField = Input:FindFirstChild("SliderField" .. tostring(index)) :: TextButton
+							local GrabBar: Frame = SliderField.GrabBar
+
+							local increment: number = thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments) or defaultIncrements[dataType][index]
+							local min: number = thisWidget.arguments.Min and getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments) or defaultMin[dataType][index]
+							local max: number = thisWidget.arguments.Max and getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments) or defaultMax[dataType][index]
+
+							local grabScaleSize: number = 1 / math.floor((1 + max - min) / increment)
+
+							GrabBar.Size = UDim2.new(grabScaleSize, 0, 1, 0)
+						end
+
+						local callbackIndex: number = #Iris._postCycleCallbacks + 1
+						local desiredCycleTick: number = Iris._cycleTick + 1
+						Iris._postCycleCallbacks[callbackIndex] = function()
+							if Iris._cycleTick >= desiredCycleTick then
+								if thisWidget.lastCycleTick ~= -1 then
+									thisWidget.state.number.lastChangeTick = Iris._cycleTick
+									Iris._widgets[`Slider{dataType}`].UpdateState(thisWidget)
+								end
+								Iris._postCycleCallbacks[callbackIndex] = nil
+							end
+						end
+					end,
+					Discard = function(thisWidget: Types.Input<T>)
+						thisWidget.Instance:Destroy()
+						widgets.discardState(thisWidget)
+					end,
+					GenerateState = function(thisWidget: Types.Input<T>)
+						if thisWidget.state.number == nil then
+							thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
+						end
+						if thisWidget.state.editingText == nil then
+							thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
+						end
+					end,
+					UpdateState = function(thisWidget: Types.Input<T>)
+						local Slider = thisWidget.Instance :: Frame
+
+						for index = 1, components do
+							local SliderField = Slider:FindFirstChild("SliderField" .. tostring(index)) :: TextButton
+							local InputField: TextBox = SliderField.InputField
+							local OverlayText: TextLabel = SliderField.OverlayText
+							local GrabBar: Frame = SliderField.GrabBar
+
+							local value: number = getValueByIndex(thisWidget.state.number.value, index, thisWidget.arguments)
+							local format: string = thisWidget.arguments.Format[index] or thisWidget.arguments.Format[1]
+							if thisWidget.arguments.Prefix then
+								format = thisWidget.arguments.Prefix[index] .. format
+							end
+
+							OverlayText.Text = string.format(format, value)
+							InputField.Text = tostring(value)
+
+							local increment: number = thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, index, thisWidget.arguments) or defaultIncrements[dataType][index]
+							local min: number = thisWidget.arguments.Min and getValueByIndex(thisWidget.arguments.Min, index, thisWidget.arguments) or defaultMin[dataType][index]
+							local max: number = thisWidget.arguments.Max and getValueByIndex(thisWidget.arguments.Max, index, thisWidget.arguments) or defaultMax[dataType][index]
+
+							local SliderWidth: number = SliderField.AbsoluteSize.X
+							local PaddedWidth: number = SliderWidth - GrabBar.AbsoluteSize.X
+							local Ratio: number = (value - min) / (max - min)
+							local Positions: number = math.floor((max - min) / increment)
+							local ClampedRatio: number = math.clamp(math.floor((Ratio * Positions)) / Positions, 0, 1)
+							local PaddedRatio: number = ((PaddedWidth / SliderWidth) * ClampedRatio) + ((1 - (PaddedWidth / SliderWidth)) / 2)
+
+							GrabBar.Position = UDim2.new(PaddedRatio, 0, 0.5, 0)
+
+							if thisWidget.state.editingText.value == index then
+								InputField.Visible = true
+								OverlayText.Visible = false
+								GrabBar.Visible = false
+								InputField:CaptureFocus()
+							else
+								InputField.Visible = false
+								OverlayText.Visible = true
+								GrabBar.Visible = true
+							end
+						end
+					end,
+				}
+			end
+
+			function generateEnumSliderScalar(enum: Enum, item: EnumItem)
+				local input: Types.WidgetClass = generateSliderScalar("Enum", 1, item.Value)
+				local valueToName = { string }
+
+				for _, enumItem: EnumItem in enum:GetEnumItems() do
+					valueToName[enumItem.Value] = enumItem.Name
+				end
+
+				return widgets.extend(input, {
+					Args = {
+						["Text"] = 1,
+					},
+					Update = function(thisWidget: Types.InputEnum)
+						local Input = thisWidget.Instance :: GuiObject
+						local TextLabel: TextLabel = Input.TextLabel
+						TextLabel.Text = thisWidget.arguments.Text or "Input Enum"
+
+						thisWidget.arguments.Increment = 1
+						thisWidget.arguments.Min = 0
+						thisWidget.arguments.Max = #enum:GetEnumItems() - 1
+
+						local SliderField = Input:FindFirstChild("SliderField1") :: TextButton
+						local GrabBar: Frame = SliderField.GrabBar
+
+						local grabScaleSize: number = 1 / math.floor(#enum:GetEnumItems())
+
+						GrabBar.Size = UDim2.new(grabScaleSize, 0, 1, 0)
+					end,
+					GenerateState = function(thisWidget: Types.InputEnum)
+						if thisWidget.state.number == nil then
+							thisWidget.state.number = Iris._widgetState(thisWidget, "number", item.Value)
+						end
+						if thisWidget.state.enumItem == nil then
+							thisWidget.state.enumItem = Iris._widgetState(thisWidget, "enumItem", item)
+						end
+						if thisWidget.state.editingText == nil then
+							thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
+						end
+					end,
+				})
+			end
+		end
+
+		do
+			local inputNum: Types.WidgetClass = generateInputScalar("Num", 1, 0)
+			inputNum.Args["NoButtons"] = 6
+			Iris.WidgetConstructor("InputNum", inputNum)
+		end
+		Iris.WidgetConstructor("InputVector2", generateInputScalar("Vector2", 2, Vector2.zero))
+		Iris.WidgetConstructor("InputVector3", generateInputScalar("Vector3", 3, Vector3.zero))
+		Iris.WidgetConstructor("InputUDim", generateInputScalar("UDim", 2, UDim.new()))
+		Iris.WidgetConstructor("InputUDim2", generateInputScalar("UDim2", 4, UDim2.new()))
+		Iris.WidgetConstructor("InputRect", generateInputScalar("Rect", 4, Rect.new(0, 0, 0, 0)))
+
+		Iris.WidgetConstructor("DragNum", generateDragScalar("Num", 1, 0))
+		Iris.WidgetConstructor("DragVector2", generateDragScalar("Vector2", 2, Vector2.zero))
+		Iris.WidgetConstructor("DragVector3", generateDragScalar("Vector3", 3, Vector3.zero))
+		Iris.WidgetConstructor("DragUDim", generateDragScalar("UDim", 2, UDim.new()))
+		Iris.WidgetConstructor("DragUDim2", generateDragScalar("UDim2", 4, UDim2.new()))
+		Iris.WidgetConstructor("DragRect", generateDragScalar("Rect", 4, Rect.new(0, 0, 0, 0)))
+
+		Iris.WidgetConstructor("InputColor3", generateColorDragScalar("Color3", Color3.fromRGB(0, 0, 0)))
+		Iris.WidgetConstructor("InputColor4", generateColorDragScalar("Color4", Color3.fromRGB(0, 0, 0), 0))
+
+		Iris.WidgetConstructor("SliderNum", generateSliderScalar("Num", 1, 0))
+		Iris.WidgetConstructor("SliderVector2", generateSliderScalar("Vector2", 2, Vector2.zero))
+		Iris.WidgetConstructor("SliderVector3", generateSliderScalar("Vector3", 3, Vector3.zero))
+		Iris.WidgetConstructor("SliderUDim", generateSliderScalar("UDim", 2, UDim.new()))
+		Iris.WidgetConstructor("SliderUDim2", generateSliderScalar("UDim2", 4, UDim2.new()))
+		Iris.WidgetConstructor("SliderRect", generateSliderScalar("Rect", 4, Rect.new(0, 0, 0, 0)))
+		-- Iris.WidgetConstructor("SliderEnum", generateSliderScalar("Enum", 4, 0))
+
+		-- stylua: ignore
+		Iris.WidgetConstructor("InputText", {
+			hasState = true,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+				["TextHint"] = 2,
+				["ReadOnly"] = 3,
+				["MultiLine"] = 4,
+			},
+			Events = {
+				["textChanged"] = {
+					["Init"] = function(thisWidget: Types.InputText)
+						thisWidget.lastTextChangedTick = 0
+					end,
+					["Get"] = function(thisWidget: Types.InputText)
+						return thisWidget.lastTextChangedTick == Iris._cycleTick
+					end,
+				},
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.InputText)
+				local InputText: Frame = Instance.new("Frame")
+				InputText.Name = "Iris_InputText"
+				InputText.AutomaticSize = Enum.AutomaticSize.Y
+				InputText.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+				InputText.BackgroundTransparency = 1
+				InputText.BorderSizePixel = 0
+				InputText.ZIndex = thisWidget.ZIndex
+				InputText.LayoutOrder = thisWidget.ZIndex
+				local UIListLayout: UIListLayout = widgets.UIListLayout(InputText, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+				local InputField: TextBox = Instance.new("TextBox")
+				InputField.Name = "InputField"
+				InputField.Size = UDim2.new(Iris._config.ContentWidth, Iris._config.ContentHeight)
+				InputField.AutomaticSize = Enum.AutomaticSize.Y
+				InputField.BackgroundColor3 = Iris._config.FrameBgColor
+				InputField.BackgroundTransparency = Iris._config.FrameBgTransparency
+				InputField.Text = ""
+				InputField.TextYAlignment = Enum.TextYAlignment.Top
+				InputField.PlaceholderColor3 = Iris._config.TextDisabledColor
+				InputField.ClearTextOnFocus = false
+				InputField.ClipsDescendants = true
+
+				widgets.applyFrameStyle(InputField)
+				widgets.applyTextStyle(InputField)
+				widgets.UISizeConstraint(InputField, Vector2.xAxis) -- prevents sizes beaking when getting too small.
+				-- InputField.UIPadding.PaddingLeft = UDim.new(0, Iris._config.ItemInnerSpacing.X)
+				-- InputField.UIPadding.PaddingRight = UDim.new(0, 0)
+				InputField.Parent = InputText
+
+				InputField.FocusLost:Connect(function()
+					thisWidget.state.text:set(InputField.Text)
+					thisWidget.lastTextChangedTick = Iris._cycleTick + 1
+				end)
+
+				local frameHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.Size = UDim2.fromOffset(0, frameHeight)
+				TextLabel.AutomaticSize = Enum.AutomaticSize.X
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.LayoutOrder = 1
+
+				widgets.applyTextStyle(TextLabel)
+
+				TextLabel.Parent = InputText
+
+				return InputText
+			end,
+			Update = function(thisWidget: Types.InputText)
+				local InputText = thisWidget.Instance :: Frame
+				local TextLabel: TextLabel = InputText.TextLabel
+				local InputField: TextBox = InputText.InputField
+
+				TextLabel.Text = thisWidget.arguments.Text or "Input Text"
+				InputField.PlaceholderText = thisWidget.arguments.TextHint or ""
+				InputField.TextEditable = not thisWidget.arguments.ReadOnly
+				InputField.MultiLine = thisWidget.arguments.MultiLine or false
+			end,
+			Discard = function(thisWidget: Types.InputText)
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+			GenerateState = function(thisWidget: Types.InputText)
+				if thisWidget.state.text == nil then
+					thisWidget.state.text = Iris._widgetState(thisWidget, "text", "")
+				end
+			end,
+			UpdateState = function(thisWidget: Types.InputText)
+				local InputText = thisWidget.Instance :: Frame
+				local InputField: TextBox = InputText.InputField
+
+				InputField.Text = thisWidget.state.text.value
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local xdasdsa = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		--stylua: ignore
+		Iris.WidgetConstructor("Selectable", {
+			hasState = true,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+				["Index"] = 2,
+				["NoClick"] = 3,
+			},
+			Events = {
+				["selected"] = {
+					["Init"] = function(_thisWidget: Types.Selectable) end,
+					["Get"] = function(thisWidget: Types.Selectable)
+						return thisWidget.lastSelectedTick == Iris._cycleTick
+					end,
+				},
+				["unselected"] = {
+					["Init"] = function(_thisWidget: Types.Selectable) end,
+					["Get"] = function(thisWidget: Types.Selectable)
+						return thisWidget.lastUnselectedTick == Iris._cycleTick
+					end,
+				},
+				["active"] = {
+					["Init"] = function(_thisWidget: Types.Selectable) end,
+					["Get"] = function(thisWidget: Types.Selectable)
+						return thisWidget.state.index.value == thisWidget.arguments.Index
+					end,
+				},
+				["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+					local Selectable = thisWidget.Instance :: Frame
+					return Selectable.SelectableButton
+				end),
+				["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Types.Widget)
+					local Selectable = thisWidget.Instance :: Frame
+					return Selectable.SelectableButton
+				end),
+				["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Types.Widget)
+					local Selectable = thisWidget.Instance :: Frame
+					return Selectable.SelectableButton
+				end),
+				["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Types.Widget)
+					local Selectable = thisWidget.Instance :: Frame
+					return Selectable.SelectableButton
+				end),
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					local Selectable = thisWidget.Instance :: Frame
+					return Selectable.SelectableButton
+				end),
+			},
+			Generate = function(thisWidget: Types.Selectable)
+				local Selectable: Frame = Instance.new("Frame")
+				Selectable.Name = "Iris_Selectable"
+				Selectable.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, Iris._config.TextSize + 2 * Iris._config.FramePadding.Y - Iris._config.ItemSpacing.Y))
+				Selectable.BackgroundTransparency = 1
+				Selectable.BorderSizePixel = 0
+				Selectable.ZIndex = 0
+				Selectable.LayoutOrder = thisWidget.ZIndex
+
+				local SelectableButton: TextButton = Instance.new("TextButton")
+				SelectableButton.Name = "SelectableButton"
+				SelectableButton.Size = UDim2.new(1, 0, 0, Iris._config.TextSize + 2 * Iris._config.FramePadding.Y)
+				SelectableButton.Position = UDim2.fromOffset(0, -bit32.rshift(Iris._config.ItemSpacing.Y, 1)) -- divide by 2
+				SelectableButton.BackgroundColor3 = Iris._config.HeaderColor
+				SelectableButton.ClipsDescendants = true
+
+				widgets.applyFrameStyle(SelectableButton)
+				widgets.applyTextStyle(SelectableButton)
+				widgets.UISizeConstraint(SelectableButton, Vector2.xAxis)
+
+				thisWidget.ButtonColors = {
+					Color = Iris._config.HeaderColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.HeaderHoveredColor,
+					HoveredTransparency = Iris._config.HeaderHoveredTransparency,
+					ActiveColor = Iris._config.HeaderActiveColor,
+					ActiveTransparency = Iris._config.HeaderActiveTransparency,
+				}
+
+				widgets.applyInteractionHighlights("Background", SelectableButton, SelectableButton, thisWidget.ButtonColors)
+
+				widgets.applyButtonClick(SelectableButton, function()
+					if thisWidget.arguments.NoClick ~= true then
+						if type(thisWidget.state.index.value) == "boolean" then
+							thisWidget.state.index:set(not thisWidget.state.index.value)
+						else
+							thisWidget.state.index:set(thisWidget.arguments.Index)
+						end
+					end
+				end)
+
+				SelectableButton.Parent = Selectable
+
+				return Selectable
+			end,
+			Update = function(thisWidget: Types.Selectable)
+				local Selectable = thisWidget.Instance :: Frame
+				local SelectableButton: TextButton = Selectable.SelectableButton
+				SelectableButton.Text = thisWidget.arguments.Text or "Selectable"
+			end,
+			Discard = function(thisWidget: Types.Selectable)
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+			GenerateState = function(thisWidget: Types.Selectable)
+				if thisWidget.state.index == nil then
+					if thisWidget.arguments.Index ~= nil then
+						error("A shared state index is needded for Iris.Selectables() with an Index argument.", 5)
+					end
+					thisWidget.state.index = Iris._widgetState(thisWidget, "index", false)
+				end
+			end,
+			UpdateState = function(thisWidget: Types.Selectable)
+				local Selectable = thisWidget.Instance :: Frame
+				local SelectableButton: TextButton = Selectable.SelectableButton
+				if thisWidget.state.index.value == (thisWidget.arguments.Index or true) then
+					thisWidget.ButtonColors.Transparency = Iris._config.HeaderTransparency
+					SelectableButton.BackgroundTransparency = Iris._config.HeaderTransparency
+					thisWidget.lastSelectedTick = Iris._cycleTick + 1
+				else
+					thisWidget.ButtonColors.Transparency = 1
+					SelectableButton.BackgroundTransparency = 1
+					thisWidget.lastUnselectedTick = Iris._cycleTick + 1
+				end
+			end,
+		} :: Types.WidgetClass)
+
+		local AnyOpenedCombo: boolean = false
+		local ComboOpenedTick: number = -1
+		local OpenedCombo: Types.Combo? = nil
+		local CachedContentSize: number = 0
+
+		local function UpdateChildContainerTransform(thisWidget: Types.Combo)
+			local Combo = thisWidget.Instance :: Frame
+			local PreviewContainer = Combo.PreviewContainer :: TextButton
+			local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
+
+			local previewPosition: Vector2 = PreviewContainer.AbsolutePosition - widgets.GuiOffset
+			local previewSize: Vector2 = PreviewContainer.AbsoluteSize
+			local borderSize: number = Iris._config.PopupBorderSize
+			local screenSize: Vector2 = ChildContainer.Parent.AbsoluteSize
+
+			local absoluteContentSize = thisWidget.UIListLayout.AbsoluteContentSize.Y
+			CachedContentSize = absoluteContentSize
+
+			local contentsSize: number = absoluteContentSize + 2 * Iris._config.WindowPadding.Y
+
+			local x: number = previewPosition.X
+			local y: number = previewPosition.Y + previewSize.Y + borderSize
+			local anchor: Vector2 = Vector2.zero
+			local distanceToScreen: number = screenSize.Y - y
+
+			-- Only extend upwards if we cannot fully extend downwards, and we are on the bottom half of the screen.
+			--  i.e. there is more space upwards than there is downwards.
+			if contentsSize > distanceToScreen and y > (screenSize.Y / 2) then
+				y = previewPosition.Y - borderSize
+				anchor = Vector2.yAxis
+				distanceToScreen = y -- from 0 to the current position
+			end
+
+			ChildContainer.AnchorPoint = anchor
+			ChildContainer.Position = UDim2.fromOffset(x, y)
+
+			local height = math.min(contentsSize, distanceToScreen)
+			ChildContainer.Size = UDim2.fromOffset(PreviewContainer.AbsoluteSize.X, height)
+		end
+
+		table.insert(Iris._postCycleCallbacks, function()
+			if AnyOpenedCombo and OpenedCombo then
+				local contentSize = OpenedCombo.UIListLayout.AbsoluteContentSize.Y
+				if contentSize ~= CachedContentSize then
+					UpdateChildContainerTransform(OpenedCombo)
+				end
+			end
+		end)
+
+		local function UpdateComboState(input: InputObject)
+			if not Iris._started then
+				return
+			end
+			if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.MouseButton2 and input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseWheel then
+				return
+			end
+			if AnyOpenedCombo == false or not OpenedCombo then
+				return
+			end
+			if ComboOpenedTick == Iris._cycleTick then
+				return
+			end
+
+			local MouseLocation: Vector2 = widgets.getMouseLocation()
+			local Combo = OpenedCombo.Instance :: Frame
+			local PreviewContainer: TextButton = Combo.PreviewContainer
+			local ChildContainer = OpenedCombo.ChildContainer
+			local rectMin: Vector2 = PreviewContainer.AbsolutePosition - widgets.GuiOffset
+			local rectMax: Vector2 = PreviewContainer.AbsolutePosition - widgets.GuiOffset + PreviewContainer.AbsoluteSize
+			if widgets.isPosInsideRect(MouseLocation, rectMin, rectMax) then
+				return
+			end
+
+			rectMin = ChildContainer.AbsolutePosition - widgets.GuiOffset
+			rectMax = ChildContainer.AbsolutePosition - widgets.GuiOffset + ChildContainer.AbsoluteSize
+			if widgets.isPosInsideRect(MouseLocation, rectMin, rectMax) then
+				return
+			end
+
+			OpenedCombo.state.isOpened:set(false)
+		end
+
+		widgets.registerEvent("InputBegan", UpdateComboState)
+
+		widgets.registerEvent("InputChanged", UpdateComboState)
+
+		--stylua: ignore
+		Iris.WidgetConstructor("Combo", {
+			hasState = true,
+			hasChildren = true,
+			Args = {
+				["Text"] = 1,
+				["NoButton"] = 2,
+				["NoPreview"] = 3,
+			},
+			Events = {
+				["opened"] = {
+					["Init"] = function(_thisWidget: Types.Combo) end,
+					["Get"] = function(thisWidget: Types.Combo)
+						return thisWidget.lastOpenedTick == Iris._cycleTick
+					end,
+				},
+				["closed"] = {
+					["Init"] = function(_thisWidget: Types.Combo) end,
+					["Get"] = function(thisWidget: Types.Combo)
+						return thisWidget.lastClosedTick == Iris._cycleTick
+					end,
+				},
+				["changed"] = {
+					["Init"] = function(_thisWidget: Types.Combo) end,
+					["Get"] = function(thisWidget: Types.Combo)
+						return thisWidget.lastChangedTick == Iris._cycleTick
+					end,
+				},
+				["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+					local Combo = thisWidget.Instance :: Frame
+					return Combo.PreviewContainer
+				end),
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.Combo)
+				local frameHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
+
+				local Combo: Frame = Instance.new("Frame")
+				Combo.Name = "Iris_Combo"
+				Combo.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+				Combo.AutomaticSize = Enum.AutomaticSize.Y
+				Combo.BackgroundTransparency = 1
+				Combo.BorderSizePixel = 0
+				Combo.LayoutOrder = thisWidget.ZIndex
+
+				local UIListLayout: UIListLayout = widgets.UIListLayout(Combo, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+				local PreviewContainer: TextButton = Instance.new("TextButton")
+				PreviewContainer.Name = "PreviewContainer"
+				PreviewContainer.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(0, 0))
+				PreviewContainer.AutomaticSize = Enum.AutomaticSize.Y
+				PreviewContainer.BackgroundTransparency = 1
+				PreviewContainer.Text = ""
+				PreviewContainer.ZIndex = thisWidget.ZIndex + 2
+				PreviewContainer.AutoButtonColor = false
+
+				widgets.applyFrameStyle(PreviewContainer, true)
+				widgets.UIListLayout(PreviewContainer, Enum.FillDirection.Horizontal, UDim.new(0, 0))
+				widgets.UISizeConstraint(PreviewContainer, Vector2.new(frameHeight))
+
+				PreviewContainer.Parent = Combo
+
+				local PreviewLabel: TextLabel = Instance.new("TextLabel")
+				PreviewLabel.Name = "PreviewLabel"
+				PreviewLabel.Size = UDim2.new(UDim.new(1, 0), Iris._config.ContentHeight)
+				PreviewLabel.AutomaticSize = Enum.AutomaticSize.Y
+				PreviewLabel.BackgroundColor3 = Iris._config.FrameBgColor
+				PreviewLabel.BackgroundTransparency = Iris._config.FrameBgTransparency
+				PreviewLabel.BorderSizePixel = 0
+				PreviewLabel.ClipsDescendants = true
+
+				widgets.applyTextStyle(PreviewLabel)
+				widgets.UIPadding(PreviewLabel, Iris._config.FramePadding)
+
+				PreviewLabel.Parent = PreviewContainer
+
+				local DropdownButton: TextLabel = Instance.new("TextLabel")
+				DropdownButton.Name = "DropdownButton"
+				DropdownButton.Size = UDim2.new(0, frameHeight, Iris._config.ContentHeight.Scale, math.max(Iris._config.ContentHeight.Offset, frameHeight))
+				DropdownButton.BorderSizePixel = 0
+				DropdownButton.BackgroundColor3 = Iris._config.ButtonColor
+				DropdownButton.BackgroundTransparency = Iris._config.ButtonTransparency
+				DropdownButton.Text = ""
+
+				local padding: number = math.round(frameHeight * 0.2)
+				local dropdownSize: number = frameHeight - 2 * padding
+
+				local Dropdown: ImageLabel = Instance.new("ImageLabel")
+				Dropdown.Name = "Dropdown"
+				Dropdown.AnchorPoint = Vector2.new(0.5, 0.5)
+				Dropdown.Size = UDim2.fromOffset(dropdownSize, dropdownSize)
+				Dropdown.Position = UDim2.fromScale(0.5, 0.5)
+				Dropdown.BackgroundTransparency = 1
+				Dropdown.BorderSizePixel = 0
+				Dropdown.ImageColor3 = Iris._config.TextColor
+				Dropdown.ImageTransparency = Iris._config.TextTransparency
+
+				Dropdown.Parent = DropdownButton
+
+				DropdownButton.Parent = PreviewContainer
+
+				-- for some reason ImGui Combo has no highlights for Active, only hovered.
+				-- so this deviates from ImGui, but its a good UX change
+				widgets.applyInteractionHighlightsWithMultiHighlightee("Background", PreviewContainer, {
+					{
+						PreviewLabel,
+						{
+							Color = Iris._config.FrameBgColor,
+							Transparency = Iris._config.FrameBgTransparency,
+							HoveredColor = Iris._config.FrameBgHoveredColor,
+							HoveredTransparency = Iris._config.FrameBgHoveredTransparency,
+							ActiveColor = Iris._config.FrameBgActiveColor,
+							ActiveTransparency = Iris._config.FrameBgActiveTransparency,
+						},
+					},
+					{
+						DropdownButton,
+						{
+							Color = Iris._config.ButtonColor,
+							Transparency = Iris._config.ButtonTransparency,
+							HoveredColor = Iris._config.ButtonHoveredColor,
+							HoveredTransparency = Iris._config.ButtonHoveredTransparency,
+							-- Use hovered for active
+							ActiveColor = Iris._config.ButtonHoveredColor,
+							ActiveTransparency = Iris._config.ButtonHoveredTransparency,
+						},
+					},
+				})
+
+				widgets.applyButtonClick(PreviewContainer, function()
+					if AnyOpenedCombo and OpenedCombo ~= thisWidget then
+						return
+					end
+					thisWidget.state.isOpened:set(not thisWidget.state.isOpened.value)
+				end)
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.Size = UDim2.fromOffset(0, frameHeight)
+				TextLabel.AutomaticSize = Enum.AutomaticSize.X
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+
+				widgets.applyTextStyle(TextLabel)
+
+				TextLabel.Parent = Combo
+
+				local ChildContainer: ScrollingFrame = Instance.new("ScrollingFrame")
+				ChildContainer.Name = "ComboContainer"
+				ChildContainer.BackgroundColor3 = Iris._config.PopupBgColor
+				ChildContainer.BackgroundTransparency = Iris._config.PopupBgTransparency
+				ChildContainer.BorderSizePixel = 0
+
+				ChildContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+				ChildContainer.ScrollBarImageTransparency = Iris._config.ScrollbarGrabTransparency
+				ChildContainer.ScrollBarImageColor3 = Iris._config.ScrollbarGrabColor
+				ChildContainer.ScrollBarThickness = Iris._config.ScrollbarSize
+				ChildContainer.CanvasSize = UDim2.fromScale(0, 0)
+				ChildContainer.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+				ChildContainer.TopImage = widgets.ICONS.BLANK_SQUARE
+				ChildContainer.MidImage = widgets.ICONS.BLANK_SQUARE
+				ChildContainer.BottomImage = widgets.ICONS.BLANK_SQUARE
+
+				-- appear over everything else
+				ChildContainer.ClipsDescendants = true
+
+				-- Unfortunatley, ScrollingFrame does not work with UICorner
+				-- if Iris._config.PopupRounding > 0 then
+				--     widgets.UICorner(ChildContainer, Iris._config.PopupRounding)
+				-- end
+
+				widgets.UIStroke(ChildContainer, Iris._config.WindowBorderSize, Iris._config.BorderColor, Iris._config.BorderTransparency)
+				widgets.UIPadding(ChildContainer, Vector2.new(2, Iris._config.WindowPadding.Y))
+				widgets.UISizeConstraint(ChildContainer, Vector2.new(100))
+
+				local ChildContainerUIListLayout: UIListLayout = widgets.UIListLayout(ChildContainer, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemSpacing.Y))
+				ChildContainerUIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+				local RootPopupScreenGui = Iris._rootInstance and Iris._rootInstance:WaitForChild("PopupScreenGui") :: GuiObject
+				ChildContainer.Parent = RootPopupScreenGui
+
+				thisWidget.ChildContainer = ChildContainer
+				thisWidget.UIListLayout = ChildContainerUIListLayout
+				return Combo
+			end,
+			Update = function(thisWidget: Types.Combo)
+				local Iris_Combo = thisWidget.Instance :: Frame
+				local PreviewContainer = Iris_Combo.PreviewContainer :: TextButton
+				local PreviewLabel: TextLabel = PreviewContainer.PreviewLabel
+				local DropdownButton: TextLabel = PreviewContainer.DropdownButton
+				local TextLabel: TextLabel = Iris_Combo.TextLabel
+
+				TextLabel.Text = thisWidget.arguments.Text or "Combo"
+
+				if thisWidget.arguments.NoButton then
+					DropdownButton.Visible = false
+					PreviewLabel.Size = UDim2.new(UDim.new(1, 0), PreviewLabel.Size.Height)
+				else
+					DropdownButton.Visible = true
+					local DropdownButtonSize = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
+					PreviewLabel.Size = UDim2.new(UDim.new(1, -DropdownButtonSize), PreviewLabel.Size.Height)
+				end
+
+				if thisWidget.arguments.NoPreview then
+					PreviewLabel.Visible = false
+					PreviewContainer.Size = UDim2.new(0, 0, 0, 0)
+					PreviewContainer.AutomaticSize = Enum.AutomaticSize.XY
+				else
+					PreviewLabel.Visible = true
+					PreviewContainer.Size = UDim2.new(Iris._config.ContentWidth, Iris._config.ContentHeight)
+					PreviewContainer.AutomaticSize = Enum.AutomaticSize.Y
+				end
+			end,
+			ChildAdded = function(thisWidget: Types.Combo, _thisChild: Types.Widget)
+				UpdateChildContainerTransform(thisWidget)
+				return thisWidget.ChildContainer
+			end,
+			GenerateState = function(thisWidget: Types.Combo)
+				if thisWidget.state.index == nil then
+					thisWidget.state.index = Iris._widgetState(thisWidget, "index", "No Selection")
+				end
+				if thisWidget.state.isOpened == nil then
+					thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", false)
+				end
+
+				thisWidget.state.index:onChange(function()
+					thisWidget.lastChangedTick = Iris._cycleTick + 1
+					if thisWidget.state.isOpened.value then
+						thisWidget.state.isOpened:set(false)
+					end
+				end)
+			end,
+			UpdateState = function(thisWidget: Types.Combo)
+				local Combo = thisWidget.Instance :: Frame
+				local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
+				local PreviewContainer = Combo.PreviewContainer :: TextButton
+				local PreviewLabel: TextLabel = PreviewContainer.PreviewLabel
+				local DropdownButton = PreviewContainer.DropdownButton :: TextLabel
+				local Dropdown: ImageLabel = DropdownButton.Dropdown
+
+				if thisWidget.state.isOpened.value then
+					AnyOpenedCombo = true
+					OpenedCombo = thisWidget
+					ComboOpenedTick = Iris._cycleTick
+					thisWidget.lastOpenedTick = Iris._cycleTick + 1
+
+					-- ImGui also does not do this, and the Arrow is always facing down
+					Dropdown.Image = widgets.ICONS.RIGHT_POINTING_TRIANGLE
+					ChildContainer.Visible = true
+
+					UpdateChildContainerTransform(thisWidget)
+				else
+					if AnyOpenedCombo then
+						AnyOpenedCombo = false
+						OpenedCombo = nil
+						thisWidget.lastClosedTick = Iris._cycleTick + 1
+					end
+					Dropdown.Image = widgets.ICONS.DOWN_POINTING_TRIANGLE
+					ChildContainer.Visible = false
+				end
+
+				local stateIndex: any = thisWidget.state.index.value
+				PreviewLabel.Text = if typeof(stateIndex) == "EnumItem" then stateIndex.Name else tostring(stateIndex)
+			end,
+			Discard = function(thisWidget: Types.Combo)
+				-- If we are discarding the current combo active, we need to hide it
+				if OpenedCombo and OpenedCombo == thisWidget then
+					OpenedCombo = nil
+					AnyOpenedCombo = false
+				end
+
+				thisWidget.Instance:Destroy()
+				thisWidget.ChildContainer:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+		} :: Types.WidgetClass)
+	end
+	)(Iris, widgets)
+	local dadsadsad = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		-- stylua: ignore
+		Iris.WidgetConstructor("ProgressBar", {
+			hasState = true,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+				["Format"] = 2,
+			},
+			Events = {
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+				["changed"] = {
+					["Init"] = function(_thisWidget: Types.ProgressBar) end,
+					["Get"] = function(thisWidget: Types.ProgressBar)
+						return thisWidget.lastChangedTick == Iris._cycleTick
+					end,
+				},
+			},
+			Generate = function(thisWidget: Types.ProgressBar)
+				local ProgressBar: Frame = Instance.new("Frame")
+				ProgressBar.Name = "Iris_ProgressBar"
+				ProgressBar.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+				ProgressBar.BackgroundTransparency = 1
+				ProgressBar.AutomaticSize = Enum.AutomaticSize.Y
+				ProgressBar.LayoutOrder = thisWidget.ZIndex
+
+				local UIListLayout: UIListLayout = widgets.UIListLayout(ProgressBar, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+				local Bar: Frame = Instance.new("Frame")
+				Bar.Name = "Bar"
+				Bar.Size = UDim2.new(Iris._config.ContentWidth, Iris._config.ContentHeight)
+				Bar.BackgroundColor3 = Iris._config.FrameBgColor
+				Bar.BackgroundTransparency = Iris._config.FrameBgTransparency
+				Bar.BorderSizePixel = 0
+				Bar.AutomaticSize = Enum.AutomaticSize.Y
+				Bar.ClipsDescendants = true
+
+				widgets.applyFrameStyle(Bar, true)
+
+				Bar.Parent = ProgressBar
+
+				local Progress: TextLabel = Instance.new("TextLabel")
+				Progress.Name = "Progress"
+				Progress.AutomaticSize = Enum.AutomaticSize.Y
+				Progress.Size = UDim2.new(UDim.new(0, 0), Iris._config.ContentHeight)
+				Progress.BackgroundColor3 = Iris._config.PlotHistogramColor
+				Progress.BackgroundTransparency = Iris._config.PlotHistogramTransparency
+				Progress.BorderSizePixel = 0
+
+				widgets.applyTextStyle(Progress)
+				widgets.UIPadding(Progress, Iris._config.FramePadding)
+				widgets.UICorner(Progress, Iris._config.FrameRounding)
+
+				Progress.Text = ""
+				Progress.Parent = Bar
+
+				local Value: TextLabel = Instance.new("TextLabel")
+				Value.Name = "Value"
+				Value.AutomaticSize = Enum.AutomaticSize.XY
+				Value.Size = UDim2.new(UDim.new(0, 0), Iris._config.ContentHeight)
+				Value.BackgroundTransparency = 1
+				Value.BorderSizePixel = 0
+				Value.ZIndex = 1
+
+				widgets.applyTextStyle(Value)
+				widgets.UIPadding(Value, Iris._config.FramePadding)
+
+				Value.Parent = Bar
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+				TextLabel.AnchorPoint = Vector2.new(0, 0.5)
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.LayoutOrder = 1
+
+				widgets.applyTextStyle(TextLabel)
+				widgets.UIPadding(Value, Iris._config.FramePadding)
+
+				TextLabel.Parent = ProgressBar
+
+				return ProgressBar
+			end,
+			GenerateState = function(thisWidget: Types.ProgressBar)
+				if thisWidget.state.progress == nil then
+					thisWidget.state.progress = Iris._widgetState(thisWidget, "Progress", 0)
+				end
+			end,
+			Update = function(thisWidget: Types.ProgressBar)
+				local Progress = thisWidget.Instance :: Frame
+				local TextLabel: TextLabel = Progress.TextLabel
+				local Bar = Progress.Bar :: Frame
+				local Value: TextLabel = Bar.Value
+
+				if thisWidget.arguments.Format ~= nil and typeof(thisWidget.arguments.Format) == "string" then
+					Value.Text = thisWidget.arguments.Format
+				end
+
+				TextLabel.Text = thisWidget.arguments.Text or "Progress Bar"
+			end,
+			UpdateState = function(thisWidget: Types.ProgressBar)
+				local ProgressBar = thisWidget.Instance :: Frame
+				local Bar = ProgressBar.Bar :: Frame
+				local Progress: TextLabel = Bar.Progress
+				local Value: TextLabel = Bar.Value
+
+				local progress: number = thisWidget.state.progress.value
+				progress = math.clamp(progress, 0, 1)
+				local totalWidth: number = Bar.AbsoluteSize.X
+				local textWidth: number = Value.AbsoluteSize.X
+				if totalWidth * (1 - progress) < textWidth then
+					Value.AnchorPoint = Vector2.xAxis
+					Value.Position = UDim2.fromScale(1, 0)
+				else
+					Value.AnchorPoint = Vector2.zero
+					Value.Position = UDim2.new(progress, 0, 0, 0)
+				end
+
+				Progress.Size = UDim2.new(UDim.new(progress, 0), Progress.Size.Height)
+				if thisWidget.arguments.Format ~= nil and typeof(thisWidget.arguments.Format) == "string" then
+					Value.Text = thisWidget.arguments.Format
+				else
+					Value.Text = string.format("%d%%", progress * 100)
+				end
+				thisWidget.lastChangedTick = Iris._cycleTick + 1
+			end,
+			Discard = function(thisWidget: Types.ProgressBar)
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+		} :: Types.WidgetClass)
+
+		local function createLine(parent: Frame, index: number): Frame
+			local Block: Frame = Instance.new("Frame")
+			Block.Name = tostring(index)
+			Block.AnchorPoint = Vector2.new(0.5, 0.5)
+			Block.BackgroundColor3 = Iris._config.PlotLinesColor
+			Block.BackgroundTransparency = Iris._config.PlotLinesTransparency
+			Block.BorderSizePixel = 0
+
+			Block.Parent = parent
+
+			return Block
+		end
+
+		local function clearLine(thisWidget: Types.PlotLines)
+			if thisWidget.HoveredLine then
+				thisWidget.HoveredLine.BackgroundColor3 = Iris._config.PlotLinesColor
+				thisWidget.HoveredLine.BackgroundTransparency = Iris._config.PlotLinesTransparency
+				thisWidget.HoveredLine = false
+				thisWidget.state.hovered:set(nil)
+			end
+		end
+
+		local function updateLine(thisWidget: Types.PlotLines, silent: true?)
 			local PlotLines = thisWidget.Instance :: Frame
 			local Background = PlotLines.Background :: Frame
 			local Plot = Background.Plot :: Frame
 
-			local values: { number } = thisWidget.state.values.value
-			local count: number = #values - 1
-			local numLines: number = #thisWidget.Lines
+			local mousePosition: Vector2 = widgets.getMouseLocation()
 
-			local min: number = thisWidget.arguments.Min or math.huge
-			local max: number = thisWidget.arguments.Max or -math.huge
+			local position: Vector2 = Plot.AbsolutePosition - widgets.GuiOffset
+			local scale: number = (mousePosition.X - position.X) / Plot.AbsoluteSize.X
+			local index: number = math.ceil(scale * #thisWidget.Lines)
+			local line: Frame? = thisWidget.Lines[index]
 
-			if min == nil or max == nil then
-				for _, value: number in values do
-					min = math.min(min, value)
-					max = math.max(max, value)
+			if line then
+				if line ~= thisWidget.HoveredLine and not silent then
+					clearLine(thisWidget)
 				end
-			end
-
-			-- add or remove blocks depending on how many are needed
-			if numLines < count then
-				for index = numLines + 1, count do
-					table.insert(thisWidget.Lines, createLine(Plot, index))
-				end
-			elseif numLines > count then
-				for _ = count + 1, numLines do
-					local line: Frame? = table.remove(thisWidget.Lines)
-					if line then
-						line:Destroy()
+				local start: number? = thisWidget.state.values.value[index]
+				local stop: number? = thisWidget.state.values.value[index + 1]
+				if start and stop then
+					if math.floor(start) == start and math.floor(stop) == stop then
+						thisWidget.Tooltip.Text = ("%d: %d\n%d: %d"):format(index, start, index + 1, stop)
+					else
+						thisWidget.Tooltip.Text = ("%d: %.3f\n%d: %.3f"):format(index, start, index + 1, stop)
 					end
 				end
-			end
-
-			local range: number = max - min
-			local size: Vector2 = Plot.AbsoluteSize
-
-			for index = 1, count do
-				local start: number = values[index]
-				local stop: number = values[index + 1]
-				local a: Vector2 = size * Vector2.new((index - 1) / count, (max - start) / range)
-				local b: Vector2 = size * Vector2.new(index / count, (max - stop) / range)
-				local position: Vector2 = (a + b) / 2
-
-				thisWidget.Lines[index].Size = UDim2.fromOffset((b - a).Magnitude + 1, 1)
-				thisWidget.Lines[index].Position = UDim2.fromOffset(position.X, position.Y)
-				thisWidget.Lines[index].Rotation = math.atan2(b.Y - a.Y, b.X - a.X) * (180 / math.pi)
-			end
-
-			-- only update the hovered block if it exists.
-			if thisWidget.HoveredLine then
-				updateLine(thisWidget, true)
-			end
-		end
-	end,
-	Discard = function(thisWidget: PlotLines)
-		thisWidget.Instance:Destroy()
-		thisWidget.Tooltip:Destroy()
-		widgets.discardState(thisWidget)
-	end,
-} :: WidgetClass)
-
-local function createBlock(parent: Frame, index: number): Frame
-	local Block: Frame = Instance.new("Frame")
-	Block.Name = tostring(index)
-	Block.BackgroundColor3 = Iris._config.PlotHistogramColor
-	Block.BackgroundTransparency = Iris._config.PlotHistogramTransparency
-	Block.BorderSizePixel = 0
-
-	Block.Parent = parent
-
-	return Block
-end
-
-local function clearBlock(thisWidget: PlotHistogram)
-	if thisWidget.HoveredBlock then
-		thisWidget.HoveredBlock.BackgroundColor3 = Iris._config.PlotHistogramColor
-		thisWidget.HoveredBlock.BackgroundTransparency = Iris._config.PlotHistogramTransparency
-		thisWidget.HoveredBlock = false
-		thisWidget.state.hovered:set(nil)
-	end
-end
-
-local function updateBlock(thisWidget: PlotHistogram, silent: true?)
-	local PlotHistogram = thisWidget.Instance :: Frame
-	local Background = PlotHistogram.Background :: Frame
-	local Plot = Background.Plot :: Frame
-
-	local mousePosition: Vector2 = widgets.getMouseLocation()
-
-	local position: Vector2 = Plot.AbsolutePosition - widgets.GuiOffset
-	local scale: number = (mousePosition.X - position.X) / Plot.AbsoluteSize.X
-	local index: number = math.ceil(scale * #thisWidget.Blocks)
-	local block: Frame? = thisWidget.Blocks[index]
-
-	if block then
-		if block ~= thisWidget.HoveredBlock and not silent then
-			clearBlock(thisWidget)
-		end
-		local value: number? = thisWidget.state.values.value[index]
-		if value then
-			thisWidget.Tooltip.Text = if math.floor(value) == value then ("%d: %d"):format(index, value) else ("%d: %.3f"):format(index, value)
-		end
-		thisWidget.HoveredBlock = block
-		block.BackgroundColor3 = Iris._config.PlotHistogramHoveredColor
-		block.BackgroundTransparency = Iris._config.PlotHistogramHoveredTransparency
-		if silent then
-			thisWidget.state.hovered.value = value
-		else
-			thisWidget.state.hovered:set(value)
-		end
-	end
-end
-
--- stylua: ignore
-Iris.WidgetConstructor("PlotHistogram", {
-	hasState = true,
-	hasChildren = false,
-	Args = {
-		["Text"] = 1,
-		["Height"] = 2,
-		["Min"] = 3,
-		["Max"] = 4,
-		["TextOverlay"] = 5,
-		["BaseLine"] = 6,
-	},
-	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
-			return thisWidget.Instance
-		end),
-	},
-	Generate = function(thisWidget: PlotHistogram)
-		local PlotHistogram: Frame = Instance.new("Frame")
-		PlotHistogram.Name = "Iris_PlotHistogram"
-		PlotHistogram.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
-		PlotHistogram.BackgroundTransparency = 1
-		PlotHistogram.BorderSizePixel = 0
-		PlotHistogram.ZIndex = thisWidget.ZIndex
-		PlotHistogram.LayoutOrder = thisWidget.ZIndex
-
-		local UIListLayout: UIListLayout = widgets.UIListLayout(PlotHistogram, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-		local Background: Frame = Instance.new("Frame")
-		Background.Name = "Background"
-		Background.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(1, 0))
-		Background.BackgroundColor3 = Iris._config.FrameBgColor
-		Background.BackgroundTransparency = Iris._config.FrameBgTransparency
-		widgets.applyFrameStyle(Background)
-
-		local UIPadding: UIPadding = (Background :: any).UIPadding
-		UIPadding.PaddingRight = UDim.new(0, Iris._config.FramePadding.X - 1)
-
-		Background.Parent = PlotHistogram
-
-		local Plot: Frame = Instance.new("Frame")
-		Plot.Name = "Plot"
-		Plot.Size = UDim2.fromScale(1, 1)
-		Plot.BackgroundTransparency = 1
-		Plot.BorderSizePixel = 0
-		Plot.ClipsDescendants = true
-
-		local OverlayText: TextLabel = Instance.new("TextLabel")
-		OverlayText.Name = "OverlayText"
-		OverlayText.AutomaticSize = Enum.AutomaticSize.XY
-		OverlayText.AnchorPoint = Vector2.new(0.5, 0)
-		OverlayText.Size = UDim2.fromOffset(0, 0)
-		OverlayText.Position = UDim2.fromScale(0.5, 0)
-		OverlayText.BackgroundTransparency = 1
-		OverlayText.BorderSizePixel = 0
-		OverlayText.ZIndex = 2
-
-		widgets.applyTextStyle(OverlayText)
-
-		OverlayText.Parent = Plot
-
-		local Tooltip: TextLabel = Instance.new("TextLabel")
-		Tooltip.Name = "Iris_Tooltip"
-		Tooltip.AutomaticSize = Enum.AutomaticSize.XY
-		Tooltip.Size = UDim2.fromOffset(0, 0)
-		Tooltip.BackgroundColor3 = Iris._config.PopupBgColor
-		Tooltip.BackgroundTransparency = Iris._config.PopupBgTransparency
-		Tooltip.BorderSizePixel = 0
-		Tooltip.Visible = false
-
-		widgets.applyTextStyle(Tooltip)
-		widgets.UIStroke(Tooltip, Iris._config.PopupBorderSize, Iris._config.BorderActiveColor, Iris._config.BorderActiveTransparency)
-		widgets.UIPadding(Tooltip, Iris._config.WindowPadding)
-		if Iris._config.PopupRounding > 0 then
-			widgets.UICorner(Tooltip, Iris._config.PopupRounding)
-		end
-
-		local popup: Instance? = Iris._rootInstance and Iris._rootInstance:FindFirstChild("PopupScreenGui")
-		Tooltip.Parent = popup and popup:FindFirstChild("TooltipContainer")
-
-		thisWidget.Tooltip = Tooltip
-
-		widgets.applyMouseMoved(Plot, function()
-			updateBlock(thisWidget)
-		end)
-
-		widgets.applyMouseLeave(Plot, function()
-			clearBlock(thisWidget)
-		end)
-
-		Plot.Parent = Background
-
-		thisWidget.Blocks = {}
-		thisWidget.HoveredBlock = false
-
-		local TextLabel: TextLabel = Instance.new("TextLabel")
-		TextLabel.Name = "TextLabel"
-		TextLabel.AutomaticSize = Enum.AutomaticSize.XY
-		TextLabel.Size = UDim2.fromOffset(0, 0)
-		TextLabel.BackgroundTransparency = 1
-		TextLabel.BorderSizePixel = 0
-		TextLabel.ZIndex = thisWidget.ZIndex + 3
-		TextLabel.LayoutOrder = thisWidget.ZIndex + 3
-
-		widgets.applyTextStyle(TextLabel)
-
-		TextLabel.Parent = PlotHistogram
-
-		return PlotHistogram
-	end,
-	GenerateState = function(thisWidget: PlotHistogram)
-		if thisWidget.state.values == nil then
-			thisWidget.state.values = Iris._widgetState(thisWidget, "values", { 1 })
-		end     
-		if thisWidget.state.hovered == nil then
-			thisWidget.state.hovered = Iris._widgetState(thisWidget, "hovered", nil)
-		end     
-	end,
-	Update = function(thisWidget: PlotHistogram)
-		local PlotLines = thisWidget.Instance :: Frame
-		local TextLabel: TextLabel = PlotLines.TextLabel
-		local Background = PlotLines.Background :: Frame
-		local Plot = Background.Plot :: Frame
-		local OverlayText: TextLabel = Plot.OverlayText
-
-		TextLabel.Text = thisWidget.arguments.Text or "Plot Histogram"
-		OverlayText.Text = thisWidget.arguments.TextOverlay or ""
-		PlotLines.Size = UDim2.new(1, 0, 0, thisWidget.arguments.Height or 0)
-	end,
-	UpdateState = function(thisWidget: PlotHistogram)
-		if thisWidget.state.hovered.lastChangeTick == Iris._cycleTick then
-			if thisWidget.state.hovered.value then
-				thisWidget.Tooltip.Visible = true
-			else
-				thisWidget.Tooltip.Visible = false
+				thisWidget.HoveredLine = line
+				line.BackgroundColor3 = Iris._config.PlotLinesHoveredColor
+				line.BackgroundTransparency = Iris._config.PlotLinesHoveredTransparency
+				if silent then
+					thisWidget.state.hovered.value = { start, stop }
+				else
+					thisWidget.state.hovered:set({ start, stop })
+				end
 			end
 		end
 
-		if thisWidget.state.values.lastChangeTick == Iris._cycleTick then
+		-- stylua: ignore
+		Iris.WidgetConstructor("PlotLines", {
+			hasState = true,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+				["Height"] = 2,
+				["Min"] = 3,
+				["Max"] = 4,
+				["TextOverlay"] = 5,
+			},
+			Events = {
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.PlotLines)
+				local PlotLines: Frame = Instance.new("Frame")
+				PlotLines.Name = "Iris_PlotLines"
+				PlotLines.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+				PlotLines.BackgroundTransparency = 1
+				PlotLines.BorderSizePixel = 0
+				PlotLines.ZIndex = thisWidget.ZIndex
+				PlotLines.LayoutOrder = thisWidget.ZIndex
+
+				local UIListLayout: UIListLayout = widgets.UIListLayout(PlotLines, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+				local Background: Frame = Instance.new("Frame")
+				Background.Name = "Background"
+				Background.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(1, 0))
+				Background.BackgroundColor3 = Iris._config.FrameBgColor
+				Background.BackgroundTransparency = Iris._config.FrameBgTransparency
+				widgets.applyFrameStyle(Background)
+
+				Background.Parent = PlotLines
+
+				local Plot: Frame = Instance.new("Frame")
+				Plot.Name = "Plot"
+				Plot.Size = UDim2.fromScale(1, 1)
+				Plot.BackgroundTransparency = 1
+				Plot.BorderSizePixel = 0
+				Plot.ClipsDescendants = true
+
+				Plot:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+					thisWidget.state.values.lastChangeTick = Iris._cycleTick
+					Iris._widgets.PlotLines.UpdateState(thisWidget)
+				end)
+
+				local OverlayText: TextLabel = Instance.new("TextLabel")
+				OverlayText.Name = "OverlayText"
+				OverlayText.AutomaticSize = Enum.AutomaticSize.XY
+				OverlayText.AnchorPoint = Vector2.new(0.5, 0)
+				OverlayText.Size = UDim2.fromOffset(0, 0)
+				OverlayText.Position = UDim2.fromScale(0.5, 0)
+				OverlayText.BackgroundTransparency = 1
+				OverlayText.BorderSizePixel = 0
+				OverlayText.ZIndex = 2
+
+				widgets.applyTextStyle(OverlayText)
+
+				OverlayText.Parent = Plot
+
+				local Tooltip: TextLabel = Instance.new("TextLabel")
+				Tooltip.Name = "Iris_Tooltip"
+				Tooltip.AutomaticSize = Enum.AutomaticSize.XY
+				Tooltip.Size = UDim2.fromOffset(0, 0)
+				Tooltip.BackgroundColor3 = Iris._config.PopupBgColor
+				Tooltip.BackgroundTransparency = Iris._config.PopupBgTransparency
+				Tooltip.BorderSizePixel = 0
+				Tooltip.Visible = false
+
+				widgets.applyTextStyle(Tooltip)
+				widgets.UIStroke(Tooltip, Iris._config.PopupBorderSize, Iris._config.BorderActiveColor, Iris._config.BorderActiveTransparency)
+				widgets.UIPadding(Tooltip, Iris._config.WindowPadding)
+				if Iris._config.PopupRounding > 0 then
+					widgets.UICorner(Tooltip, Iris._config.PopupRounding)
+				end
+
+				local popup: Instance? = Iris._rootInstance and Iris._rootInstance:FindFirstChild("PopupScreenGui")
+				Tooltip.Parent = popup and popup:FindFirstChild("TooltipContainer")
+
+				thisWidget.Tooltip = Tooltip
+
+				widgets.applyMouseMoved(Plot, function()
+					updateLine(thisWidget)
+				end)
+
+				widgets.applyMouseLeave(Plot, function()
+					clearLine(thisWidget)
+				end)
+
+				Plot.Parent = Background
+
+				thisWidget.Lines = {}
+				thisWidget.HoveredLine = false
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+				TextLabel.Size = UDim2.fromOffset(0, 0)
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.ZIndex = thisWidget.ZIndex + 3
+				TextLabel.LayoutOrder = thisWidget.ZIndex + 3
+
+				widgets.applyTextStyle(TextLabel)
+
+				TextLabel.Parent = PlotLines
+
+				return PlotLines
+			end,
+			GenerateState = function(thisWidget: Types.PlotLines)
+				if thisWidget.state.values == nil then
+					thisWidget.state.values = Iris._widgetState(thisWidget, "values", { 0, 1 })
+				end
+				if thisWidget.state.hovered == nil then
+					thisWidget.state.hovered = Iris._widgetState(thisWidget, "hovered", nil)
+				end
+			end,
+			Update = function(thisWidget: Types.PlotLines)
+				local PlotLines = thisWidget.Instance :: Frame
+				local TextLabel: TextLabel = PlotLines.TextLabel
+				local Background = PlotLines.Background :: Frame
+				local Plot = Background.Plot :: Frame
+				local OverlayText: TextLabel = Plot.OverlayText
+
+				TextLabel.Text = thisWidget.arguments.Text or "Plot Lines"
+				OverlayText.Text = thisWidget.arguments.TextOverlay or ""
+				PlotLines.Size = UDim2.new(1, 0, 0, thisWidget.arguments.Height or 0)
+			end,
+			UpdateState = function(thisWidget: Types.PlotLines)
+				if thisWidget.state.hovered.lastChangeTick == Iris._cycleTick then
+					if thisWidget.state.hovered.value then
+						thisWidget.Tooltip.Visible = true
+					else
+						thisWidget.Tooltip.Visible = false
+					end
+				end
+
+				if thisWidget.state.values.lastChangeTick == Iris._cycleTick then
+					local PlotLines = thisWidget.Instance :: Frame
+					local Background = PlotLines.Background :: Frame
+					local Plot = Background.Plot :: Frame
+
+					local values: { number } = thisWidget.state.values.value
+					local count: number = #values - 1
+					local numLines: number = #thisWidget.Lines
+
+					local min: number = thisWidget.arguments.Min or math.huge
+					local max: number = thisWidget.arguments.Max or -math.huge
+
+					if min == nil or max == nil then
+						for _, value: number in values do
+							min = math.min(min, value)
+							max = math.max(max, value)
+						end
+					end
+
+					-- add or remove blocks depending on how many are needed
+					if numLines < count then
+						for index = numLines + 1, count do
+							table.insert(thisWidget.Lines, createLine(Plot, index))
+						end
+					elseif numLines > count then
+						for _ = count + 1, numLines do
+							local line: Frame? = table.remove(thisWidget.Lines)
+							if line then
+								line:Destroy()
+							end
+						end
+					end
+
+					local range: number = max - min
+					local size: Vector2 = Plot.AbsoluteSize
+
+					for index = 1, count do
+						local start: number = values[index]
+						local stop: number = values[index + 1]
+						local a: Vector2 = size * Vector2.new((index - 1) / count, (max - start) / range)
+						local b: Vector2 = size * Vector2.new(index / count, (max - stop) / range)
+						local position: Vector2 = (a + b) / 2
+
+						thisWidget.Lines[index].Size = UDim2.fromOffset((b - a).Magnitude + 1, 1)
+						thisWidget.Lines[index].Position = UDim2.fromOffset(position.X, position.Y)
+						thisWidget.Lines[index].Rotation = math.atan2(b.Y - a.Y, b.X - a.X) * (180 / math.pi)
+					end
+
+					-- only update the hovered block if it exists.
+					if thisWidget.HoveredLine then
+						updateLine(thisWidget, true)
+					end
+				end
+			end,
+			Discard = function(thisWidget: Types.PlotLines)
+				thisWidget.Instance:Destroy()
+				thisWidget.Tooltip:Destroy()
+				widgets.discardState(thisWidget)
+			end,
+		} :: Types.WidgetClass)
+
+		local function createBlock(parent: Frame, index: number): Frame
+			local Block: Frame = Instance.new("Frame")
+			Block.Name = tostring(index)
+			Block.BackgroundColor3 = Iris._config.PlotHistogramColor
+			Block.BackgroundTransparency = Iris._config.PlotHistogramTransparency
+			Block.BorderSizePixel = 0
+
+			Block.Parent = parent
+
+			return Block
+		end
+
+		local function clearBlock(thisWidget: Types.PlotHistogram)
+			if thisWidget.HoveredBlock then
+				thisWidget.HoveredBlock.BackgroundColor3 = Iris._config.PlotHistogramColor
+				thisWidget.HoveredBlock.BackgroundTransparency = Iris._config.PlotHistogramTransparency
+				thisWidget.HoveredBlock = false
+				thisWidget.state.hovered:set(nil)
+			end
+		end
+
+		local function updateBlock(thisWidget: Types.PlotHistogram, silent: true?)
 			local PlotHistogram = thisWidget.Instance :: Frame
 			local Background = PlotHistogram.Background :: Frame
 			local Plot = Background.Plot :: Frame
 
-			local values: { number } = thisWidget.state.values.value
-			local count: number = #values
-			local numBlocks: number = #thisWidget.Blocks
+			local mousePosition: Vector2 = widgets.getMouseLocation()
 
-			local min: number = thisWidget.arguments.Min or math.huge
-			local max: number = thisWidget.arguments.Max or -math.huge
-			local baseline: number = thisWidget.arguments.BaseLine or 0
+			local position: Vector2 = Plot.AbsolutePosition - widgets.GuiOffset
+			local scale: number = (mousePosition.X - position.X) / Plot.AbsoluteSize.X
+			local index: number = math.ceil(scale * #thisWidget.Blocks)
+			local block: Frame? = thisWidget.Blocks[index]
 
-			if min == nil or max == nil then
-				for _, value: number in values do
-					min = math.min(min or value, value)
-					max = math.max(max or value, value)
+			if block then
+				if block ~= thisWidget.HoveredBlock and not silent then
+					clearBlock(thisWidget)
+				end
+				local value: number? = thisWidget.state.values.value[index]
+				if value then
+					thisWidget.Tooltip.Text = if math.floor(value) == value then ("%d: %d"):format(index, value) else ("%d: %.3f"):format(index, value)
+				end
+				thisWidget.HoveredBlock = block
+				block.BackgroundColor3 = Iris._config.PlotHistogramHoveredColor
+				block.BackgroundTransparency = Iris._config.PlotHistogramHoveredTransparency
+				if silent then
+					thisWidget.state.hovered.value = value
+				else
+					thisWidget.state.hovered:set(value)
 				end
 			end
+		end
 
-			-- add or remove blocks depending on how many are needed
-			if numBlocks < count then
-				for index = numBlocks + 1, count do
-					table.insert(thisWidget.Blocks, createBlock(Plot, index))                    
+		-- stylua: ignore
+		Iris.WidgetConstructor("PlotHistogram", {
+			hasState = true,
+			hasChildren = false,
+			Args = {
+				["Text"] = 1,
+				["Height"] = 2,
+				["Min"] = 3,
+				["Max"] = 4,
+				["TextOverlay"] = 5,
+				["BaseLine"] = 6,
+			},
+			Events = {
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+					return thisWidget.Instance
+				end),
+			},
+			Generate = function(thisWidget: Types.PlotHistogram)
+				local PlotHistogram: Frame = Instance.new("Frame")
+				PlotHistogram.Name = "Iris_PlotHistogram"
+				PlotHistogram.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+				PlotHistogram.BackgroundTransparency = 1
+				PlotHistogram.BorderSizePixel = 0
+				PlotHistogram.ZIndex = thisWidget.ZIndex
+				PlotHistogram.LayoutOrder = thisWidget.ZIndex
+
+				local UIListLayout: UIListLayout = widgets.UIListLayout(PlotHistogram, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+				UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+				local Background: Frame = Instance.new("Frame")
+				Background.Name = "Background"
+				Background.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(1, 0))
+				Background.BackgroundColor3 = Iris._config.FrameBgColor
+				Background.BackgroundTransparency = Iris._config.FrameBgTransparency
+				widgets.applyFrameStyle(Background)
+
+				local UIPadding: UIPadding = (Background :: any).UIPadding
+				UIPadding.PaddingRight = UDim.new(0, Iris._config.FramePadding.X - 1)
+
+				Background.Parent = PlotHistogram
+
+				local Plot: Frame = Instance.new("Frame")
+				Plot.Name = "Plot"
+				Plot.Size = UDim2.fromScale(1, 1)
+				Plot.BackgroundTransparency = 1
+				Plot.BorderSizePixel = 0
+				Plot.ClipsDescendants = true
+
+				local OverlayText: TextLabel = Instance.new("TextLabel")
+				OverlayText.Name = "OverlayText"
+				OverlayText.AutomaticSize = Enum.AutomaticSize.XY
+				OverlayText.AnchorPoint = Vector2.new(0.5, 0)
+				OverlayText.Size = UDim2.fromOffset(0, 0)
+				OverlayText.Position = UDim2.fromScale(0.5, 0)
+				OverlayText.BackgroundTransparency = 1
+				OverlayText.BorderSizePixel = 0
+				OverlayText.ZIndex = 2
+
+				widgets.applyTextStyle(OverlayText)
+
+				OverlayText.Parent = Plot
+
+				local Tooltip: TextLabel = Instance.new("TextLabel")
+				Tooltip.Name = "Iris_Tooltip"
+				Tooltip.AutomaticSize = Enum.AutomaticSize.XY
+				Tooltip.Size = UDim2.fromOffset(0, 0)
+				Tooltip.BackgroundColor3 = Iris._config.PopupBgColor
+				Tooltip.BackgroundTransparency = Iris._config.PopupBgTransparency
+				Tooltip.BorderSizePixel = 0
+				Tooltip.Visible = false
+
+				widgets.applyTextStyle(Tooltip)
+				widgets.UIStroke(Tooltip, Iris._config.PopupBorderSize, Iris._config.BorderActiveColor, Iris._config.BorderActiveTransparency)
+				widgets.UIPadding(Tooltip, Iris._config.WindowPadding)
+				if Iris._config.PopupRounding > 0 then
+					widgets.UICorner(Tooltip, Iris._config.PopupRounding)
 				end
-			elseif numBlocks > count then
-				for _ = count + 1, numBlocks do
-					local block: Frame? = table.remove(thisWidget.Blocks)
-					if block then
-						block:Destroy()
+
+				local popup: Instance? = Iris._rootInstance and Iris._rootInstance:FindFirstChild("PopupScreenGui")
+				Tooltip.Parent = popup and popup:FindFirstChild("TooltipContainer")
+
+				thisWidget.Tooltip = Tooltip
+
+				widgets.applyMouseMoved(Plot, function()
+					updateBlock(thisWidget)
+				end)
+
+				widgets.applyMouseLeave(Plot, function()
+					clearBlock(thisWidget)
+				end)
+
+				Plot.Parent = Background
+
+				thisWidget.Blocks = {}
+				thisWidget.HoveredBlock = false
+
+				local TextLabel: TextLabel = Instance.new("TextLabel")
+				TextLabel.Name = "TextLabel"
+				TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+				TextLabel.Size = UDim2.fromOffset(0, 0)
+				TextLabel.BackgroundTransparency = 1
+				TextLabel.BorderSizePixel = 0
+				TextLabel.ZIndex = thisWidget.ZIndex + 3
+				TextLabel.LayoutOrder = thisWidget.ZIndex + 3
+
+				widgets.applyTextStyle(TextLabel)
+
+				TextLabel.Parent = PlotHistogram
+
+				return PlotHistogram
+			end,
+			GenerateState = function(thisWidget: Types.PlotHistogram)
+				if thisWidget.state.values == nil then
+					thisWidget.state.values = Iris._widgetState(thisWidget, "values", { 1 })
+				end     
+				if thisWidget.state.hovered == nil then
+					thisWidget.state.hovered = Iris._widgetState(thisWidget, "hovered", nil)
+				end     
+			end,
+			Update = function(thisWidget: Types.PlotHistogram)
+				local PlotLines = thisWidget.Instance :: Frame
+				local TextLabel: TextLabel = PlotLines.TextLabel
+				local Background = PlotLines.Background :: Frame
+				local Plot = Background.Plot :: Frame
+				local OverlayText: TextLabel = Plot.OverlayText
+
+				TextLabel.Text = thisWidget.arguments.Text or "Plot Histogram"
+				OverlayText.Text = thisWidget.arguments.TextOverlay or ""
+				PlotLines.Size = UDim2.new(1, 0, 0, thisWidget.arguments.Height or 0)
+			end,
+			UpdateState = function(thisWidget: Types.PlotHistogram)
+				if thisWidget.state.hovered.lastChangeTick == Iris._cycleTick then
+					if thisWidget.state.hovered.value then
+						thisWidget.Tooltip.Visible = true
+					else
+						thisWidget.Tooltip.Visible = false
+					end
+				end
+
+				if thisWidget.state.values.lastChangeTick == Iris._cycleTick then
+					local PlotHistogram = thisWidget.Instance :: Frame
+					local Background = PlotHistogram.Background :: Frame
+					local Plot = Background.Plot :: Frame
+
+					local values: { number } = thisWidget.state.values.value
+					local count: number = #values
+					local numBlocks: number = #thisWidget.Blocks
+
+					local min: number = thisWidget.arguments.Min or math.huge
+					local max: number = thisWidget.arguments.Max or -math.huge
+					local baseline: number = thisWidget.arguments.BaseLine or 0
+
+					if min == nil or max == nil then
+						for _, value: number in values do
+							min = math.min(min or value, value)
+							max = math.max(max or value, value)
+						end
+					end
+
+					-- add or remove blocks depending on how many are needed
+					if numBlocks < count then
+						for index = numBlocks + 1, count do
+							table.insert(thisWidget.Blocks, createBlock(Plot, index))                    
+						end
+					elseif numBlocks > count then
+						for _ = count + 1, numBlocks do
+							local block: Frame? = table.remove(thisWidget.Blocks)
+							if block then
+								block:Destroy()
+							end
+						end
+					end
+
+					local range: number = max - min
+					local width: UDim = UDim.new(1 / count, -1)
+					for index = 1, count do
+						local num: number = values[index]
+						if num >= 0 then
+							thisWidget.Blocks[index].Size = UDim2.new(width, UDim.new((num - baseline) / range))
+							thisWidget.Blocks[index].Position = UDim2.fromScale((index - 1) / count, (max - num) / range)
+						else
+							thisWidget.Blocks[index].Size = UDim2.new(width, UDim.new((baseline - num) / range))
+							thisWidget.Blocks[index].Position = UDim2.fromScale((index - 1) / count, (max - baseline) / range)
+						end
+					end
+
+					-- only update the hovered block if it exists.
+					if thisWidget.HoveredBlock then
+						updateBlock(thisWidget, true)
+					end
+				end
+			end,
+			Discard = function(thisWidget: Types.PlotHistogram)
+				thisWidget.Instance:Destroy()
+				thisWidget.Tooltip:Destroy()
+				widgets.discardState(thisWidget)            
+			end,
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+	local dasdasdwqdqw = (function(Iris: Types.Internal, widgets: Types.WidgetUtility)
+		local Tables: { [Types.ID]: Types.Table } = {}
+		local TableMinWidths: { [Types.Table]: { boolean } } = {}
+		local AnyActiveTable = false
+		local ActiveTable: Types.Table? = nil
+		local ActiveColumn = 0
+		local ActiveLeftWidth = -1
+		local ActiveRightWidth = -1
+		local MousePositionX = 0
+
+		local function CalculateMinColumnWidth(thisWidget: Types.Table, index: number)
+			local width = 0
+			for _, row in thisWidget._cellInstances do
+				local cell = row[index]
+				for _, child in cell:GetChildren() do
+					if child:IsA("GuiObject") then
+						width = math.max(width, child.AbsoluteSize.X)
 					end
 				end
 			end
 
-			local range: number = max - min
-			local width: UDim = UDim.new(1 / count, -1)
-			for index = 1, count do
-				local num: number = values[index]
-				if num >= 0 then
-					thisWidget.Blocks[index].Size = UDim2.new(width, UDim.new((num - baseline) / range))
-					thisWidget.Blocks[index].Position = UDim2.fromScale((index - 1) / count, (max - num) / range)
-				else
-					thisWidget.Blocks[index].Size = UDim2.new(width, UDim.new((baseline - num) / range))
-					thisWidget.Blocks[index].Position = UDim2.fromScale((index - 1) / count, (max - baseline) / range)
+			thisWidget._minWidths[index] = width + 2 * Iris._config.CellPadding.X
+		end
+
+		table.insert(Iris._postCycleCallbacks, function()
+			for _, thisWidget in Tables do
+				for rowIndex, cycleTick in thisWidget._rowCycles do
+					if cycleTick < Iris._cycleTick - 1 then
+						local Row = thisWidget._rowInstances[rowIndex]
+						local RowBorder = thisWidget._rowBorders[rowIndex - 1]
+						if Row ~= nil then
+							Row:Destroy()
+						end
+						if RowBorder ~= nil then
+							RowBorder:Destroy()
+						end
+						thisWidget._rowInstances[rowIndex] = nil
+						thisWidget._rowBorders[rowIndex - 1] = nil
+						thisWidget._cellInstances[rowIndex] = nil
+						thisWidget._rowCycles[rowIndex] = nil
+					end
 				end
+
+				thisWidget._rowIndex = 1
+				thisWidget._columnIndex = 1
+
+				-- update the border container size to be the same, albeit *every* frame!
+				local Table = thisWidget.Instance :: Frame
+				local BorderContainer: Frame = Table.BorderContainer
+				BorderContainer.Size = UDim2.new(1, 0, 0, thisWidget._rowContainer.AbsoluteSize.Y)
+				thisWidget._columnBorders[0].Size = UDim2.new(0, 5, 0, thisWidget._rowContainer.AbsoluteSize.Y)
 			end
 
-			-- only update the hovered block if it exists.
-			if thisWidget.HoveredBlock then
-				updateBlock(thisWidget, true)
-			end
-		end
-	end,
-	Discard = function(thisWidget: PlotHistogram)
-		thisWidget.Instance:Destroy()
-		thisWidget.Tooltip:Destroy()
-		widgets.discardState(thisWidget)            
-	end,
-} :: WidgetClass)
-local Tables: { [ID]: Table } = {}
-local TableMinWidths: { [Table]: { boolean } } = {}
-local AnyActiveTable = false
-local ActiveTable: Table? = nil
-local ActiveColumn = 0
-local ActiveLeftWidth = -1
-local ActiveRightWidth = -1
-local MousePositionX = 0
-
-local function CalculateMinColumnWidth(thisWidget: Table, index: number)
-	local width = 0
-	for _, row in thisWidget._cellInstances do
-		local cell = row[index]
-		for _, child in cell:GetChildren() do
-			if child:IsA("GuiObject") then
-				width = math.max(width, child.AbsoluteSize.X)
-			end
-		end
-	end
-
-	thisWidget._minWidths[index] = width + 2 * Iris._config.CellPadding.X
-end
-
-table.insert(Iris._postCycleCallbacks, function()
-	for _, thisWidget in Tables do
-		for rowIndex, cycleTick in thisWidget._rowCycles do
-			if cycleTick < Iris._cycleTick - 1 then
-				local Row = thisWidget._rowInstances[rowIndex]
-				local RowBorder = thisWidget._rowBorders[rowIndex - 1]
-				if Row ~= nil then
-					Row:Destroy()
+			for thisWidget, columns in TableMinWidths do
+				local refresh = false
+				for column, _ in columns do
+					CalculateMinColumnWidth(thisWidget, column)
+					refresh = true
 				end
-				if RowBorder ~= nil then
-					RowBorder:Destroy()
-				end
-				thisWidget._rowInstances[rowIndex] = nil
-				thisWidget._rowBorders[rowIndex - 1] = nil
-				thisWidget._cellInstances[rowIndex] = nil
-				thisWidget._rowCycles[rowIndex] = nil
-			end
-		end
-
-		thisWidget._rowIndex = 1
-		thisWidget._columnIndex = 1
-
-		-- update the border container size to be the same, albeit *every* frame!
-		local Table = thisWidget.Instance :: Frame
-		local BorderContainer: Frame = Table.BorderContainer
-		BorderContainer.Size = UDim2.new(1, 0, 0, thisWidget._rowContainer.AbsoluteSize.Y)
-		thisWidget._columnBorders[0].Size = UDim2.new(0, 5, 0, thisWidget._rowContainer.AbsoluteSize.Y)
-	end
-
-	for thisWidget, columns in TableMinWidths do
-		local refresh = false
-		for column, _ in columns do
-			CalculateMinColumnWidth(thisWidget, column)
-			refresh = true
-		end
-		if refresh then
-			table.clear(columns)
-			Iris._widgets["Table"].UpdateState(thisWidget)
-		end
-	end
-end)
-
-local function UpdateActiveColumn()
-	if AnyActiveTable == false or ActiveTable == nil then
-		return
-	end
-
-	local widths = ActiveTable.state.widths
-	local NumColumns = ActiveTable.arguments.NumColumns
-	local Table = ActiveTable.Instance :: Frame
-	local BorderContainer = Table.BorderContainer :: Frame
-	local Fixed = ActiveTable.arguments.FixedWidth
-	local Padding = 2 * Iris._config.CellPadding.X
-
-	if ActiveLeftWidth == -1 then
-		ActiveLeftWidth = widths.value[ActiveColumn]
-		if ActiveLeftWidth == 0 then
-			ActiveLeftWidth = Padding / Table.AbsoluteSize.X
-		end
-		ActiveRightWidth = widths.value[ActiveColumn + 1] or -1
-		if ActiveRightWidth == 0 then
-			ActiveRightWidth = Padding / Table.AbsoluteSize.X
-		end
-	end
-
-	local BorderX = Table.AbsolutePosition.X
-	local LeftX: number -- the start of the current column
-	-- local CurrentX: number = BorderContainer:FindFirstChild(`Border_{ActiveColumn}`).AbsolutePosition.X + 3 - BorderX -- the current column position
-	local RightX: number -- the end of the next column
-	if ActiveColumn == 1 then
-		LeftX = 0
-	else
-		LeftX = math.floor(BorderContainer:FindFirstChild(`Border_{ActiveColumn - 1}`).AbsolutePosition.X + 3 - BorderX)
-	end
-	if ActiveColumn >= NumColumns - 1 then
-		RightX = Table.AbsoluteSize.X
-	else
-		RightX = math.floor(BorderContainer:FindFirstChild(`Border_{ActiveColumn + 1}`).AbsolutePosition.X + 3 - BorderX)
-	end
-
-	local TableX: number = BorderX - widgets.GuiOffset.X
-	local DeltaX: number = math.clamp(widgets.getMouseLocation().X, LeftX + TableX + Padding, RightX + TableX - Padding) - MousePositionX
-	local LeftOffset = (MousePositionX - TableX) - LeftX
-	local LeftRatio = ActiveLeftWidth / LeftOffset
-
-	if Fixed then
-		widths.value[ActiveColumn] = math.clamp(math.round(ActiveLeftWidth + DeltaX), Padding, Table.AbsoluteSize.X - LeftX)
-	else
-		local Change = LeftRatio * DeltaX
-		widths.value[ActiveColumn] = math.clamp(ActiveLeftWidth + Change, 0, (RightX - LeftX - Padding) / Table.AbsoluteSize.X)
-		if ActiveColumn < NumColumns then
-			widths.value[ActiveColumn + 1] = math.clamp(ActiveRightWidth - Change, 0, 1)
-		end
-	end
-
-	widths:set(widths.value, true)
-end
-
-local function ColumnMouseDown(thisWidget: Table, index: number)
-	AnyActiveTable = true
-	ActiveTable = thisWidget
-	ActiveColumn = index
-	ActiveLeftWidth = -1
-	ActiveRightWidth = -1
-	MousePositionX = widgets.getMouseLocation().X
-end
-
-widgets.registerEvent("InputChanged", function()
-	if not Iris._started then
-		return
-	end
-	UpdateActiveColumn()
-end)
-
-widgets.registerEvent("InputEnded", function(inputObject: InputObject)
-	if not Iris._started then
-		return
-	end
-	if inputObject.UserInputType == Enum.UserInputType.MouseButton1 and AnyActiveTable then
-		AnyActiveTable = false
-		ActiveTable = nil
-		ActiveColumn = 0
-		ActiveLeftWidth = -1
-		ActiveRightWidth = -1
-		MousePositionX = 0
-	end
-end)
-
-local function GenerateCell(_thisWidget: Table, index: number, width: UDim, header: boolean)
-	local Cell: TextButton
-	if header then
-		Cell = Instance.new("TextButton")
-		Cell.Text = ""
-		Cell.AutoButtonColor = false
-	else
-		Cell = (Instance.new("Frame") :: GuiObject) :: TextButton
-	end
-	Cell.Name = `Cell_{index}`
-	Cell.AutomaticSize = Enum.AutomaticSize.Y
-	Cell.Size = UDim2.new(width, UDim.new())
-	Cell.BackgroundTransparency = 1
-	Cell.ZIndex = index
-	Cell.LayoutOrder = index
-	Cell.ClipsDescendants = true
-
-	if header then
-		widgets.applyInteractionHighlights("Background", Cell, Cell, {
-			Color = Iris._config.HeaderColor,
-			Transparency = 1,
-			HoveredColor = Iris._config.HeaderHoveredColor,
-			HoveredTransparency = Iris._config.HeaderHoveredTransparency,
-			ActiveColor = Iris._config.HeaderActiveColor,
-			ActiveTransparency = Iris._config.HeaderActiveTransparency,
-		})
-	end
-
-	widgets.UIPadding(Cell, Iris._config.CellPadding)
-	widgets.UIListLayout(Cell, Enum.FillDirection.Vertical, UDim.new())
-	widgets.UISizeConstraint(Cell, Vector2.new(2 * Iris._config.CellPadding.X, 0))
-
-	return Cell
-end
-
-local function GenerateColumnBorder(thisWidget: Table, index: number, style: "Light" | "Strong")
-	local Border = Instance.new("ImageButton")
-	Border.Name = `Border_{index}`
-	Border.Size = UDim2.new(0, 5, 1, 0)
-	Border.BackgroundTransparency = 1
-	Border.AutoButtonColor = false
-	Border.Image = ""
-	Border.ImageTransparency = 1
-	Border.ZIndex = index
-	Border.LayoutOrder = 2 * index
-
-	local offset = if index == thisWidget.arguments.NumColumns then 3 else 2
-
-	local Line = Instance.new("Frame")
-	Line.Name = "Line"
-	Line.Size = UDim2.new(0, 1, 1, 0)
-	Line.Position = UDim2.fromOffset(offset, 0)
-	Line.BackgroundColor3 = Iris._config[`TableBorder{style}Color`]
-	Line.BackgroundTransparency = Iris._config[`TableBorder{style}Transparency`]
-	Line.BorderSizePixel = 0
-
-	Line.Parent = Border
-
-	local Hover = Instance.new("Frame")
-	Hover.Name = "Hover"
-	Hover.Size = UDim2.new(0, 1, 1, 0)
-	Hover.Position = UDim2.fromOffset(offset, 0)
-	Hover.BackgroundColor3 = Iris._config[`TableBorder{style}Color`]
-	Hover.BackgroundTransparency = Iris._config[`TableBorder{style}Transparency`]
-	Hover.BorderSizePixel = 0
-
-	Hover.Visible = thisWidget.arguments.Resizable
-
-	Hover.Parent = Border
-
-	widgets.applyInteractionHighlights("Background", Border, Hover, {
-		Color = Iris._config.ResizeGripColor,
-		Transparency = 1,
-		HoveredColor = Iris._config.ResizeGripHoveredColor,
-		HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
-		ActiveColor = Iris._config.ResizeGripActiveColor,
-		ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
-	})
-
-	widgets.applyButtonDown(Border, function()
-		if thisWidget.arguments.Resizable then
-			ColumnMouseDown(thisWidget, index)
-		end
-	end)
-
-	return Border
-end
-
--- creates a new row and all columns, and adds all to the table's row and cell instance tables, but does not parent
-local function GenerateRow(thisWidget: Table, index: number)
-	local Row: Frame = Instance.new("Frame")
-	Row.Name = `Row_{index}`
-	Row.AutomaticSize = Enum.AutomaticSize.Y
-	Row.Size = UDim2.fromScale(1, 0)
-	if index == 0 then
-		Row.BackgroundColor3 = Iris._config.TableHeaderColor
-		Row.BackgroundTransparency = Iris._config.TableHeaderTransparency
-	elseif thisWidget.arguments.RowBackground == true then
-		if (index % 2) == 0 then
-			Row.BackgroundColor3 = Iris._config.TableRowBgAltColor
-			Row.BackgroundTransparency = Iris._config.TableRowBgAltTransparency
-		else
-			Row.BackgroundColor3 = Iris._config.TableRowBgColor
-			Row.BackgroundTransparency = Iris._config.TableRowBgTransparency
-		end
-	else
-		Row.BackgroundTransparency = 1
-	end
-	Row.BorderSizePixel = 0
-	Row.ZIndex = 2 * index - 1
-	Row.LayoutOrder = 2 * index - 1
-	Row.ClipsDescendants = true
-
-	widgets.UIListLayout(Row, Enum.FillDirection.Horizontal, UDim.new())
-
-	thisWidget._cellInstances[index] = table.create(thisWidget.arguments.NumColumns)
-	for columnIndex = 1, thisWidget.arguments.NumColumns do
-		local Cell = GenerateCell(thisWidget, columnIndex, thisWidget._widths[columnIndex], index == 0)
-		Cell.Parent = Row
-		thisWidget._cellInstances[index][columnIndex] = Cell
-	end
-
-	thisWidget._rowInstances[index] = Row
-
-	return Row
-end
-
-local function GenerateRowBorder(_thisWidget: Table, index: number, style: "Light" | "Strong")
-	local Border = Instance.new("Frame")
-	Border.Name = `Border_{index}`
-	Border.Size = UDim2.new(1, 0, 0, 0)
-	Border.BackgroundTransparency = 1
-	Border.ZIndex = 2 * index
-	Border.LayoutOrder = 2 * index
-
-	local Line = Instance.new("Frame")
-	Line.Name = "Line"
-	Line.AnchorPoint = Vector2.new(0, 0.5)
-	Line.Size = UDim2.new(1, 0, 0, 1)
-	Line.BackgroundColor3 = Iris._config[`TableBorder{style}Color`]
-	Line.BackgroundTransparency = Iris._config[`TableBorder{style}Transparency`]
-	Line.BorderSizePixel = 0
-
-	Line.Parent = Border
-
-	return Border
-end
-
---stylua: ignore
-Iris.WidgetConstructor("Table", {
-	hasState = true,
-	hasChildren = true,
-	Args = {
-		NumColumns = 1,
-		Header = 2,
-		RowBackground = 3,
-		OuterBorders = 4,
-		InnerBorders = 5,
-		Resizable = 6,
-		FixedWidth = 7,
-		ProportionalWidth = 8,
-		LimitTableWidth = 9,
-	},
-	Events = {},
-	Generate = function(thisWidget: Table)
-		Tables[thisWidget.ID] = thisWidget
-		TableMinWidths[thisWidget] = {}
-
-		local Table = Instance.new("Frame")
-		Table.Name = "Iris_Table"
-		Table.AutomaticSize = Enum.AutomaticSize.Y
-		Table.Size = UDim2.fromScale(1, 0)
-		Table.BackgroundTransparency = 1
-		Table.ZIndex = thisWidget.ZIndex
-		Table.LayoutOrder = thisWidget.ZIndex
-
-		local RowContainer = Instance.new("Frame")
-		RowContainer.Name = "RowContainer"
-		RowContainer.AutomaticSize = Enum.AutomaticSize.Y
-		RowContainer.Size = UDim2.fromScale(1, 0)
-		RowContainer.BackgroundTransparency = 1
-		RowContainer.ZIndex = 1
-
-		widgets.UISizeConstraint(RowContainer)
-		widgets.UIListLayout(RowContainer, Enum.FillDirection.Vertical, UDim.new())
-
-		RowContainer.Parent = Table
-		thisWidget._rowContainer = RowContainer
-
-		local BorderContainer = Instance.new("Frame")
-		BorderContainer.Name = "BorderContainer"
-		BorderContainer.Size = UDim2.fromScale(1, 1)
-		BorderContainer.BackgroundTransparency = 1
-		BorderContainer.ZIndex = 2
-		BorderContainer.ClipsDescendants = true
-
-		widgets.UISizeConstraint(BorderContainer)            
-		widgets.UIListLayout(BorderContainer, Enum.FillDirection.Horizontal, UDim.new())
-		widgets.UIStroke(BorderContainer, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
-
-		BorderContainer.Parent = Table
-
-		thisWidget._columnIndex = 1
-		thisWidget._rowIndex = 1
-		thisWidget._rowInstances = {}
-		thisWidget._cellInstances = {}
-		thisWidget._rowBorders = {}
-		thisWidget._columnBorders = {}
-		thisWidget._rowCycles = {}
-
-		local callbackIndex = #Iris._postCycleCallbacks + 1
-		local desiredCycleTick = Iris._cycleTick + 1
-		Iris._postCycleCallbacks[callbackIndex] = function()
-			if Iris._cycleTick >= desiredCycleTick then
-				if thisWidget.lastCycleTick ~= -1 then
-					thisWidget.state.widths.lastChangeTick = Iris._cycleTick
+				if refresh then
+					table.clear(columns)
 					Iris._widgets["Table"].UpdateState(thisWidget)
 				end
-				Iris._postCycleCallbacks[callbackIndex] = nil
 			end
-		end
+		end)
 
-		return Table
-	end,
-	GenerateState = function(thisWidget: Table)
-		local NumColumns = thisWidget.arguments.NumColumns
-		if thisWidget.state.widths == nil then
-			local Widths: { number } = table.create(NumColumns, 1 / NumColumns)
-			thisWidget.state.widths = Iris._widgetState(thisWidget, "widths", Widths)
-		end
-		thisWidget._widths = table.create(NumColumns, UDim.new())
-		thisWidget._minWidths = table.create(NumColumns, 0)
+		local function UpdateActiveColumn()
+			if AnyActiveTable == false or ActiveTable == nil then
+				return
+			end
 
-		local Table = thisWidget.Instance :: Frame
-		local BorderContainer: Frame = Table.BorderContainer
+			local widths = ActiveTable.state.widths
+			local NumColumns = ActiveTable.arguments.NumColumns
+			local Table = ActiveTable.Instance :: Frame
+			local BorderContainer = Table.BorderContainer :: Frame
+			local Fixed = ActiveTable.arguments.FixedWidth
+			local Padding = 2 * Iris._config.CellPadding.X
 
-		thisWidget._cellInstances[-1] = table.create(NumColumns)
-		for index = 1, NumColumns do
-			local Border = GenerateColumnBorder(thisWidget, index, "Light")
-			Border.Visible = thisWidget.arguments.InnerBorders
-			thisWidget._columnBorders[index] = Border
-			Border.Parent = BorderContainer
-
-			local Cell = GenerateCell(thisWidget, index, thisWidget._widths[index], false)
-			local UISizeConstraint = Cell:FindFirstChild("UISizeConstraint") :: UISizeConstraint
-			UISizeConstraint.MinSize = Vector2.new(
-				2 * Iris._config.CellPadding.X + (if index > 1 then -2 else 0) + (if index < NumColumns then -3 else 0),
-				0
-			)
-			Cell.LayoutOrder = 2 * index - 1
-			thisWidget._cellInstances[-1][index] = Cell
-			Cell.Parent = BorderContainer
-		end
-
-		local TableColumnBorder = GenerateColumnBorder(thisWidget, NumColumns, "Strong")
-		thisWidget._columnBorders[0] = TableColumnBorder
-		TableColumnBorder.Parent = Table
-	end,
-	Update = function(thisWidget: Table)
-		local NumColumns = thisWidget.arguments.NumColumns
-		assert(NumColumns >= 1, "Iris.Table must have at least one column.")
-
-		if thisWidget._widths ~= nil and #thisWidget._widths ~= NumColumns then
-			-- disallow changing the number of columns. It's too much effort
-			thisWidget.arguments.NumColumns = #thisWidget._widths
-			warn("NumColumns cannot change once set. See documentation.")
-		end
-
-		for rowIndex, row in thisWidget._rowInstances do
-			if rowIndex == 0 then
-				row.BackgroundColor3 = Iris._config.TableHeaderColor
-				row.BackgroundTransparency = Iris._config.TableHeaderTransparency
-			elseif thisWidget.arguments.RowBackground == true then
-				if (rowIndex % 2) == 0 then
-					row.BackgroundColor3 = Iris._config.TableRowBgAltColor
-					row.BackgroundTransparency = Iris._config.TableRowBgAltTransparency
-				else
-					row.BackgroundColor3 = Iris._config.TableRowBgColor
-					row.BackgroundTransparency = Iris._config.TableRowBgTransparency
+			if ActiveLeftWidth == -1 then
+				ActiveLeftWidth = widths.value[ActiveColumn]
+				if ActiveLeftWidth == 0 then
+					ActiveLeftWidth = Padding / Table.AbsoluteSize.X
 				end
+				ActiveRightWidth = widths.value[ActiveColumn + 1] or -1
+				if ActiveRightWidth == 0 then
+					ActiveRightWidth = Padding / Table.AbsoluteSize.X
+				end
+			end
+
+			local BorderX = Table.AbsolutePosition.X
+			local LeftX: number -- the start of the current column
+			-- local CurrentX: number = BorderContainer:FindFirstChild(`Border_{ActiveColumn}`).AbsolutePosition.X + 3 - BorderX -- the current column position
+			local RightX: number -- the end of the next column
+			if ActiveColumn == 1 then
+				LeftX = 0
 			else
-				row.BackgroundTransparency = 1
+				LeftX = math.floor(BorderContainer:FindFirstChild(`Border_{ActiveColumn - 1}`).AbsolutePosition.X + 3 - BorderX)
 			end
-		end
-
-		for _, Border: Frame in thisWidget._rowBorders do
-			Border.Visible = thisWidget.arguments.InnerBorders
-		end
-
-		for _, Border: GuiButton in thisWidget._columnBorders do
-			Border.Visible = thisWidget.arguments.InnerBorders or thisWidget.arguments.Resizable
-		end
-
-		for _, border in thisWidget._columnBorders do
-			local hover = border:FindFirstChild("Hover") :: Frame?
-			if hover then
-				hover.Visible = thisWidget.arguments.Resizable
+			if ActiveColumn >= NumColumns - 1 then
+				RightX = Table.AbsoluteSize.X
+			else
+				RightX = math.floor(BorderContainer:FindFirstChild(`Border_{ActiveColumn + 1}`).AbsolutePosition.X + 3 - BorderX)
 			end
-		end
 
-		if thisWidget._columnBorders[NumColumns] ~= nil then
-			thisWidget._columnBorders[NumColumns].Visible =
-				not thisWidget.arguments.LimitTableWidth and (thisWidget.arguments.Resizable or thisWidget.arguments.InnerBorders)
-			thisWidget._columnBorders[0].Visible =
-				thisWidget.arguments.LimitTableWidth and (thisWidget.arguments.Resizable or thisWidget.arguments.OuterBorders)
-		end
+			local TableX: number = BorderX - widgets.GuiOffset.X
+			local DeltaX: number = math.clamp(widgets.getMouseLocation().X, LeftX + TableX + Padding, RightX + TableX - Padding) - MousePositionX
+			local LeftOffset = (MousePositionX - TableX) - LeftX
+			local LeftRatio = ActiveLeftWidth / LeftOffset
 
-		-- the header border visibility must be updated after settings all borders
-		-- visiblity or not
-		local HeaderRow: Frame? = thisWidget._rowInstances[0]
-		local HeaderBorder: Frame? = thisWidget._rowBorders[0]
-		if HeaderRow ~= nil then
-			HeaderRow.Visible = thisWidget.arguments.Header
-		end
-		if HeaderBorder ~= nil then
-			HeaderBorder.Visible = thisWidget.arguments.Header and thisWidget.arguments.InnerBorders
-		end
-
-		local Table = thisWidget.Instance :: Frame
-		local BorderContainer = Table.BorderContainer :: Frame
-		BorderContainer.UIStroke.Enabled = thisWidget.arguments.OuterBorders
-
-		for index = 1, thisWidget.arguments.NumColumns do
-			TableMinWidths[thisWidget][index] = true
-		end
-
-		if thisWidget._widths ~= nil then
-			Iris._widgets["Table"].UpdateState(thisWidget)
-		end
-	end,
-	UpdateState = function(thisWidget: Table)
-		local Table = thisWidget.Instance :: Frame
-		local BorderContainer = Table.BorderContainer :: Frame
-		local RowContainer = Table.RowContainer :: Frame
-		local NumColumns = thisWidget.arguments.NumColumns
-		local ColumnWidths = thisWidget.state.widths.value
-		local MinWidths = thisWidget._minWidths
-
-		local Fixed = thisWidget.arguments.FixedWidth
-		local Proportional = thisWidget.arguments.ProportionalWidth
-
-		if not thisWidget.arguments.Resizable then
 			if Fixed then
-				if Proportional then
-					for index = 1, NumColumns do
-						ColumnWidths[index] = MinWidths[index]
-					end
+				widths.value[ActiveColumn] = math.clamp(math.round(ActiveLeftWidth + DeltaX), Padding, Table.AbsoluteSize.X - LeftX)
+			else
+				local Change = LeftRatio * DeltaX
+				widths.value[ActiveColumn] = math.clamp(ActiveLeftWidth + Change, 0, (RightX - LeftX - Padding) / Table.AbsoluteSize.X)
+				if ActiveColumn < NumColumns then
+					widths.value[ActiveColumn + 1] = math.clamp(ActiveRightWidth - Change, 0, 1)
+				end
+			end
+
+			widths:set(widths.value, true)
+		end
+
+		local function ColumnMouseDown(thisWidget: Types.Table, index: number)
+			AnyActiveTable = true
+			ActiveTable = thisWidget
+			ActiveColumn = index
+			ActiveLeftWidth = -1
+			ActiveRightWidth = -1
+			MousePositionX = widgets.getMouseLocation().X
+		end
+
+		widgets.registerEvent("InputChanged", function()
+			if not Iris._started then
+				return
+			end
+			UpdateActiveColumn()
+		end)
+
+		widgets.registerEvent("InputEnded", function(inputObject: InputObject)
+			if not Iris._started then
+				return
+			end
+			if inputObject.UserInputType == Enum.UserInputType.MouseButton1 and AnyActiveTable then
+				AnyActiveTable = false
+				ActiveTable = nil
+				ActiveColumn = 0
+				ActiveLeftWidth = -1
+				ActiveRightWidth = -1
+				MousePositionX = 0
+			end
+		end)
+
+		local function GenerateCell(_thisWidget: Types.Table, index: number, width: UDim, header: boolean)
+			local Cell: TextButton
+			if header then
+				Cell = Instance.new("TextButton")
+				Cell.Text = ""
+				Cell.AutoButtonColor = false
+			else
+				Cell = (Instance.new("Frame") :: GuiObject) :: TextButton
+			end
+			Cell.Name = `Cell_{index}`
+			Cell.AutomaticSize = Enum.AutomaticSize.Y
+			Cell.Size = UDim2.new(width, UDim.new())
+			Cell.BackgroundTransparency = 1
+			Cell.ZIndex = index
+			Cell.LayoutOrder = index
+			Cell.ClipsDescendants = true
+
+			if header then
+				widgets.applyInteractionHighlights("Background", Cell, Cell, {
+					Color = Iris._config.HeaderColor,
+					Transparency = 1,
+					HoveredColor = Iris._config.HeaderHoveredColor,
+					HoveredTransparency = Iris._config.HeaderHoveredTransparency,
+					ActiveColor = Iris._config.HeaderActiveColor,
+					ActiveTransparency = Iris._config.HeaderActiveTransparency,
+				})
+			end
+
+			widgets.UIPadding(Cell, Iris._config.CellPadding)
+			widgets.UIListLayout(Cell, Enum.FillDirection.Vertical, UDim.new())
+			widgets.UISizeConstraint(Cell, Vector2.new(2 * Iris._config.CellPadding.X, 0))
+
+			return Cell
+		end
+
+		local function GenerateColumnBorder(thisWidget: Types.Table, index: number, style: "Light" | "Strong")
+			local Border = Instance.new("ImageButton")
+			Border.Name = `Border_{index}`
+			Border.Size = UDim2.new(0, 5, 1, 0)
+			Border.BackgroundTransparency = 1
+			Border.AutoButtonColor = false
+			Border.Image = ""
+			Border.ImageTransparency = 1
+			Border.ZIndex = index
+			Border.LayoutOrder = 2 * index
+
+			local offset = if index == thisWidget.arguments.NumColumns then 3 else 2
+
+			local Line = Instance.new("Frame")
+			Line.Name = "Line"
+			Line.Size = UDim2.new(0, 1, 1, 0)
+			Line.Position = UDim2.fromOffset(offset, 0)
+			Line.BackgroundColor3 = Iris._config[`TableBorder{style}Color`]
+			Line.BackgroundTransparency = Iris._config[`TableBorder{style}Transparency`]
+			Line.BorderSizePixel = 0
+
+			Line.Parent = Border
+
+			local Hover = Instance.new("Frame")
+			Hover.Name = "Hover"
+			Hover.Size = UDim2.new(0, 1, 1, 0)
+			Hover.Position = UDim2.fromOffset(offset, 0)
+			Hover.BackgroundColor3 = Iris._config[`TableBorder{style}Color`]
+			Hover.BackgroundTransparency = Iris._config[`TableBorder{style}Transparency`]
+			Hover.BorderSizePixel = 0
+
+			Hover.Visible = thisWidget.arguments.Resizable
+
+			Hover.Parent = Border
+
+			widgets.applyInteractionHighlights("Background", Border, Hover, {
+				Color = Iris._config.ResizeGripColor,
+				Transparency = 1,
+				HoveredColor = Iris._config.ResizeGripHoveredColor,
+				HoveredTransparency = Iris._config.ResizeGripHoveredTransparency,
+				ActiveColor = Iris._config.ResizeGripActiveColor,
+				ActiveTransparency = Iris._config.ResizeGripActiveTransparency,
+			})
+
+			widgets.applyButtonDown(Border, function()
+				if thisWidget.arguments.Resizable then
+					ColumnMouseDown(thisWidget, index)
+				end
+			end)
+
+			return Border
+		end
+
+		-- creates a new row and all columns, and adds all to the table's row and cell instance tables, but does not parent
+		local function GenerateRow(thisWidget: Types.Table, index: number)
+			local Row: Frame = Instance.new("Frame")
+			Row.Name = `Row_{index}`
+			Row.AutomaticSize = Enum.AutomaticSize.Y
+			Row.Size = UDim2.fromScale(1, 0)
+			if index == 0 then
+				Row.BackgroundColor3 = Iris._config.TableHeaderColor
+				Row.BackgroundTransparency = Iris._config.TableHeaderTransparency
+			elseif thisWidget.arguments.RowBackground == true then
+				if (index % 2) == 0 then
+					Row.BackgroundColor3 = Iris._config.TableRowBgAltColor
+					Row.BackgroundTransparency = Iris._config.TableRowBgAltTransparency
 				else
-					local maxWidth = 0
-					for _, width in MinWidths do
-						maxWidth = math.max(maxWidth, width)
-					end
-					for index = 1, NumColumns do
-						ColumnWidths[index] = maxWidth
-					end
+					Row.BackgroundColor3 = Iris._config.TableRowBgColor
+					Row.BackgroundTransparency = Iris._config.TableRowBgTransparency
 				end
 			else
-				if Proportional then
-					local TotalWidth = 0
-					for _, width in MinWidths do
-						TotalWidth += width
-					end
-					local Ratio = 1 / TotalWidth
-					for index = 1, NumColumns do
-						ColumnWidths[index] = Ratio * MinWidths[index]
-					end
-				else
-					local width = 1 / NumColumns
-					for index = 1, NumColumns do
-						ColumnWidths[index] = width
+				Row.BackgroundTransparency = 1
+			end
+			Row.BorderSizePixel = 0
+			Row.ZIndex = 2 * index - 1
+			Row.LayoutOrder = 2 * index - 1
+			Row.ClipsDescendants = true
+
+			widgets.UIListLayout(Row, Enum.FillDirection.Horizontal, UDim.new())
+
+			thisWidget._cellInstances[index] = table.create(thisWidget.arguments.NumColumns)
+			for columnIndex = 1, thisWidget.arguments.NumColumns do
+				local Cell = GenerateCell(thisWidget, columnIndex, thisWidget._widths[columnIndex], index == 0)
+				Cell.Parent = Row
+				thisWidget._cellInstances[index][columnIndex] = Cell
+			end
+
+			thisWidget._rowInstances[index] = Row
+
+			return Row
+		end
+
+		local function GenerateRowBorder(_thisWidget: Types.Table, index: number, style: "Light" | "Strong")
+			local Border = Instance.new("Frame")
+			Border.Name = `Border_{index}`
+			Border.Size = UDim2.new(1, 0, 0, 0)
+			Border.BackgroundTransparency = 1
+			Border.ZIndex = 2 * index
+			Border.LayoutOrder = 2 * index
+
+			local Line = Instance.new("Frame")
+			Line.Name = "Line"
+			Line.AnchorPoint = Vector2.new(0, 0.5)
+			Line.Size = UDim2.new(1, 0, 0, 1)
+			Line.BackgroundColor3 = Iris._config[`TableBorder{style}Color`]
+			Line.BackgroundTransparency = Iris._config[`TableBorder{style}Transparency`]
+			Line.BorderSizePixel = 0
+
+			Line.Parent = Border
+
+			return Border
+		end
+
+		--stylua: ignore
+		Iris.WidgetConstructor("Table", {
+			hasState = true,
+			hasChildren = true,
+			Args = {
+				NumColumns = 1,
+				Header = 2,
+				RowBackground = 3,
+				OuterBorders = 4,
+				InnerBorders = 5,
+				Resizable = 6,
+				FixedWidth = 7,
+				ProportionalWidth = 8,
+				LimitTableWidth = 9,
+			},
+			Events = {},
+			Generate = function(thisWidget: Types.Table)
+				Tables[thisWidget.ID] = thisWidget
+				TableMinWidths[thisWidget] = {}
+
+				local Table = Instance.new("Frame")
+				Table.Name = "Iris_Table"
+				Table.AutomaticSize = Enum.AutomaticSize.Y
+				Table.Size = UDim2.fromScale(1, 0)
+				Table.BackgroundTransparency = 1
+				Table.ZIndex = thisWidget.ZIndex
+				Table.LayoutOrder = thisWidget.ZIndex
+
+				local RowContainer = Instance.new("Frame")
+				RowContainer.Name = "RowContainer"
+				RowContainer.AutomaticSize = Enum.AutomaticSize.Y
+				RowContainer.Size = UDim2.fromScale(1, 0)
+				RowContainer.BackgroundTransparency = 1
+				RowContainer.ZIndex = 1
+
+				widgets.UISizeConstraint(RowContainer)
+				widgets.UIListLayout(RowContainer, Enum.FillDirection.Vertical, UDim.new())
+
+				RowContainer.Parent = Table
+				thisWidget._rowContainer = RowContainer
+
+				local BorderContainer = Instance.new("Frame")
+				BorderContainer.Name = "BorderContainer"
+				BorderContainer.Size = UDim2.fromScale(1, 1)
+				BorderContainer.BackgroundTransparency = 1
+				BorderContainer.ZIndex = 2
+				BorderContainer.ClipsDescendants = true
+
+				widgets.UISizeConstraint(BorderContainer)            
+				widgets.UIListLayout(BorderContainer, Enum.FillDirection.Horizontal, UDim.new())
+				widgets.UIStroke(BorderContainer, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
+
+				BorderContainer.Parent = Table
+
+				thisWidget._columnIndex = 1
+				thisWidget._rowIndex = 1
+				thisWidget._rowInstances = {}
+				thisWidget._cellInstances = {}
+				thisWidget._rowBorders = {}
+				thisWidget._columnBorders = {}
+				thisWidget._rowCycles = {}
+
+				local callbackIndex = #Iris._postCycleCallbacks + 1
+				local desiredCycleTick = Iris._cycleTick + 1
+				Iris._postCycleCallbacks[callbackIndex] = function()
+					if Iris._cycleTick >= desiredCycleTick then
+						if thisWidget.lastCycleTick ~= -1 then
+							thisWidget.state.widths.lastChangeTick = Iris._cycleTick
+							Iris._widgets["Table"].UpdateState(thisWidget)
+						end
+						Iris._postCycleCallbacks[callbackIndex] = nil
 					end
 				end
-			end
-		end
 
-		local Position = UDim.new()
-		for index = 1, NumColumns do
-			local ColumnWidth = ColumnWidths[index]
+				return Table
+			end,
+			GenerateState = function(thisWidget: Types.Table)
+				local NumColumns = thisWidget.arguments.NumColumns
+				if thisWidget.state.widths == nil then
+					local Widths: { number } = table.create(NumColumns, 1 / NumColumns)
+					thisWidget.state.widths = Iris._widgetState(thisWidget, "widths", Widths)
+				end
+				thisWidget._widths = table.create(NumColumns, UDim.new())
+				thisWidget._minWidths = table.create(NumColumns, 0)
 
-			local Width = UDim.new(
-				if Fixed then 0 else math.clamp(ColumnWidth, 0, 1),
-				if Fixed then math.max(ColumnWidth, 0) else 0
-			)
-			thisWidget._widths[index] = Width
-			Position += Width
+				local Table = thisWidget.Instance :: Frame
+				local BorderContainer: Frame = Table.BorderContainer
 
-			for _, row in thisWidget._cellInstances do
-				row[index].Size = UDim2.new(Width, UDim.new())
-			end
+				thisWidget._cellInstances[-1] = table.create(NumColumns)
+				for index = 1, NumColumns do
+					local Border = GenerateColumnBorder(thisWidget, index, "Light")
+					Border.Visible = thisWidget.arguments.InnerBorders
+					thisWidget._columnBorders[index] = Border
+					Border.Parent = BorderContainer
 
-			thisWidget._cellInstances[-1][index].Size = UDim2.new(Width + UDim.new(0,
-				(if index > 1 then -2 else 0) - 3
-				), UDim.new())
-		end
+					local Cell = GenerateCell(thisWidget, index, thisWidget._widths[index], false)
+					local UISizeConstraint = Cell:FindFirstChild("UISizeConstraint") :: UISizeConstraint
+					UISizeConstraint.MinSize = Vector2.new(
+						2 * Iris._config.CellPadding.X + (if index > 1 then -2 else 0) + (if index < NumColumns then -3 else 0),
+						0
+					)
+					Cell.LayoutOrder = 2 * index - 1
+					thisWidget._cellInstances[-1][index] = Cell
+					Cell.Parent = BorderContainer
+				end
 
-		-- if the table has a fixed width and we want to cap it, we calculate the table width necessary
-		local Width = Position.Offset
-		if not thisWidget.arguments.FixedWidth or not thisWidget.arguments.LimitTableWidth then
-			Width = math.huge
-		end
+				local TableColumnBorder = GenerateColumnBorder(thisWidget, NumColumns, "Strong")
+				thisWidget._columnBorders[0] = TableColumnBorder
+				TableColumnBorder.Parent = Table
+			end,
+			Update = function(thisWidget: Types.Table)
+				local NumColumns = thisWidget.arguments.NumColumns
+				assert(NumColumns >= 1, "Iris.Table must have at least one column.")
 
-		BorderContainer.UISizeConstraint.MaxSize = Vector2.new(Width, math.huge)
-		RowContainer.UISizeConstraint.MaxSize = Vector2.new(Width, math.huge)
-		thisWidget._columnBorders[0].Position = UDim2.new(0, Width - 3, 0, 0)
-	end,
-	ChildAdded = function(thisWidget: Table, _: Widget)
-		local rowIndex = thisWidget._rowIndex
-		local columnIndex = thisWidget._columnIndex
-		-- determine if the row exists yet
-		local Row = thisWidget._rowInstances[rowIndex]
-		thisWidget._rowCycles[rowIndex] = Iris._cycleTick
-		TableMinWidths[thisWidget][columnIndex] = true
+				if thisWidget._widths ~= nil and #thisWidget._widths ~= NumColumns then
+					-- disallow changing the number of columns. It's too much effort
+					thisWidget.arguments.NumColumns = #thisWidget._widths
+					warn("NumColumns cannot change once set. See documentation.")
+				end
 
-		if Row ~= nil then
-			return thisWidget._cellInstances[rowIndex][columnIndex]
-		end
+				for rowIndex, row in thisWidget._rowInstances do
+					if rowIndex == 0 then
+						row.BackgroundColor3 = Iris._config.TableHeaderColor
+						row.BackgroundTransparency = Iris._config.TableHeaderTransparency
+					elseif thisWidget.arguments.RowBackground == true then
+						if (rowIndex % 2) == 0 then
+							row.BackgroundColor3 = Iris._config.TableRowBgAltColor
+							row.BackgroundTransparency = Iris._config.TableRowBgAltTransparency
+						else
+							row.BackgroundColor3 = Iris._config.TableRowBgColor
+							row.BackgroundTransparency = Iris._config.TableRowBgTransparency
+						end
+					else
+						row.BackgroundTransparency = 1
+					end
+				end
 
-		Row = GenerateRow(thisWidget, rowIndex)
-		if rowIndex == 0 then
-			Row.Visible = thisWidget.arguments.Header
-		end
-		Row.Parent = thisWidget._rowContainer
+				for _, Border: Frame in thisWidget._rowBorders do
+					Border.Visible = thisWidget.arguments.InnerBorders
+				end
 
-		if rowIndex > 0 then
-			local Border = GenerateRowBorder(thisWidget, rowIndex - 1, if rowIndex == 1 then "Strong" else "Light")
-			Border.Visible = thisWidget.arguments.InnerBorders and (if rowIndex == 1 then (thisWidget.arguments.Header and thisWidget.arguments.InnerBorders) and (thisWidget._rowInstances[0] ~= nil) else true)
-			thisWidget._rowBorders[rowIndex - 1] = Border
-			Border.Parent = thisWidget._rowContainer
-		end
+				for _, Border: GuiButton in thisWidget._columnBorders do
+					Border.Visible = thisWidget.arguments.InnerBorders or thisWidget.arguments.Resizable
+				end
 
-		return thisWidget._cellInstances[rowIndex][columnIndex]
-	end,
-	ChildDiscarded = function(thisWidget: Table, thisChild: Widget)
-		local Cell = thisChild.Instance.Parent
+				for _, border in thisWidget._columnBorders do
+					local hover = border:FindFirstChild("Hover") :: Frame?
+					if hover then
+						hover.Visible = thisWidget.arguments.Resizable
+					end
+				end
 
-		if Cell ~= nil then
-			local columnIndex = tonumber(Cell.Name:sub(6))
+				if thisWidget._columnBorders[NumColumns] ~= nil then
+					thisWidget._columnBorders[NumColumns].Visible =
+						not thisWidget.arguments.LimitTableWidth and (thisWidget.arguments.Resizable or thisWidget.arguments.InnerBorders)
+					thisWidget._columnBorders[0].Visible =
+						thisWidget.arguments.LimitTableWidth and (thisWidget.arguments.Resizable or thisWidget.arguments.OuterBorders)
+				end
 
-			if columnIndex then
+				-- the header border visibility must be updated after settings all borders
+				-- visiblity or not
+				local HeaderRow: Frame? = thisWidget._rowInstances[0]
+				local HeaderBorder: Frame? = thisWidget._rowBorders[0]
+				if HeaderRow ~= nil then
+					HeaderRow.Visible = thisWidget.arguments.Header
+				end
+				if HeaderBorder ~= nil then
+					HeaderBorder.Visible = thisWidget.arguments.Header and thisWidget.arguments.InnerBorders
+				end
+
+				local Table = thisWidget.Instance :: Frame
+				local BorderContainer = Table.BorderContainer :: Frame
+				BorderContainer.UIStroke.Enabled = thisWidget.arguments.OuterBorders
+
+				for index = 1, thisWidget.arguments.NumColumns do
+					TableMinWidths[thisWidget][index] = true
+				end
+
+				if thisWidget._widths ~= nil then
+					Iris._widgets["Table"].UpdateState(thisWidget)
+				end
+			end,
+			UpdateState = function(thisWidget: Types.Table)
+				local Table = thisWidget.Instance :: Frame
+				local BorderContainer = Table.BorderContainer :: Frame
+				local RowContainer = Table.RowContainer :: Frame
+				local NumColumns = thisWidget.arguments.NumColumns
+				local ColumnWidths = thisWidget.state.widths.value
+				local MinWidths = thisWidget._minWidths
+
+				local Fixed = thisWidget.arguments.FixedWidth
+				local Proportional = thisWidget.arguments.ProportionalWidth
+
+				if not thisWidget.arguments.Resizable then
+					if Fixed then
+						if Proportional then
+							for index = 1, NumColumns do
+								ColumnWidths[index] = MinWidths[index]
+							end
+						else
+							local maxWidth = 0
+							for _, width in MinWidths do
+								maxWidth = math.max(maxWidth, width)
+							end
+							for index = 1, NumColumns do
+								ColumnWidths[index] = maxWidth
+							end
+						end
+					else
+						if Proportional then
+							local TotalWidth = 0
+							for _, width in MinWidths do
+								TotalWidth += width
+							end
+							local Ratio = 1 / TotalWidth
+							for index = 1, NumColumns do
+								ColumnWidths[index] = Ratio * MinWidths[index]
+							end
+						else
+							local width = 1 / NumColumns
+							for index = 1, NumColumns do
+								ColumnWidths[index] = width
+							end
+						end
+					end
+				end
+
+				local Position = UDim.new()
+				for index = 1, NumColumns do
+					local ColumnWidth = ColumnWidths[index]
+
+					local Width = UDim.new(
+						if Fixed then 0 else math.clamp(ColumnWidth, 0, 1),
+						if Fixed then math.max(ColumnWidth, 0) else 0
+					)
+					thisWidget._widths[index] = Width
+					Position += Width
+
+					for _, row in thisWidget._cellInstances do
+						row[index].Size = UDim2.new(Width, UDim.new())
+					end
+
+					thisWidget._cellInstances[-1][index].Size = UDim2.new(Width + UDim.new(0,
+						(if index > 1 then -2 else 0) - 3
+						), UDim.new())
+				end
+
+				-- if the table has a fixed width and we want to cap it, we calculate the table width necessary
+				local Width = Position.Offset
+				if not thisWidget.arguments.FixedWidth or not thisWidget.arguments.LimitTableWidth then
+					Width = math.huge
+				end
+
+				BorderContainer.UISizeConstraint.MaxSize = Vector2.new(Width, math.huge)
+				RowContainer.UISizeConstraint.MaxSize = Vector2.new(Width, math.huge)
+				thisWidget._columnBorders[0].Position = UDim2.new(0, Width - 3, 0, 0)
+			end,
+			ChildAdded = function(thisWidget: Types.Table, _: Types.Widget)
+				local rowIndex = thisWidget._rowIndex
+				local columnIndex = thisWidget._columnIndex
+				-- determine if the row exists yet
+				local Row = thisWidget._rowInstances[rowIndex]
+				thisWidget._rowCycles[rowIndex] = Iris._cycleTick
 				TableMinWidths[thisWidget][columnIndex] = true
-			end
-		end
-	end,
-	Discard = function(thisWidget: Table)
-		Tables[thisWidget.ID] = nil
-		TableMinWidths[thisWidget] = nil
-		thisWidget.Instance:Destroy()
-		widgets.discardState(thisWidget)
-	end
-} :: WidgetClass)
 
--- basic wrapper for nearly every widget, saves space.
-local function wrapper(name)
-	return function(arguments, states)
-		return Iris.Internal._Insert(name, arguments, states)
+				if Row ~= nil then
+					return thisWidget._cellInstances[rowIndex][columnIndex]
+				end
+
+				Row = GenerateRow(thisWidget, rowIndex)
+				if rowIndex == 0 then
+					Row.Visible = thisWidget.arguments.Header
+				end
+				Row.Parent = thisWidget._rowContainer
+
+				if rowIndex > 0 then
+					local Border = GenerateRowBorder(thisWidget, rowIndex - 1, if rowIndex == 1 then "Strong" else "Light")
+					Border.Visible = thisWidget.arguments.InnerBorders and (if rowIndex == 1 then (thisWidget.arguments.Header and thisWidget.arguments.InnerBorders) and (thisWidget._rowInstances[0] ~= nil) else true)
+					thisWidget._rowBorders[rowIndex - 1] = Border
+					Border.Parent = thisWidget._rowContainer
+				end
+
+				return thisWidget._cellInstances[rowIndex][columnIndex]
+			end,
+			ChildDiscarded = function(thisWidget: Types.Table, thisChild: Types.Widget)
+				local Cell = thisChild.Instance.Parent
+
+				if Cell ~= nil then
+					local columnIndex = tonumber(Cell.Name:sub(6))
+
+					if columnIndex then
+						TableMinWidths[thisWidget][columnIndex] = true
+					end
+				end
+			end,
+			Discard = function(thisWidget: Types.Table)
+				Tables[thisWidget.ID] = nil
+				TableMinWidths[thisWidget] = nil
+				thisWidget.Instance:Destroy()
+				widgets.discardState(thisWidget)
+			end
+		} :: Types.WidgetClass)
+	end)(Iris, widgets)
+end)(Internal)
+
+local b = (function(Iris: Types.Iris)
+	-- basic wrapper for nearly every widget, saves space.
+	local function wrapper(name)
+		return function(arguments, states)
+			return Iris.Internal._Insert(name, arguments, states)
+		end
 	end
-end
 
     --[[
         ----------------------------
@@ -11750,16 +10651,16 @@ end
         }
         ```
     ]=]
-Iris.Window = wrapper("Window")
+	Iris.Window = wrapper("Window")
 
     --[=[
         @within Iris
         @function SetFocusedWindow
-        @param window Window -- the window to focus.
+        @param window Types.Window -- the window to focus.
 
         Sets the focused window to the window provided, which brings it to the front and makes it active.
     ]=]
---Iris.SetFocusedWindow = Iris.Internal.SetFocusedWindow
+	Iris.SetFocusedWindow = Iris.Internal.SetFocusedWindow
 
     --[=[
         @within Window
@@ -11782,7 +10683,7 @@ Iris.Window = wrapper("Window")
         }
         ```
     ]=]
-Iris.Tooltip = wrapper("Tooltip")
+	Iris.Tooltip = wrapper("Tooltip")
 
     --[[
         ---------------------------------
@@ -11810,7 +10711,7 @@ Iris.Tooltip = wrapper("Tooltip")
         hasState = false
         ```
     ]=]
-Iris.MenuBar = wrapper("MenuBar")
+	Iris.MenuBar = wrapper("MenuBar")
 
     --[=[
         @within Menu
@@ -11860,7 +10761,7 @@ Iris.MenuBar = wrapper("MenuBar")
         }
         ```
     ]=]
-Iris.Menu = wrapper("Menu")
+	Iris.Menu = wrapper("Menu")
 
     --[=[
         @within Menu
@@ -11894,7 +10795,7 @@ Iris.Menu = wrapper("Menu")
         }
         ```
     ]=]
-Iris.MenuItem = wrapper("MenuItem")
+	Iris.MenuItem = wrapper("MenuItem")
 
     --[=[
         @within Menu
@@ -11933,7 +10834,7 @@ Iris.MenuItem = wrapper("MenuItem")
         }
         ```
     ]=]
-Iris.MenuToggle = wrapper("MenuToggle")
+	Iris.MenuToggle = wrapper("MenuToggle")
 
     --[[
         -----------------------------------
@@ -11967,7 +10868,7 @@ Iris.MenuToggle = wrapper("MenuToggle")
         hasState = false
         ```
     ]=]
-Iris.Separator = wrapper("Separator")
+	Iris.Separator = wrapper("Separator")
 
     --[=[
         @within Format
@@ -11996,7 +10897,7 @@ Iris.Separator = wrapper("Separator")
         }
         ```
     ]=]
-Iris.Indent = wrapper("Indent")
+	Iris.Indent = wrapper("Indent")
 
     --[=[
         @within Format
@@ -12029,7 +10930,7 @@ Iris.Indent = wrapper("Indent")
         }
         ```
     ]=]
-Iris.SameLine = wrapper("SameLine")
+	Iris.SameLine = wrapper("SameLine")
 
     --[=[
         @within Format
@@ -12044,7 +10945,7 @@ Iris.SameLine = wrapper("SameLine")
         hasState = false
         ```
     ]=]
-Iris.Group = wrapper("Group")
+	Iris.Group = wrapper("Group")
 
     --[[
         ---------------------------------
@@ -12087,7 +10988,7 @@ Iris.Group = wrapper("Group")
         }
         ```
     ]=]
-Iris.Text = wrapper("Text")
+	Iris.Text = wrapper("Text")
 
     --[=[
         @within Text
@@ -12108,10 +11009,10 @@ Iris.Text = wrapper("Text")
         }
         ```
     ]=]
-Iris.TextWrapped = function(arguments: WidgetArguments): Text
-	arguments[2] = true
-	return Iris.Internal._Insert("Text", arguments) :: Text
-end
+	Iris.TextWrapped = function(arguments: Types.WidgetArguments): Types.Text
+		arguments[2] = true
+		return Iris.Internal._Insert("Text", arguments) :: Types.Text
+	end
 
     --[=[
         @within Text
@@ -12133,11 +11034,11 @@ end
         }
         ```
     ]=]
-Iris.TextColored = function(arguments: WidgetArguments): Text
-	arguments[3] = arguments[2]
-	arguments[2] = nil
-	return Iris.Internal._Insert("Text", arguments) :: Text
-end
+	Iris.TextColored = function(arguments: Types.WidgetArguments): Types.Text
+		arguments[3] = arguments[2]
+		arguments[2] = nil
+		return Iris.Internal._Insert("Text", arguments) :: Types.Text
+	end
 
     --[=[
         @within Text
@@ -12167,7 +11068,7 @@ end
         }
         ```
     ]=]
-Iris.SeparatorText = wrapper("SeparatorText")
+	Iris.SeparatorText = wrapper("SeparatorText")
 
     --[=[
         @within Text
@@ -12206,7 +11107,7 @@ Iris.SeparatorText = wrapper("SeparatorText")
         }
         ```
     ]=]
-Iris.InputText = wrapper("InputText")
+	Iris.InputText = wrapper("InputText")
 
     --[[
         ----------------------------------
@@ -12241,7 +11142,7 @@ Iris.InputText = wrapper("InputText")
         }
         ```
     ]=]
-Iris.Button = wrapper("Button")
+	Iris.Button = wrapper("Button")
 
     --[=[
         @within Basic
@@ -12266,7 +11167,7 @@ Iris.Button = wrapper("Button")
         }
         ```
     ]=]
-Iris.SmallButton = wrapper("SmallButton")
+	Iris.SmallButton = wrapper("SmallButton")
 
     --[=[
         @within Basic
@@ -12292,7 +11193,7 @@ Iris.SmallButton = wrapper("SmallButton")
         }
         ```
     ]=]
-Iris.Checkbox = wrapper("Checkbox")
+	Iris.Checkbox = wrapper("Checkbox")
 
     --[=[
         @within Basic
@@ -12320,7 +11221,7 @@ Iris.Checkbox = wrapper("Checkbox")
         }
         ```
     ]=]
-Iris.RadioButton = wrapper("RadioButton")
+	Iris.RadioButton = wrapper("RadioButton")
 
     --[[
         ----------------------------------
@@ -12360,7 +11261,7 @@ Iris.RadioButton = wrapper("RadioButton")
         }
         ```
     ]=]
-Iris.Image = wrapper("Image")
+	Iris.Image = wrapper("Image")
 
     --[=[
         @within Image
@@ -12392,7 +11293,7 @@ Iris.Image = wrapper("Image")
         }
         ```
     ]=]
-Iris.ImageButton = wrapper("ImageButton")
+	Iris.ImageButton = wrapper("ImageButton")
 
     --[[
         ---------------------------------
@@ -12431,7 +11332,7 @@ Iris.ImageButton = wrapper("ImageButton")
         }
         ```
     ]=]
-Iris.Tree = wrapper("Tree")
+	Iris.Tree = wrapper("Tree")
 
     --[=[
         @within Tree
@@ -12458,7 +11359,7 @@ Iris.Tree = wrapper("Tree")
         }
         ```
     ]=]
-Iris.CollapsingHeader = wrapper("CollapsingHeader")
+	Iris.CollapsingHeader = wrapper("CollapsingHeader")
 
     --[[
         --------------------------------
@@ -12491,7 +11392,7 @@ Iris.CollapsingHeader = wrapper("CollapsingHeader")
         }
         ```
     ]=]
-Iris.TabBar = wrapper("TabBar")
+	Iris.TabBar = wrapper("TabBar")
 
     --[=[
         @within Tab
@@ -12527,7 +11428,7 @@ Iris.TabBar = wrapper("TabBar")
         }
         ```
     ]=]
-Iris.Tab = wrapper("Tab")
+	Iris.Tab = wrapper("Tab")
 
     --[[
         ----------------------------------
@@ -12538,7 +11439,7 @@ Iris.Tab = wrapper("Tab")
         @class Input
         Input Widget API
 
-        Input Widgets are textboxes for typing in specific number values. See [Drag], [Slider] or [InputText](Text#InputText) for more input 
+        Input Widgets are textboxes for typing in specific number values. See [Drag], [Slider] or [InputText](Text#InputText) for more input types.
 
         Iris provides a set of specific inputs for the datatypes:
         Number,
@@ -12600,7 +11501,7 @@ Iris.Tab = wrapper("Tab")
         }
         ```
     ]=]
-Iris.InputNum = wrapper("InputNum")
+	Iris.InputNum = wrapper("InputNum")
 
     --[=[
         @within Input
@@ -12630,7 +11531,7 @@ Iris.InputNum = wrapper("InputNum")
         }
         ```
     ]=]
-Iris.InputVector2 = wrapper("InputVector2")
+	Iris.InputVector2 = wrapper("InputVector2")
 
     --[=[
         @within Input
@@ -12660,7 +11561,7 @@ Iris.InputVector2 = wrapper("InputVector2")
         }
         ```
     ]=]
-Iris.InputVector3 = wrapper("InputVector3")
+	Iris.InputVector3 = wrapper("InputVector3")
 
     --[=[
         @within Input
@@ -12691,7 +11592,7 @@ Iris.InputVector3 = wrapper("InputVector3")
         }
         ```
     ]=]
-Iris.InputUDim = wrapper("InputUDim")
+	Iris.InputUDim = wrapper("InputUDim")
 
     --[=[
         @within Input
@@ -12722,7 +11623,7 @@ Iris.InputUDim = wrapper("InputUDim")
         }
         ```
     ]=]
-Iris.InputUDim2 = wrapper("InputUDim2")
+	Iris.InputUDim2 = wrapper("InputUDim2")
 
     --[=[
         @within Input
@@ -12752,7 +11653,7 @@ Iris.InputUDim2 = wrapper("InputUDim2")
         }
         ```
     ]=]
-Iris.InputRect = wrapper("InputRect")
+	Iris.InputRect = wrapper("InputRect")
 
     --[[
         ---------------------------------
@@ -12798,7 +11699,7 @@ Iris.InputRect = wrapper("InputRect")
         }
         ```
     ]=]
-Iris.DragNum = wrapper("DragNum")
+	Iris.DragNum = wrapper("DragNum")
 
     --[=[
         @within Drag
@@ -12830,7 +11731,7 @@ Iris.DragNum = wrapper("DragNum")
         }
         ```
     ]=]
-Iris.DragVector2 = wrapper("DragVector2")
+	Iris.DragVector2 = wrapper("DragVector2")
 
     --[=[
         @within Drag
@@ -12862,7 +11763,7 @@ Iris.DragVector2 = wrapper("DragVector2")
         }
         ```
     ]=]
-Iris.DragVector3 = wrapper("DragVector3")
+	Iris.DragVector3 = wrapper("DragVector3")
 
     --[=[
         @within Drag
@@ -12894,7 +11795,7 @@ Iris.DragVector3 = wrapper("DragVector3")
         }
         ```
     ]=]
-Iris.DragUDim = wrapper("DragUDim")
+	Iris.DragUDim = wrapper("DragUDim")
 
     --[=[
         @within Drag
@@ -12926,7 +11827,7 @@ Iris.DragUDim = wrapper("DragUDim")
         }
         ```
     ]=]
-Iris.DragUDim2 = wrapper("DragUDim2")
+	Iris.DragUDim2 = wrapper("DragUDim2")
 
     --[=[
         @within Drag
@@ -12958,7 +11859,7 @@ Iris.DragUDim2 = wrapper("DragUDim2")
         }
         ```
     ]=]
-Iris.DragRect = wrapper("DragRect")
+	Iris.DragRect = wrapper("DragRect")
 
     --[=[
         @within Input
@@ -12989,7 +11890,7 @@ Iris.DragRect = wrapper("DragRect")
         }
         ```
     ]=]
-Iris.InputColor3 = wrapper("InputColor3")
+	Iris.InputColor3 = wrapper("InputColor3")
 
     --[=[
         @within Input
@@ -13023,7 +11924,7 @@ Iris.InputColor3 = wrapper("InputColor3")
         }
         ```
     ]=]
-Iris.InputColor4 = wrapper("InputColor4")
+	Iris.InputColor4 = wrapper("InputColor4")
 
     --[[
         -----------------------------------
@@ -13069,7 +11970,7 @@ Iris.InputColor4 = wrapper("InputColor4")
         }
         ```
     ]=]
-Iris.SliderNum = wrapper("SliderNum")
+	Iris.SliderNum = wrapper("SliderNum")
 
     --[=[
         @within Slider
@@ -13100,7 +12001,7 @@ Iris.SliderNum = wrapper("SliderNum")
         }
         ```
     ]=]
-Iris.SliderVector2 = wrapper("SliderVector2")
+	Iris.SliderVector2 = wrapper("SliderVector2")
 
     --[=[
         @within Slider
@@ -13131,7 +12032,7 @@ Iris.SliderVector2 = wrapper("SliderVector2")
         }
         ```
     ]=]
-Iris.SliderVector3 = wrapper("SliderVector3")
+	Iris.SliderVector3 = wrapper("SliderVector3")
 
     --[=[
         @within Slider
@@ -13162,7 +12063,7 @@ Iris.SliderVector3 = wrapper("SliderVector3")
         }
         ```
     ]=]
-Iris.SliderUDim = wrapper("SliderUDim")
+	Iris.SliderUDim = wrapper("SliderUDim")
 
     --[=[
         @within Slider
@@ -13193,7 +12094,7 @@ Iris.SliderUDim = wrapper("SliderUDim")
         }
         ```
     ]=]
-Iris.SliderUDim2 = wrapper("SliderUDim2")
+	Iris.SliderUDim2 = wrapper("SliderUDim2")
 
     --[=[
         @within Slider
@@ -13224,7 +12125,7 @@ Iris.SliderUDim2 = wrapper("SliderUDim2")
         }
         ```
     ]=]
-Iris.SliderRect = wrapper("SliderRect")
+	Iris.SliderRect = wrapper("SliderRect")
 
     --[[
         ----------------------------------
@@ -13267,7 +12168,7 @@ Iris.SliderRect = wrapper("SliderRect")
         }
         ```
     ]=]
-Iris.Selectable = wrapper("Selectable")
+	Iris.Selectable = wrapper("Selectable")
 
     --[=[
         @within Combo
@@ -13299,7 +12200,7 @@ Iris.Selectable = wrapper("Selectable")
         }
         ```
     ]=]
-Iris.Combo = wrapper("Combo")
+	Iris.Combo = wrapper("Combo")
 
     --[=[
         @within Combo
@@ -13333,22 +12234,22 @@ Iris.Combo = wrapper("Combo")
         }
         ```
     ]=]
-Iris.ComboArray = function<T>(arguments: WidgetArguments, states: WidgetStates?, selectionArray: { T })
-	local defaultState
-	if states == nil then
-		defaultState = Iris.State(selectionArray[1])
-	else
-		defaultState = states
-	end
-	local thisWidget = Iris.Internal._Insert("Combo", arguments, defaultState)
-	local sharedIndex: State<T> = thisWidget.state.index
-	for _, Selection in selectionArray do
-		Iris.Internal._Insert("Selectable", { Selection, Selection }, { index = sharedIndex } :: States)
-	end
-	Iris.End()
+	Iris.ComboArray = function<T>(arguments: Types.WidgetArguments, states: Types.WidgetStates?, selectionArray: { T })
+		local defaultState
+		if states == nil then
+			defaultState = Iris.State(selectionArray[1])
+		else
+			defaultState = states
+		end
+		local thisWidget = Iris.Internal._Insert("Combo", arguments, defaultState)
+		local sharedIndex: Types.State<T> = thisWidget.state.index
+		for _, Selection in selectionArray do
+			Iris.Internal._Insert("Selectable", { Selection, Selection }, { index = sharedIndex } :: Types.States)
+		end
+		Iris.End()
 
-	return thisWidget
-end
+		return thisWidget
+	end
 
     --[=[
         @within Combo
@@ -13382,22 +12283,22 @@ end
         }
         ```
     ]=]
-Iris.ComboEnum = function(arguments: WidgetArguments, states: WidgetStates?, enumType: Enum)
-	local defaultState
-	if states == nil then
-		defaultState = Iris.State(enumType:GetEnumItems()[1])
-	else
-		defaultState = states
-	end
-	local thisWidget = Iris.Internal._Insert("Combo", arguments, defaultState)
-	local sharedIndex = thisWidget.state.index
-	for _, Selection in enumType:GetEnumItems() do
-		Iris.Internal._Insert("Selectable", { Selection.Name, Selection }, { index = sharedIndex } :: States)
-	end
-	Iris.End()
+	Iris.ComboEnum = function(arguments: Types.WidgetArguments, states: Types.WidgetStates?, enumType: Enum)
+		local defaultState
+		if states == nil then
+			defaultState = Iris.State(enumType:GetEnumItems()[1])
+		else
+			defaultState = states
+		end
+		local thisWidget = Iris.Internal._Insert("Combo", arguments, defaultState)
+		local sharedIndex = thisWidget.state.index
+		for _, Selection in enumType:GetEnumItems() do
+			Iris.Internal._Insert("Selectable", { Selection.Name, Selection }, { index = sharedIndex } :: Types.States)
+		end
+		Iris.End()
 
-	return thisWidget
-end
+		return thisWidget
+	end
 
     --[=[
         @private
@@ -13430,7 +12331,7 @@ end
         }
         ```
     ]=]
-Iris.InputEnum = Iris.ComboEnum
+	Iris.InputEnum = Iris.ComboEnum
 
     --[[
         ---------------------------------
@@ -13466,7 +12367,7 @@ Iris.InputEnum = Iris.ComboEnum
         }
         ```
     ]=]
-Iris.ProgressBar = wrapper("ProgressBar")
+	Iris.ProgressBar = wrapper("ProgressBar")
 
     --[=[
         @within Plot
@@ -13497,7 +12398,7 @@ Iris.ProgressBar = wrapper("ProgressBar")
         }
         ```
     ]=]
-Iris.PlotLines = wrapper("PlotLines")
+	Iris.PlotLines = wrapper("PlotLines")
 
     --[=[
         @within Plot
@@ -13529,7 +12430,7 @@ Iris.PlotLines = wrapper("PlotLines")
         }
         ```
     ]=]
-Iris.PlotHistogram = wrapper("PlotHistogram")
+	Iris.PlotHistogram = wrapper("PlotHistogram")
 
     --[[
         ----------------------------------
@@ -13630,7 +12531,7 @@ Iris.PlotHistogram = wrapper("PlotHistogram")
         }
         ```
     ]=]
-Iris.Table = wrapper("Table")
+	Iris.Table = wrapper("Table")
 
     --[=[
         @within Table
@@ -13639,19 +12540,19 @@ Iris.Table = wrapper("Table")
         In a table, moves to the next available cell. If the current cell is in the last column,
         then moves to the cell in the first column of the next row.
     ]=]
-Iris.NextColumn = function(): number
-	local Table = Iris.Internal._GetParentWidget() :: Table
-	assert(Table ~= nil, "Iris.NextColumn() can only called when directly within a table.")
+	Iris.NextColumn = function(): number
+		local Table = Iris.Internal._GetParentWidget() :: Types.Table
+		assert(Table ~= nil, "Iris.NextColumn() can only called when directly within a table.")
 
-	local columnIndex = Table._columnIndex
-	if columnIndex == Table.arguments.NumColumns then
-		Table._columnIndex = 1
-		Table._rowIndex += 1
-	else
-		Table._columnIndex += 1
+		local columnIndex = Table._columnIndex
+		if columnIndex == Table.arguments.NumColumns then
+			Table._columnIndex = 1
+			Table._rowIndex += 1
+		else
+			Table._columnIndex += 1
+		end
+		return Table._columnIndex
 	end
-	return Table._columnIndex
-end
 
     --[=[
         @within Table
@@ -13659,13 +12560,13 @@ end
         
         In a table, moves to the cell in the first column of the next row.
     ]=]
-Iris.NextRow = function(): number
-	local Table = Iris.Internal._GetParentWidget() :: Table
-	assert(Table ~= nil, "Iris.NextRow() can only called when directly within a table.")
-	Table._columnIndex = 1
-	Table._rowIndex += 1
-	return Table._rowIndex
-end
+	Iris.NextRow = function(): number
+		local Table = Iris.Internal._GetParentWidget() :: Types.Table
+		assert(Table ~= nil, "Iris.NextRow() can only called when directly within a table.")
+		Table._columnIndex = 1
+		Table._rowIndex += 1
+		return Table._rowIndex
+	end
 
     --[=[
         @within Table
@@ -13676,12 +12577,12 @@ end
 
         Will erorr if the given index is not in the range of 1 to NumColumns.
     ]=]
-Iris.SetColumnIndex = function(index: number): ()
-	local Table = Iris.Internal._GetParentWidget() :: Table
-	assert(Table ~= nil, "Iris.SetColumnIndex() can only called when directly within a table.")
-	assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
-	Table._columnIndex = index
-end
+	Iris.SetColumnIndex = function(index: number): ()
+		local Table = Iris.Internal._GetParentWidget() :: Types.Table
+		assert(Table ~= nil, "Iris.SetColumnIndex() can only called when directly within a table.")
+		assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
+		Table._columnIndex = index
+	end
 
     --[=[
         @within Table
@@ -13690,12 +12591,12 @@ end
 
         In a table, moves to the cell in the given row with the same previous column.
     ]=]
-Iris.SetRowIndex = function(index: number): ()
-	local Table = Iris.Internal._GetParentWidget() :: Table
-	assert(Table ~= nil, "Iris.SetRowIndex() can only called when directly within a table.")
-	assert(index >= 1, "The index must be greater or equal to 1.")
-	Table._rowIndex = index
-end
+	Iris.SetRowIndex = function(index: number): ()
+		local Table = Iris.Internal._GetParentWidget() :: Types.Table
+		assert(Table ~= nil, "Iris.SetRowIndex() can only called when directly within a table.")
+		assert(index >= 1, "The index must be greater or equal to 1.")
+		Table._rowIndex = index
+	end
 
     --[=[
         @within Table
@@ -13704,15 +12605,15 @@ end
         In a table, moves to the cell in the next column in the header row (row index 0). Will loop around
         from the last column to the first.
     ]=]
-Iris.NextHeaderColumn = function(): number
-	local Table = Iris.Internal._GetParentWidget() :: Table
-	assert(Table ~= nil, "Iris.NextHeaderColumn() can only called when directly within a table.")
+	Iris.NextHeaderColumn = function(): number
+		local Table = Iris.Internal._GetParentWidget() :: Types.Table
+		assert(Table ~= nil, "Iris.NextHeaderColumn() can only called when directly within a table.")
 
-	Table._rowIndex = 0
-	Table._columnIndex = (Table._columnIndex % Table.arguments.NumColumns) + 1
+		Table._rowIndex = 0
+		Table._columnIndex = (Table._columnIndex % Table.arguments.NumColumns) + 1
 
-	return Table._columnIndex
-end
+		return Table._columnIndex
+	end
 
     --[=[
         @within Table
@@ -13723,14 +12624,14 @@ end
 
         Will erorr if the given index is not in the range of 1 to NumColumns.
     ]=]
-Iris.SetHeaderColumnIndex = function(index: number): ()
-	local Table = Iris.Internal._GetParentWidget() :: Table
-	assert(Table ~= nil, "Iris.SetHeaderColumnIndex() can only called when directly within a table.")
-	assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
+	Iris.SetHeaderColumnIndex = function(index: number): ()
+		local Table = Iris.Internal._GetParentWidget() :: Types.Table
+		assert(Table ~= nil, "Iris.SetHeaderColumnIndex() can only called when directly within a table.")
+		assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
 
-	Table._rowIndex = 0
-	Table._columnIndex = index
-end
+		Table._rowIndex = 0
+		Table._columnIndex = index
+	end
 
     --[=[
         @within Table
@@ -13744,14 +12645,15 @@ end
 
         Will erorr if the given index is not in the range of 1 to NumColumns.
     ]=]
-Iris.SetColumnWidth = function(index: number, width: number): ()
-	local Table = Iris.Internal._GetParentWidget() :: Table
-	assert(Table ~= nil, "Iris.SetColumnWidth() can only called when directly within a table.")
-	assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
+	Iris.SetColumnWidth = function(index: number, width: number): ()
+		local Table = Iris.Internal._GetParentWidget() :: Types.Table
+		assert(Table ~= nil, "Iris.SetColumnWidth() can only called when directly within a table.")
+		assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
 
-	local oldValue = Table.state.widths.value[index]
-	Table.state.widths.value[index] = width
-	Table.state.widths:set(Table.state.widths.value, width ~= oldValue)
-end
+		local oldValue = Table.state.widths.value[index]
+		Table.state.widths.value[index] = width
+		Table.state.widths:set(Table.state.widths.value, width ~= oldValue)
+	end
+end)(Iris)
 
 return Iris
