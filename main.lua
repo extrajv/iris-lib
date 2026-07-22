@@ -10102,7 +10102,7 @@ local function UpdateChildContainerTransform(thisWidget: Combo)
 end
 
 table.insert(Iris._postCycleCallbacks, function()
-	if AnyOpenedCombo and OpenedCombo then
+	if AnyOpenedCombo and OpenedCombo and OpenedCombo.lastCycleTick ~= -1 then
 		local contentSize = OpenedCombo.UIListLayout.AbsoluteContentSize.Y
 		if contentSize ~= CachedContentSize then
 			UpdateChildContainerTransform(OpenedCombo)
