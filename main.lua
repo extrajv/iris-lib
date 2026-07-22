@@ -11755,7 +11755,7 @@ Iris.Window = wrapper("Window")
 
         Sets the focused window to the window provided, which brings it to the front and makes it active.
     ]=]
-Iris.SetFocusedWindow = Iris.Internal.SetFocusedWindow
+--Iris.SetFocusedWindow = Iris.Internal.SetFocusedWindow
 
     --[=[
         @within Window
