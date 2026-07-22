@@ -1,4 +1,3 @@
---!optimize 2
 --[=[
     @class Iris
 
@@ -2043,6 +2042,7 @@ local Internal: Internal = (function(Iris: Iris): Internal
 
 	Iris.Internal = Internal
 	Iris._config = Internal._config
+	print("SET UP INTERNAL")
 	return Internal
 end)(Iris)
 
