@@ -10067,6 +10067,10 @@ local function UpdateChildContainerTransform(thisWidget: Combo)
 	local PreviewContainer = Combo.PreviewContainer :: TextButton
 	local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
 
+	if ChildContainer.Parent == nil then
+		return
+	end
+
 	local previewPosition: Vector2 = PreviewContainer.AbsolutePosition - widgets.GuiOffset
 	local previewSize: Vector2 = PreviewContainer.AbsoluteSize
 	local borderSize: number = Iris._config.PopupBorderSize
