@@ -18,16 +18,1136 @@
     end)
     ```
 ]=]
-local Iris = {} :: Types.Iris
+
+type InputDataTypes = "Num" | "Vector2" | "Vector3" | "UDim" | "UDim2" | "Color3" | "Color4" | "Rect" | "Enum" | "" | string
+
+--[=[
+    @within Iris
+    @type ID string
+]=]
+export type ID = string
+
+--[=[
+    @within State
+    @type State<T> { ID: ID, value: T, get: (self) -> T, set: (self, newValue: T) -> T, onChange: (self, callback: (newValue: T) -> ()) -> (), ConnectedWidgets: { [ID]: Widget }, ConnectedFunctions: { (newValue: T) -> () } }
+]=]
+export type State<T> = {
+	ID: ID,
+	value: T,
+	lastChangeTick: number,
+	ConnectedWidgets: { [ID]: Widget },
+	ConnectedFunctions: { (newValue: T) -> () },
+
+	get: (self: State<T>) -> T,
+	set: (self: State<T>, newValue: T, force: true?) -> (),
+	onChange: (self: State<T>, funcToConnect: (newValue: T) -> ()) -> () -> (),
+	changed: (self: State<T>) -> boolean,
+}
+
+--[=[
+    @within Iris
+    @type Widget { ID: ID, type: string, lastCycleTick: number, parentWidget: Widget, Instance: GuiObject, ZIndex: number, arguments: { [string]: any }}
+]=]
+export type Widget = {
+	ID: ID,
+	type: string,
+	lastCycleTick: number,
+	trackedEvents: {},
+	parentWidget: ParentWidget,
+
+	arguments: {},
+	providedArguments: {},
+
+	Instance: GuiObject,
+	ZIndex: number,
+}
+
+export type ParentWidget = Widget & {
+	ChildContainer: GuiObject,
+	ZOffset: number,
+	ZUpdate: boolean,
+}
+
+export type StateWidget = Widget & {
+	state: {
+		[string]: State<any>,
+	},
+}
+
+-- Events
+
+export type Hovered = {
+	isHoveredEvent: boolean,
+	hovered: () -> boolean,
+}
+
+export type Clicked = {
+	lastClickedTick: number,
+	clicked: () -> boolean,
+}
+
+export type RightClicked = {
+	lastRightClickedTick: number,
+	rightClicked: () -> boolean,
+}
+
+export type DoubleClicked = {
+	lastClickedTime: number,
+	lastClickedPosition: Vector2,
+	lastDoubleClickedTick: number,
+	doubleClicked: () -> boolean,
+}
+
+export type CtrlClicked = {
+	lastCtrlClickedTick: number,
+	ctrlClicked: () -> boolean,
+}
+
+export type Active = {
+	active: () -> boolean,
+}
+
+export type Checked = {
+	lastCheckedTick: number,
+	checked: () -> boolean,
+}
+
+export type Unchecked = {
+	lastUncheckedTick: number,
+	unchecked: () -> boolean,
+}
+
+export type Opened = {
+	lastOpenedTick: number,
+	opened: () -> boolean,
+}
+
+export type Closed = {
+	lastClosedTick: number,
+	closed: () -> boolean,
+}
+
+export type Collapsed = {
+	lastCollapsedTick: number,
+	collapsed: () -> boolean,
+}
+
+export type Uncollapsed = {
+	lastUncollapsedTick: number,
+	uncollapsed: () -> boolean,
+}
+
+export type Selected = {
+	lastSelectedTick: number,
+	selected: () -> boolean,
+}
+
+export type Unselected = {
+	lastUnselectedTick: number,
+	unselected: () -> boolean,
+}
+
+export type Changed = {
+	lastChangedTick: number,
+	changed: () -> boolean,
+}
+
+export type NumberChanged = {
+	lastNumberChangedTick: number,
+	numberChanged: () -> boolean,
+}
+
+export type TextChanged = {
+	lastTextChangedTick: number,
+	textChanged: () -> boolean,
+}
+
+-- Widgets
+
+-- Window
+
+export type Root = ParentWidget
+
+export type Window = ParentWidget & {
+	usesScreenGuis: boolean,
+
+	arguments: {
+		Title: string?,
+		NoTitleBar: boolean?,
+		NoBackground: boolean?,
+		NoCollapse: boolean?,
+		NoClose: boolean?,
+		NoMove: boolean?,
+		NoScrollbar: boolean?,
+		NoResize: boolean?,
+		NoNav: boolean?,
+		NoMenu: boolean?,
+	},
+
+	state: {
+		size: State<Vector2>,
+		position: State<Vector2>,
+		isUncollapsed: State<boolean>,
+		isOpened: State<boolean>,
+		scrollDistance: State<number>,
+	},
+} & Opened & Closed & Collapsed & Uncollapsed & Hovered
+
+export type Tooltip = Widget & {
+	arguments: {
+		Text: string,
+	},
+}
+
+-- Menu
+
+export type MenuBar = ParentWidget
+
+export type Menu = ParentWidget & {
+	ButtonColors: { [string]: Color3 | number },
+
+	arguments: {
+		Text: string?,
+	},
+
+	state: {
+		isOpened: State<boolean>,
+	},
+} & Clicked & Opened & Closed & Hovered
+
+export type MenuItem = Widget & {
+	arguments: {
+		Text: string,
+		KeyCode: Enum.KeyCode?,
+		ModifierKey: Enum.ModifierKey?,
+	},
+} & Clicked & Hovered
+
+export type MenuToggle = Widget & {
+	arguments: {
+		Text: string,
+		KeyCode: Enum.KeyCode?,
+		ModifierKey: Enum.ModifierKey?,
+	},
+
+	state: {
+		isChecked: State<boolean>,
+	},
+} & Checked & Unchecked & Hovered
+
+-- Format
+
+export type Separator = Widget
+
+export type Indent = ParentWidget & {
+	arguments: {
+		Width: number?,
+	},
+}
+
+export type SameLine = ParentWidget & {
+	arguments: {
+		Width: number?,
+		VerticalAlignment: Enum.VerticalAlignment?,
+		HorizontalAlignment: Enum.HorizontalAlignment?,
+	},
+}
+
+export type Group = ParentWidget
+
+-- Text
+
+export type Text = Widget & {
+	arguments: {
+		Text: string,
+		Wrapped: boolean?,
+		Color: Color3?,
+		RichText: boolean?,
+	},
+} & Hovered
+
+export type SeparatorText = Widget & {
+	arguments: {
+		Text: string,
+	},
+} & Hovered
+
+-- Basic
+
+export type Button = Widget & {
+	arguments: {
+		Text: string?,
+		Size: UDim2?,
+	},
+} & Clicked & RightClicked & DoubleClicked & CtrlClicked & Hovered
+
+export type Checkbox = Widget & {
+	arguments: {
+		Text: string?,
+	},
+
+	state: {
+		isChecked: State<boolean>,
+	},
+} & Unchecked & Checked & Hovered
+
+export type RadioButton = Widget & {
+	arguments: {
+		Text: string?,
+		Index: any,
+	},
+
+	state: {
+		index: State<any>,
+	},
+
+	active: () -> boolean,
+} & Selected & Unselected & Active & Hovered
+
+-- Image
+
+export type Image = Widget & {
+	arguments: {
+		Image: string,
+		Size: UDim2,
+		Rect: Rect?,
+		ScaleType: Enum.ScaleType?,
+		TileSize: UDim2?,
+		SliceCenter: Rect?,
+		SliceScale: number?,
+		ResampleMode: Enum.ResamplerMode?,
+	},
+} & Hovered
+
+-- ooops, may have overriden a Roblox type, and then got a weird type message
+-- let's just hope I don't have to use a Roblox ImageButton type anywhere by name in this file
+export type ImageButton = Image & Clicked & RightClicked & DoubleClicked & CtrlClicked
+
+-- Tree
+
+export type Tree = CollapsingHeader & {
+	arguments: {
+		Text: string,
+		SpanAvailWidth: boolean?,
+		NoIndent: boolean?,
+		DefaultOpen: true?,
+	},
+}
+
+export type CollapsingHeader = ParentWidget & {
+	arguments: {
+		Text: string?,
+		DefaultOpen: true?,
+	},
+
+	state: {
+		isUncollapsed: State<boolean>,
+	},
+} & Collapsed & Uncollapsed & Hovered
+
+-- Tabs
+
+export type TabBar = ParentWidget & {
+	Tabs: { Tab },
+
+	state: {
+		index: State<number>,
+	},
+}
+
+export type Tab = ParentWidget & {
+	parentWidget: TabBar,
+	Index: number,
+	ButtonColors: { [string]: Color3 | number },
+
+	arguments: {
+		Text: string,
+		Hideable: boolean,
+	},
+
+	state: {
+		index: State<number>,
+		isOpened: State<boolean>,
+	},
+} & Clicked & Opened & Selected & Unselected & Active & Closed & Hovered
+
+-- Input
+export type Input<T> = Widget & {
+	lastClickedTime: number,
+	lastClickedPosition: Vector2,
+
+	arguments: {
+		Text: string?,
+		Increment: T,
+		Min: T,
+		Max: T,
+		Format: { string },
+		Prefix: { string },
+		NoButtons: boolean?,
+	},
+
+	state: {
+		number: State<T>,
+		editingText: State<number>,
+	},
+} & NumberChanged & Hovered
+
+export type InputColor3 = Input<{ number }> & {
+	arguments: {
+		UseFloats: boolean?,
+		UseHSV: boolean?,
+	},
+
+	state: {
+		color: State<Color3>,
+		editingText: State<boolean>,
+	},
+} & NumberChanged & Hovered
+
+export type InputColor4 = InputColor3 & {
+	state: {
+		transparency: State<number>,
+	},
+}
+
+export type InputEnum = Input<number> & {
+	state: {
+		enumItem: State<EnumItem>,
+	},
+}
+
+export type InputText = Widget & {
+	arguments: {
+		Text: string?,
+		TextHint: string?,
+		ReadOnly: boolean?,
+		MultiLine: boolean?,
+	},
+
+	state: {
+		text: State<string>,
+	},
+} & TextChanged & Hovered
+
+-- Combo
+
+export type Selectable = Widget & {
+	ButtonColors: { [string]: Color3 | number },
+
+	arguments: {
+		Text: string?,
+		Index: any?,
+		NoClick: boolean?,
+	},
+
+	state: {
+		index: State<any>,
+	},
+} & Selected & Unselected & Clicked & RightClicked & DoubleClicked & CtrlClicked & Hovered
+
+export type Combo = ParentWidget & {
+	arguments: {
+		Text: string?,
+		NoButton: boolean?,
+		NoPreview: boolean?,
+	},
+
+	state: {
+		index: State<any>,
+		isOpened: State<boolean>,
+	},
+
+	UIListLayout: UIListLayout,
+} & Opened & Closed & Changed & Clicked & Hovered
+
+-- Plot
+
+export type ProgressBar = Widget & {
+	arguments: {
+		Text: string?,
+		Format: string?,
+	},
+
+	state: {
+		progress: State<number>,
+	},
+} & Changed & Hovered
+
+export type PlotLines = Widget & {
+	Lines: { Frame },
+	HoveredLine: Frame | false,
+	Tooltip: TextLabel,
+
+	arguments: {
+		Text: string,
+		Height: number,
+		Min: number,
+		Max: number,
+		TextOverlay: string,
+	},
+
+	state: {
+		values: State<{ number }>,
+		hovered: State<{ number }?>,
+	},
+} & Hovered
+
+export type PlotHistogram = Widget & {
+	Blocks: { Frame },
+	HoveredBlock: Frame | false,
+	Tooltip: TextLabel,
+
+	arguments: {
+		Text: string,
+		Height: number,
+		Min: number,
+		Max: number,
+		TextOverlay: string,
+		BaseLine: number,
+	},
+
+	state: {
+		values: State<{ number }>,
+		hovered: State<number?>,
+	},
+} & Hovered
+
+export type Table = ParentWidget & {
+	_columnIndex: number,
+	_rowIndex: number,
+	_rowContainer: Frame,
+	_rowInstances: { Frame },
+	_cellInstances: { { Frame } },
+	_rowBorders: { Frame },
+	_columnBorders: { GuiButton },
+	_rowCycles: { number },
+	_widths: { UDim },
+	_minWidths: { number },
+
+	arguments: {
+		NumColumns: number,
+		Header: boolean,
+		RowBackground: boolean,
+		OuterBorders: boolean,
+		InnerBorders: boolean,
+		Resizable: boolean,
+		FixedWidth: boolean,
+		ProportionalWidth: boolean,
+		LimitTableWidth: boolean,
+	},
+
+	state: {
+		widths: State<{ number }>,
+	},
+} & Hovered
+
+export type InputDataType = number | Vector2 | Vector3 | UDim | UDim2 | Color3 | Rect | { number }
+
+export type Argument = any
+export type Arguments = {
+	[string]: Argument,
+	Text: string,
+	TextHint: string,
+	TextOverlay: string,
+	ReadOnly: boolean,
+	MultiLine: boolean,
+	Wrapped: boolean,
+	Color: Color3,
+	RichText: boolean,
+
+	Increment: InputDataType,
+	Min: InputDataType,
+	Max: InputDataType,
+	Format: { string },
+	UseFloats: boolean,
+	UseHSV: boolean,
+	UseHex: boolean,
+	Prefix: { string },
+	BaseLine: number,
+
+	Width: number,
+	Height: number,
+	VerticalAlignment: Enum.VerticalAlignment,
+	HorizontalAlignment: Enum.HorizontalAlignment,
+	Index: any,
+	Image: string,
+	Size: UDim2,
+	Rect: Rect,
+	ScaleType: Enum.ScaleType,
+	TileSize: UDim2,
+	SliceCenter: Rect,
+	SliceScale: number,
+	ResampleMode: Enum.ResamplerMode,
+
+	SpanAvailWidth: boolean,
+	NoIdent: boolean,
+	NoClick: boolean,
+	NoButtons: boolean,
+	NoButton: boolean,
+	NoPreview: boolean,
+
+	NumColumns: number,
+	RowBg: boolean,
+	BordersOuter: boolean,
+	BordersInner: boolean,
+
+	Title: string,
+	NoTitleBar: boolean,
+	NoBackground: boolean,
+	NoCollapse: boolean,
+	NoClose: boolean,
+	NoMove: boolean,
+	NoScrollbar: boolean,
+	NoResize: boolean,
+	NoMenu: boolean,
+
+	KeyCode: Enum.KeyCode,
+	ModifierKey: Enum.ModifierKey,
+	Disabled: boolean,
+}
+
+export type States = {
+	[string]: State<any>,
+	number: State<number>,
+	color: State<Color3>,
+	transparency: State<number>,
+	editingText: State<boolean>,
+	index: State<any>,
+
+	size: State<Vector2>,
+	position: State<Vector2>,
+	progress: State<number>,
+	scrollDistance: State<number>,
+
+	isChecked: State<boolean>,
+	isOpened: State<boolean>,
+	isUncollapsed: State<boolean>,
+}
+
+export type Event = {
+	Init: (Widget) -> (),
+	Get: (Widget) -> boolean,
+}
+export type Events = { [string]: Event }
+
+-- Widgets
+
+export type WidgetArguments = { [number]: Argument }
+export type WidgetStates = {
+	[string]: State<any>,
+	number: State<number>?,
+	color: State<Color3>?,
+	transparency: State<number>?,
+	editingText: State<boolean>?,
+	index: State<any>?,
+
+	size: State<Vector2>?,
+	position: State<Vector2>?,
+	progress: State<number>?,
+	scrollDistance: State<number>?,
+	values: State<number>?,
+
+	isChecked: State<boolean>?,
+	isOpened: State<boolean>?,
+	isUncollapsed: State<boolean>?,
+}
+
+export type WidgetClass = {
+	Generate: (thisWidget: Widget) -> GuiObject,
+	Discard: (thisWidget: Widget) -> (),
+	Update: (thisWidget: Widget, ...any) -> (),
+
+	Args: { [string]: number },
+	Events: Events,
+	hasChildren: boolean,
+	hasState: boolean,
+	ArgNames: { [number]: string },
+
+	GenerateState: (thisWidget: Widget) -> (),
+	UpdateState: (thisWidget: Widget) -> (),
+
+	ChildAdded: (thisWidget: Widget, thisChild: Widget) -> GuiObject,
+	ChildDiscarded: (thisWidget: Widget, thisChild: Widget) -> (),
+}
+
+-- Iris
+
+export type Internal = {
+    --[[
+        --------------
+          PROPERTIES
+        --------------
+    ]]
+	_version: string,
+	_started: boolean,
+	_shutdown: boolean,
+	_cycleTick: number,
+	_deltaTime: number,
+	_eventConnection: RBXScriptConnection?,
+
+	-- Refresh
+	_globalRefreshRequested: boolean,
+	_refreshCounter: number,
+	_refreshLevel: number,
+	_refreshStack: { boolean },
+
+	-- Widgets & Instances
+	_widgets: { [string]: WidgetClass },
+	_widgetCount: number,
+	_stackIndex: number,
+	_rootInstance: GuiObject?,
+	_rootWidget: ParentWidget,
+	_lastWidget: Widget,
+	SelectionImageObject: Frame,
+	parentInstance: Instance,
+	_utility: WidgetUtility,
+
+	-- Config
+	_rootConfig: Config,
+	_config: Config,
+
+	-- ID
+	_IDStack: { ID },
+	_usedIDs: { [ID]: number },
+	_newID: boolean,
+	_pushedIds: { ID },
+	_nextWidgetId: ID?,
+
+	-- VDOM
+	_lastVDOM: { [ID]: Widget },
+	_VDOM: { [ID]: Widget },
+
+	-- State
+	_states: { [ID]: State<any> },
+
+	-- Callback
+	_postCycleCallbacks: { () -> () },
+	_connectedFunctions: { () -> () },
+	_connections: { RBXScriptConnection },
+	_initFunctions: { () -> () },
+	_cycleCoroutine: thread?,
+
+    --[[
+        ---------
+          STATE
+        ---------
+    ]]
+
+	StateClass: {
+		__index: any,
+
+		get: <T>(self: State<T>) -> any,
+		set: <T>(self: State<T>, newValue: any) -> any,
+		onChange: <T>(self: State<T>, callback: (newValue: any) -> ()) -> (),
+	},
+
+    --[[
+        -------------
+          FUNCTIONS
+        -------------
+    ]]
+	_cycle: (deltaTime: number) -> (),
+	_NoOp: () -> (),
+
+	-- Widget
+	WidgetConstructor: (type: string, widgetClass: WidgetClass) -> (),
+	_Insert: (widgetType: string, arguments: WidgetArguments?, states: WidgetStates?) -> Widget,
+	_GenNewWidget: (widgetType: string, arguments: Arguments, states: WidgetStates?, ID: ID) -> Widget,
+	_ContinueWidget: (ID: ID, widgetType: string) -> Widget,
+	_DiscardWidget: (widgetToDiscard: Widget) -> (),
+
+	_widgetState: (thisWidget: Widget, stateName: string, initialValue: any) -> State<any>,
+	_EventCall: (thisWidget: Widget, eventName: string) -> boolean,
+	_GetParentWidget: () -> ParentWidget,
+	SetFocusedWindow: (thisWidget: Window?) -> (),
+
+	-- Generate
+	_generateEmptyVDOM: () -> { [ID]: Widget },
+	_generateRootInstance: () -> (),
+	_generateSelectionImageObject: () -> (),
+
+	-- Utility
+	_getID: (levelsToIgnore: number) -> ID,
+	_deepCompare: (t1: {}, t2: {}) -> boolean,
+	_deepCopy: (t: {}) -> {},
+}
+
+export type WidgetUtility = {
+	GuiService: GuiService,
+	RunService: RunService,
+	TextService: TextService,
+	UserInputService: UserInputService,
+	ContextActionService: ContextActionService,
+
+	getTime: () -> number,
+	getMouseLocation: () -> Vector2,
+
+	ICONS: {
+		BLANK_SQUARE: string,
+		RIGHT_POINTING_TRIANGLE: string,
+		DOWN_POINTING_TRIANGLE: string,
+		MULTIPLICATION_SIGN: string,
+		BOTTOM_RIGHT_CORNER: string,
+		CHECK_MARK: string,
+		BORDER: string,
+		ALPHA_BACKGROUND_TEXTURE: string,
+		UNKNOWN_TEXTURE: string,
+	},
+
+	GuiOffset: Vector2,
+	MouseOffset: Vector2,
+
+	findBestWindowPosForPopup: (refPos: Vector2, size: Vector2, outerMin: Vector2, outerMax: Vector2) -> Vector2,
+	getScreenSizeForWindow: (thisWidget: Widget) -> Vector2,
+	isPosInsideRect: (pos: Vector2, rectMin: Vector2, rectMax: Vector2) -> boolean,
+	extend: (superClass: WidgetClass, { [any]: any }) -> WidgetClass,
+	discardState: (thisWidget: Widget) -> (),
+
+	UIPadding: (Parent: GuiObject, PxPadding: Vector2) -> UIPadding,
+	UIListLayout: (Parent: GuiObject, FillDirection: Enum.FillDirection, Padding: UDim) -> UIListLayout,
+	UIStroke: (Parent: GuiObject, Thickness: number, Color: Color3, Transparency: number) -> UIStroke,
+	UICorner: (Parent: GuiObject, PxRounding: number?) -> UICorner,
+	UISizeConstraint: (Parent: GuiObject, MinSize: Vector2?, MaxSize: Vector2?) -> UISizeConstraint,
+
+	applyTextStyle: (thisInstance: TextLabel | TextButton | TextBox) -> (),
+	applyInteractionHighlights: (Property: string, Button: GuiButton, Highlightee: GuiObject, Colors: { [string]: any }) -> (),
+	applyInteractionHighlightsWithMultiHighlightee: (Property: string, Button: GuiButton, Highlightees: { { GuiObject | { [string]: Color3 | number } } }) -> (),
+	applyFrameStyle: (thisInstance: GuiObject, noPadding: boolean?, noCorner: boolean?) -> (),
+
+	applyButtonClick: (thisInstance: GuiButton, callback: () -> ()) -> (),
+	applyButtonDown: (thisInstance: GuiButton, callback: (x: number, y: number) -> ()) -> (),
+	applyMouseEnter: (thisInstance: GuiObject, callback: (x: number, y: number) -> ()) -> (),
+	applyMouseMoved: (thisInstance: GuiObject, callback: (x: number, y: number) -> ()) -> (),
+	applyMouseLeave: (thisInstance: GuiObject, callback: (x: number, y: number) -> ()) -> (),
+	applyInputBegan: (thisInstance: GuiObject, callback: (input: InputObject) -> ()) -> (),
+	applyInputEnded: (thisInstance: GuiObject, callback: (input: InputObject) -> ()) -> (),
+
+	registerEvent: (event: string, callback: (...any) -> ()) -> (),
+
+	EVENTS: {
+		hover: (pathToHovered: (thisWidget: Widget & Hovered) -> GuiObject) -> Event,
+		click: (pathToClicked: (thisWidget: Widget & Clicked) -> GuiButton) -> Event,
+		rightClick: (pathToClicked: (thisWidget: Widget & RightClicked) -> GuiButton) -> Event,
+		doubleClick: (pathToClicked: (thisWidget: Widget & DoubleClicked) -> GuiButton) -> Event,
+		ctrlClick: (pathToClicked: (thisWidget: Widget & CtrlClicked) -> GuiButton) -> Event,
+	},
+
+	abstractButton: WidgetClass,
+}
+
+export type Config = {
+	TextColor: Color3,
+	TextTransparency: number,
+	TextDisabledColor: Color3,
+	TextDisabledTransparency: number,
+
+	BorderColor: Color3,
+	BorderActiveColor: Color3,
+	BorderTransparency: number,
+	BorderActiveTransparency: number,
+
+	WindowBgColor: Color3,
+	WindowBgTransparency: number,
+	ScrollbarGrabColor: Color3,
+	ScrollbarGrabTransparency: number,
+	PopupBgColor: Color3,
+	PopupBgTransparency: number,
+
+	TitleBgColor: Color3,
+	TitleBgTransparency: number,
+	TitleBgActiveColor: Color3,
+	TitleBgActiveTransparency: number,
+	TitleBgCollapsedColor: Color3,
+	TitleBgCollapsedTransparency: number,
+
+	MenubarBgColor: Color3,
+	MenubarBgTransparency: number,
+
+	FrameBgColor: Color3,
+	FrameBgTransparency: number,
+	FrameBgHoveredColor: Color3,
+	FrameBgHoveredTransparency: number,
+	FrameBgActiveColor: Color3,
+	FrameBgActiveTransparency: number,
+
+	ButtonColor: Color3,
+	ButtonTransparency: number,
+	ButtonHoveredColor: Color3,
+	ButtonHoveredTransparency: number,
+	ButtonActiveColor: Color3,
+	ButtonActiveTransparency: number,
+
+	ImageColor: Color3,
+	ImageTransparency: number,
+
+	SliderGrabColor: Color3,
+	SliderGrabTransparency: number,
+	SliderGrabActiveColor: Color3,
+	SliderGrabActiveTransparency: number,
+
+	HeaderColor: Color3,
+	HeaderTransparency: number,
+	HeaderHoveredColor: Color3,
+	HeaderHoveredTransparency: number,
+	HeaderActiveColor: Color3,
+	HeaderActiveTransparency: number,
+
+	TabColor: Color3,
+	TabTransparency: number,
+	TabHoveredColor: Color3,
+	TabHoveredTransparency: number,
+	TabActiveColor: Color3,
+	TabActiveTransparency: number,
+
+	SelectionImageObjectColor: Color3,
+	SelectionImageObjectTransparency: number,
+	SelectionImageObjectBorderColor: Color3,
+	SelectionImageObjectBorderTransparency: number,
+
+	TableBorderStrongColor: Color3,
+	TableBorderStrongTransparency: number,
+	TableBorderLightColor: Color3,
+	TableBorderLightTransparency: number,
+	TableRowBgColor: Color3,
+	TableRowBgTransparency: number,
+	TableRowBgAltColor: Color3,
+	TableRowBgAltTransparency: number,
+	TableHeaderColor: Color3,
+	TableHeaderTransparency: number,
+
+	NavWindowingHighlightColor: Color3,
+	NavWindowingHighlightTransparency: number,
+	NavWindowingDimBgColor: Color3,
+	NavWindowingDimBgTransparency: number,
+
+	SeparatorColor: Color3,
+	SeparatorTransparency: number,
+
+	CheckMarkColor: Color3,
+	CheckMarkTransparency: number,
+
+	PlotLinesColor: Color3,
+	PlotLinesTransparency: number,
+	PlotLinesHoveredColor: Color3,
+	PlotLinesHoveredTransparency: number,
+	PlotHistogramColor: Color3,
+	PlotHistogramTransparency: number,
+	PlotHistogramHoveredColor: Color3,
+	PlotHistogramHoveredTransparency: number,
+
+	ResizeGripColor: Color3,
+	ResizeGripTransparency: number,
+	ResizeGripHoveredColor: Color3,
+	ResizeGripHoveredTransparency: number,
+	ResizeGripActiveColor: Color3,
+	ResizeGripActiveTransparency: number,
+
+	HoverColor: Color3,
+	HoverTransparency: number,
+
+	-- Sizes
+	ItemWidth: UDim,
+	ContentWidth: UDim,
+	ContentHeight: UDim,
+
+	WindowPadding: Vector2,
+	WindowResizePadding: Vector2,
+	FramePadding: Vector2,
+	ItemSpacing: Vector2,
+	ItemInnerSpacing: Vector2,
+	CellPadding: Vector2,
+	DisplaySafeAreaPadding: Vector2,
+	IndentSpacing: number,
+	SeparatorTextPadding: Vector2,
+
+	TextFont: Font,
+	TextSize: number,
+	FrameBorderSize: number,
+	FrameRounding: number,
+	GrabRounding: number,
+	WindowBorderSize: number,
+	WindowTitleAlign: Enum.LeftRight,
+	PopupBorderSize: number,
+	PopupRounding: number,
+	ScrollbarSize: number,
+	GrabMinSize: number,
+	SeparatorTextBorderSize: number,
+	ImageBorderSize: number,
+
+	UseScreenGUIs: boolean,
+	IgnoreGuiInset: boolean,
+	Parent: BasePlayerGui,
+	RichText: boolean,
+	TextWrapped: boolean,
+	DisplayOrderOffset: number,
+	ZIndexOffset: number,
+
+	MouseDoubleClickTime: number,
+	MouseDoubleClickMaxDist: number,
+	MouseDragThreshold: number,
+}
+
+type WidgetCall<W, A, S, E...> = (arguments: A, states: S, E...) -> W
+
+export type Iris = {
+    --[[
+        -----------
+          WIDGETS
+        -----------
+    ]]
+
+	End: () -> (),
+
+	-- Window API
+	Window: WidgetCall<Window, WidgetArguments, WidgetStates?>,
+	Tooltip: WidgetCall<Tooltip, WidgetArguments, nil>,
+
+	-- Menu Widget API
+	MenuBar: () -> Widget,
+	Menu: WidgetCall<Menu, WidgetArguments, WidgetStates?>,
+	MenuItem: WidgetCall<MenuItem, WidgetArguments, nil>,
+	MenuToggle: WidgetCall<MenuToggle, WidgetArguments, WidgetStates?>,
+
+	-- Format Widget API
+	Separator: () -> Separator,
+	Indent: (arguments: WidgetArguments?) -> Indent,
+	SameLine: (arguments: WidgetArguments?) -> SameLine,
+	Group: () -> Group,
+
+	-- Text Widget API
+	Text: WidgetCall<Text, WidgetArguments, nil>,
+	TextWrapped: WidgetCall<Text, WidgetArguments, nil>,
+	TextColored: WidgetCall<Text, WidgetArguments, nil>,
+	SeparatorText: WidgetCall<SeparatorText, WidgetArguments, nil>,
+	InputText: WidgetCall<InputText, WidgetArguments, WidgetStates?>,
+
+	-- Basic Widget API
+	Button: WidgetCall<Button, WidgetArguments, nil>,
+	SmallButton: WidgetCall<Button, WidgetArguments, nil>,
+	Checkbox: WidgetCall<Checkbox, WidgetArguments, WidgetStates?>,
+	RadioButton: WidgetCall<RadioButton, WidgetArguments, WidgetStates?>,
+
+	-- Tree Widget API
+	Tree: WidgetCall<Tree, WidgetArguments, WidgetStates?>,
+	CollapsingHeader: WidgetCall<CollapsingHeader, WidgetArguments, WidgetStates?>,
+
+	-- Tab Widget API
+	TabBar: WidgetCall<TabBar, WidgetArguments?, WidgetStates?>,
+	Tab: WidgetCall<Tab, WidgetArguments, WidgetStates?>,
+
+	-- Input Widget API
+	InputNum: WidgetCall<Input<number>, WidgetArguments, WidgetStates?>,
+	InputVector2: WidgetCall<Input<Vector2>, WidgetArguments, WidgetStates?>,
+	InputVector3: WidgetCall<Input<Vector3>, WidgetArguments, WidgetStates?>,
+	InputUDim: WidgetCall<Input<UDim>, WidgetArguments, WidgetStates?>,
+	InputUDim2: WidgetCall<Input<UDim2>, WidgetArguments, WidgetStates?>,
+	InputRect: WidgetCall<Input<Rect>, WidgetArguments, WidgetStates?>,
+	InputColor3: WidgetCall<InputColor3, WidgetArguments, WidgetStates?>,
+	InputColor4: WidgetCall<InputColor4, WidgetArguments, WidgetStates?>,
+
+	-- Drag Widget API
+	DragNum: WidgetCall<Input<number>, WidgetArguments, WidgetStates?>,
+	DragVector2: WidgetCall<Input<Vector2>, WidgetArguments, WidgetStates?>,
+	DragVector3: WidgetCall<Input<Vector3>, WidgetArguments, WidgetStates?>,
+	DragUDim: WidgetCall<Input<UDim>, WidgetArguments, WidgetStates?>,
+	DragUDim2: WidgetCall<Input<UDim2>, WidgetArguments, WidgetStates?>,
+	DragRect: WidgetCall<Input<Rect>, WidgetArguments, WidgetStates?>,
+
+	-- Slider Widget API
+	SliderNum: WidgetCall<Input<number>, WidgetArguments, WidgetStates?>,
+	SliderVector2: WidgetCall<Input<Vector2>, WidgetArguments, WidgetStates?>,
+	SliderVector3: WidgetCall<Input<Vector3>, WidgetArguments, WidgetStates?>,
+	SliderUDim: WidgetCall<Input<UDim>, WidgetArguments, WidgetStates?>,
+	SliderUDim2: WidgetCall<Input<UDim2>, WidgetArguments, WidgetStates?>,
+	SliderRect: WidgetCall<Input<Rect>, WidgetArguments, WidgetStates?>,
+
+	-- Combo Widget Widget API
+	Selectable: WidgetCall<Selectable, WidgetArguments, WidgetStates?>,
+	Combo: WidgetCall<Combo, WidgetArguments, WidgetStates?>,
+	ComboArray: WidgetCall<Combo, WidgetArguments, WidgetStates?, { any }>,
+	ComboEnum: WidgetCall<Combo, WidgetArguments, WidgetStates?, Enum>,
+	InputEnum: WidgetCall<Combo, WidgetArguments, WidgetStates?, Enum>,
+
+	ProgressBar: WidgetCall<ProgressBar, WidgetArguments, WidgetStates?>,
+	PlotLines: WidgetCall<PlotLines, WidgetArguments, WidgetStates?>,
+	PlotHistogram: WidgetCall<PlotHistogram, WidgetArguments, WidgetStates?>,
+
+	Image: WidgetCall<Image, WidgetArguments, nil>,
+	ImageButton: WidgetCall<ImageButton, WidgetArguments, nil>,
+
+	-- Table Widget Api
+	Table: WidgetCall<Table, WidgetArguments, WidgetStates?>,
+	NextColumn: () -> number,
+	NextRow: () -> number,
+	SetColumnIndex: (index: number) -> (),
+	SetRowIndex: (index: number) -> (),
+	NextHeaderColumn: () -> number,
+	SetHeaderColumnIndex: (index: number) -> (),
+	SetColumnWidth: (index: number, width: number) -> (),
+
+    --[[
+        ---------
+          STATE
+        ---------
+    ]]
+
+	State: <T>(initialValue: T) -> State<T>,
+	WeakState: <T>(initialValue: T) -> T,
+	VariableState: <T>(variable: T, callback: (T) -> ()) -> State<T>,
+	TableState: <K, V>(tab: { [K]: V }, key: K, callback: ((newValue: V) -> true?)?) -> State<V>,
+	ComputedState: <T, U>(firstState: State<T>, onChangeCallback: (firstValue: T) -> U) -> State<U>,
+
+    --[[
+        -------------
+          FUNCTIONS
+        -------------
+    ]]
+
+	Init: (playerInstance: BasePlayerGui?, eventConnection: (RBXScriptConnection | () -> () | false)?, allowMultipleInits: boolean?) -> Iris,
+	Shutdown: () -> (),
+	Connect: (self: Iris, callback: () -> ()) -> () -> (),
+	Append: (userInstance: GuiObject) -> (),
+	ForceRefresh: () -> (),
+
+	-- Widget
+	SetFocusedWindow: (thisWidget: Window?) -> (),
+
+	-- ID API
+	PushId: (ID: ID) -> (),
+	PopId: () -> (),
+	SetNextWidgetID: (ID: ID) -> (),
+
+	-- Config API
+	UpdateGlobalConfig: (deltaStyle: { [string]: any }) -> (),
+	PushConfig: (deltaStyle: { [string]: any }) -> (),
+	PopConfig: () -> (),
+
+    --[[
+        --------------
+          PROPERTIES
+        --------------
+    ]]
+
+	Internal: Internal,
+	Disabled: boolean,
+	Args: { [string]: { [string]: number } },
+	Events: { [string]: () -> boolean },
+
+	TemplateConfig: { [string]: Config },
+	_config: Config,
+	ShowDemoWindow: () -> Window,
+}
+
+local Iris = {} :: Iris
 
 local HttpService: HttpService = game:GetService("HttpService")
-local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
+local Internal: Internal = (function(Iris: Iris): Internal
     --[=[
         @class Internal
         An internal class within Iris containing all the backend data and functions for Iris to operate.
         It is recommended that you don't generally interact with Internal unless you understand what you are doing.
     ]=]
-	local Internal = {} :: Types.Internal
+	local Internal = {} :: Internal
 
     --[[
         ---------------------------------
@@ -169,7 +1289,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 		end
 		self.value = newValue
 		self.lastChangeTick = Iris.Internal._cycleTick
-		for _, thisWidget: Types.Widget in self.ConnectedWidgets do
+		for _, thisWidget: Widget in self.ConnectedWidgets do
 			if thisWidget.lastCycleTick ~= -1 then
 				Internal._widgets[thisWidget.type].UpdateState(thisWidget)
 			end
@@ -348,13 +1468,13 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
         @within Internal
         @function WidgetConstructor
         @param type string -- name used to denote the widget class.
-        @param widgetClass Types.WidgetClass -- table of methods for the new widget.
+        @param widgetClass WidgetClass -- table of methods for the new widget.
 
         For each widget, a widget class is created which handles all the operations of a widget. This removes the class nature
         of widgets, and simplifies the available functions which can be applied to any widget. The widgets themselves are
         dumb tables containing all the data but no methods to handle any of the data apart from events.
     ]=]
-	function Internal.WidgetConstructor(type: string, widgetClass: Types.WidgetClass)
+	function Internal.WidgetConstructor(type: string, widgetClass: WidgetClass)
 		local Fields: { [string]: { [string]: { string } } } = {
 			All = {
 				needed = {
@@ -389,7 +1509,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 
 		-- we ensure all essential functions and properties are present, otherwise the code will break later.
 		-- some functions will only be needed if the widget has children or has state.
-		local thisWidget = {} :: Types.WidgetClass
+		local thisWidget = {} :: WidgetClass
 		for _, field: string in Fields.All.needed do
 			assert(widgetClass[field] ~= nil, `field {field} is missing from widget {type}, it is needed for all widgets`)
 			thisWidget[field] = widgetClass[field]
@@ -463,26 +1583,26 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
         Every widget is created through _Insert. An ID is generated based on the line of the calling code and is used to
         find the previous frame widget if it exists. If no widget exists, a new one is created.
     ]=]
-	function Internal._Insert(widgetType: string, args: Types.WidgetArguments?, states: Types.WidgetStates?): Types.Widget
-		local ID: Types.ID = Internal._getID(3)
+	function Internal._Insert(widgetType: string, args: WidgetArguments?, states: WidgetStates?): Widget
+		local ID: ID = Internal._getID(3)
 		--debug.profilebegin(ID)
 
 		-- fetch the widget class which contains all the functions for the widget.
-		local thisWidgetClass: Types.WidgetClass = Internal._widgets[widgetType]
+		local thisWidgetClass: WidgetClass = Internal._widgets[widgetType]
 
 		if Internal._VDOM[ID] then
 			-- widget already created once this frame, so we can append to it.
 			return Internal._ContinueWidget(ID, widgetType)
 		end
 
-		local arguments: Types.Arguments = {} :: Types.Arguments
+		local arguments: Arguments = {} :: Arguments
 		if args ~= nil then
 			if type(args) ~= "table" then
 				args = { args }
 			end
 
 			-- convert the arguments to a key-value dictionary so arguments can be referred to by their name and not index.
-			for index: number, argument: Types.Argument in args do
+			for index: number, argument: Argument in args do
 				assert(index > 0, `Widget Arguments must be a positive number, not {index} of type {typeof(index)} for {argument}.`)
 				arguments[thisWidgetClass.ArgNames[index]] = argument
 			end
@@ -490,7 +1610,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 		-- prevents tampering with the arguments which are used to check for changes.
 		table.freeze(arguments)
 
-		local lastWidget: Types.Widget? = Internal._lastVDOM[ID]
+		local lastWidget: Widget? = Internal._lastVDOM[ID]
 		if lastWidget and widgetType == lastWidget.type then
 			-- found a matching widget from last frame.
 			if Internal._refreshCounter > 0 then
@@ -499,9 +1619,9 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 				lastWidget = nil
 			end
 		end
-		local thisWidget: Types.Widget = if lastWidget == nil then Internal._GenNewWidget(widgetType, arguments, states, ID) else lastWidget
+		local thisWidget: Widget = if lastWidget == nil then Internal._GenNewWidget(widgetType, arguments, states, ID) else lastWidget
 
-		local parentWidget: Types.ParentWidget = thisWidget.parentWidget
+		local parentWidget: ParentWidget = thisWidget.parentWidget
 
 		if thisWidget.type ~= "Window" and thisWidget.type ~= "Tooltip" then
 			if thisWidget.ZIndex ~= parentWidget.ZOffset then
@@ -519,7 +1639,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 
 		-- since rows are not instances, but will be removed if not updated, we have to add specific table code.
 		if parentWidget.type == "Table" then
-			local Table = parentWidget :: Types.Table
+			local Table = parentWidget :: Table
 			Table._rowCycles[Table._rowIndex] = Internal._cycleTick
 		end
 
@@ -536,7 +1656,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 		parentWidget.ZOffset += 1
 
 		if thisWidgetClass.hasChildren then
-			local thisParent = thisWidget :: Types.ParentWidget
+			local thisParent = thisWidget :: ParentWidget
 			-- a parent widget, so we increase our depth.
 			thisParent.ZOffset = 0
 			thisParent.ZUpdate = false
@@ -564,13 +1684,13 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
         All widgets are created as tables with properties. The widget class contains the functions to create the UI instances and
         update the widget or change state.
     ]=]
-	function Internal._GenNewWidget(widgetType: string, arguments: Types.Arguments, states: Types.WidgetStates?, ID: Types.ID): Types.Widget
-		local parentId: Types.ID = Internal._IDStack[Internal._stackIndex]
-		local parentWidget: Types.ParentWidget = Internal._VDOM[parentId]
-		local thisWidgetClass: Types.WidgetClass = Internal._widgets[widgetType]
+	function Internal._GenNewWidget(widgetType: string, arguments: Arguments, states: WidgetStates?, ID: ID): Widget
+		local parentId: ID = Internal._IDStack[Internal._stackIndex]
+		local parentWidget: ParentWidget = Internal._VDOM[parentId]
+		local thisWidgetClass: WidgetClass = Internal._widgets[widgetType]
 
 		-- widgets are just tables with properties.
-		local thisWidget = {} :: Types.Widget
+		local thisWidget = {} :: Widget
 		setmetatable(thisWidget, thisWidget)
 
 		thisWidget.ID = ID
@@ -599,9 +1719,9 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 
 		local eventMTParent
 		if thisWidgetClass.hasState then
-			local stateWidget = thisWidget :: Types.StateWidget
+			local stateWidget = thisWidget :: StateWidget
 			if states then
-				for index: string, state: Types.State<any> in states do
+				for index: string, state: State<any> in states do
 					if not (type(state) == "table" and getmetatable(state :: any) == Internal.StateClass) then
 						-- generate a new state.
 						states[index] = Internal._widgetState(stateWidget, index, state)
@@ -610,7 +1730,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 				end
 
 				stateWidget.state = states
-				for _, state: Types.State<any> in states do
+				for _, state: State<any> in states do
 					state.ConnectedWidgets[stateWidget.ID] = stateWidget
 				end
 			else
@@ -649,9 +1769,9 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
         arguments or states.
         Basically equivalent to the end of `Internal._Insert`.
     ]=]
-	function Internal._ContinueWidget(ID: Types.ID, widgetType: string): Types.Widget
-		local thisWidgetClass: Types.WidgetClass = Internal._widgets[widgetType]
-		local thisWidget: Types.Widget = Internal._VDOM[ID]
+	function Internal._ContinueWidget(ID: ID, widgetType: string): Widget
+		local thisWidgetClass: WidgetClass = Internal._widgets[widgetType]
+		local thisWidget: Widget = Internal._VDOM[ID]
 
 		if thisWidgetClass.hasChildren then
 			-- a parent widget so we increase our depth.
@@ -672,7 +1792,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
         previous frame. There is no code which needs to update any widget tables since they are already reset
         at the start before discarding happens.
     ]=]
-	function Internal._DiscardWidget(widgetToDiscard: Types.Widget)
+	function Internal._DiscardWidget(widgetToDiscard: Widget)
 		local widgetParent = widgetToDiscard.parentWidget
 		if widgetParent then
 			-- if the parent needs to update it's children.
@@ -697,8 +1817,8 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
         Connects the state to the widget. If no state exists then a new one is created. Called for every state in every
         widget if the user does not provide a state.
     ]=]
-	function Internal._widgetState(thisWidget: Types.StateWidget, stateName: string, initialValue: any): Types.State<any>
-		local ID: Types.ID = thisWidget.ID .. stateName
+	function Internal._widgetState(thisWidget: StateWidget, stateName: string, initialValue: any): State<any>
+		local ID: ID = thisWidget.ID .. stateName
 		if Internal._states[ID] then
 			Internal._states[ID].ConnectedWidgets[thisWidget.ID] = thisWidget
 			Internal._states[ID].lastChangeTick = Internal._cycleTick
@@ -726,9 +1846,9 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
         A wrapper for any event on any widget. Automatically, Iris does not initialize events unless they are explicitly
         called so in the first frame, the event connections are set up. Every event is a function which returns a boolean.
     ]=]
-	function Internal._EventCall(thisWidget: Types.Widget, eventName: string): boolean
-		local Events: Types.Events = Internal._widgets[thisWidget.type].Events
-		local Event: Types.Event = Events[eventName]
+	function Internal._EventCall(thisWidget: Widget, eventName: string): boolean
+		local Events: Events = Internal._widgets[thisWidget.type].Events
+		local Event: Event = Events[eventName]
 		assert(Event ~= nil, `widget {thisWidget.type} has no event of name {eventName}`)
 
 		if thisWidget.trackedEvents[eventName] == nil then
@@ -745,7 +1865,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 
         Returns the parent widget of the currently active widget, based on the stack depth.
     ]=]
-	function Internal._GetParentWidget(): Types.ParentWidget
+	function Internal._GetParentWidget(): ParentWidget
 		return Internal._VDOM[Internal._IDStack[Internal._stackIndex]]
 	end
 
@@ -759,7 +1879,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 
         Creates the VDOM at the start of each frame containing just the root instance.
     ]=]
-	function Internal._generateEmptyVDOM(): { [Types.ID]: Types.Widget }
+	function Internal._generateEmptyVDOM(): { [ID]: Widget }
 		return {
 			["R"] = Internal._rootWidget,
 		}
@@ -827,15 +1947,15 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
         created from. This ensures that the function is heuristic and always returns the same
         id for the same widget.
     ]=]
-	function Internal._getID(levelsToIgnore: number): Types.ID
+	function Internal._getID(levelsToIgnore: number): ID
 		if Internal._nextWidgetId then
-			local ID: Types.ID = Internal._nextWidgetId
+			local ID: ID = Internal._nextWidgetId
 			Internal._nextWidgetId = nil
 			return ID
 		end
 
 		local i: number = 1 + (levelsToIgnore or 1)
-		local ID: Types.ID = ""
+		local ID: ID = ""
 		local levelInfo: number = debug.info(i, "l")
 		while levelInfo ~= -1 and levelInfo ~= nil do
 			ID ..= "+" .. levelInfo
@@ -926,6 +2046,7 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 	return Internal
 end)(Iris)
 
+Iris.Internal = Internal
 for k,v in Internal do
 	Iris[k] = v
 end
@@ -976,7 +2097,7 @@ Iris.Events = {}
 
     If the `eventConnection` is `false` then Iris will not create a cycle loop and the user will need to call [Internal._cycle] every frame.
 ]=]
-function Iris.Init(parentInstance: Instance?, eventConnection: (RBXScriptSignal | (() -> number) | false)?, allowMultipleInits: boolean): Types.Iris
+function Iris.Init(parentInstance: Instance?, eventConnection: (RBXScriptSignal | (() -> number) | false)?, allowMultipleInits: boolean): Iris
 	assert(Internal._shutdown == false, "Iris.Init() cannot be called once shutdown.")
 	assert(Internal._started == false or allowMultipleInits == true, "Iris.Init() can only be called once.")
 
@@ -1084,12 +2205,12 @@ end
     property or by the current parent widget from the stack.
 ]=]
 function Iris.Append(userInstance: GuiObject)
-	local parentWidget: Types.ParentWidget = Internal._GetParentWidget()
+	local parentWidget: ParentWidget = Internal._GetParentWidget()
 	local widgetInstanceParent: GuiObject
 	if Internal._config.Parent then
 		widgetInstanceParent = Internal._config.Parent :: any
 	else
-		widgetInstanceParent = Internal._widgets[parentWidget.type].ChildAdded(parentWidget, { type = "userInstance" } :: Types.Widget)
+		widgetInstanceParent = Internal._widgets[parentWidget.type].ChildAdded(parentWidget, { type = "userInstance" } :: Widget)
 	end
 	userInstance.Parent = widgetInstanceParent
 end
@@ -1558,7 +2679,7 @@ Internal._globalRefreshRequested = false -- UpdatingGlobalConfig changes this to
 
     Pushes an id onto the id stack for all future widgets. Use [Iris.PopId] to pop it off the stack.
 ]=]
-function Iris.PushId(ID: Types.ID)
+function Iris.PushId(ID: ID)
 	assert(typeof(ID) == "string", "The ID argument to Iris.PushId() to be a string.")
 
 	Internal._newID = true
@@ -1601,7 +2722,7 @@ end
     -- both text widgets will be placed under the same window despite being called separately.
     ```
 ]=]
-function Iris.SetNextWidgetID(ID: Types.ID)
+function Iris.SetNextWidgetID(ID: ID)
 	Internal._nextWidgetId = ID
 end
 
@@ -1643,8 +2764,8 @@ end
     In this example, the code will work properly, and increment every frame.
     :::
 ]=]
-function Iris.State<T>(initialValue: T): Types.State<T>
-	local ID: Types.ID = Internal._getID(2)
+function Iris.State<T>(initialValue: T): State<T>
+	local ID: ID = Internal._getID(2)
 	if Internal._states[ID] then
 		return Internal._states[ID]
 	end
@@ -1668,8 +2789,8 @@ end
 
     Constructs a new state object, subsequent ID calls will return the same object, except all widgets connected to the state are discarded, the state reverts to the passed initialValue
 ]=]
-function Iris.WeakState<T>(initialValue: T): Types.State<T>
-	local ID: Types.ID = Internal._getID(2)
+function Iris.WeakState<T>(initialValue: T): State<T>
+	local ID: ID = Internal._getID(2)
 	if Internal._states[ID] then
 		if next(Internal._states[ID].ConnectedWidgets) == nil then
 			Internal._states[ID] = nil
@@ -1726,9 +2847,9 @@ end
     You must use `state:set(...)` if you want the variable to update to the state's value.
     :::
 ]=]
-function Iris.VariableState<T>(variable: T, callback: (T) -> ()): Types.State<T>
-	local ID: Types.ID = Internal._getID(2)
-	local state: Types.State<T>? = Internal._states[ID]
+function Iris.VariableState<T>(variable: T, callback: (T) -> ()): State<T>
+	local ID: ID = Internal._getID(2)
+	local state: State<T>? = Internal._states[ID]
 
 	if state then
 		if variable ~= state.value then
@@ -1743,7 +2864,7 @@ function Iris.VariableState<T>(variable: T, callback: (T) -> ()): Types.State<T>
 		lastChangeTick = Iris.Internal._cycleTick,
 		ConnectedWidgets = {},
 		ConnectedFunctions = {},
-	} :: Types.State<T>
+	} :: State<T>
 	setmetatable(newState, Internal.StateClass)
 	Internal._states[ID] = newState
 
@@ -1806,10 +2927,10 @@ end
     You must use `state:set(...)` if you want the table value to update to the state's value.
     :::
 ]=]
-function Iris.TableState<K, V>(tab: { [K]: V }, key: K, callback: ((newValue: V) -> false?)?): Types.State<V>
+function Iris.TableState<K, V>(tab: { [K]: V }, key: K, callback: ((newValue: V) -> false?)?): State<V>
 	local value: V = tab[key]
-	local ID: Types.ID = Internal._getID(2)
-	local state: Types.State<V>? = Internal._states[ID]
+	local ID: ID = Internal._getID(2)
+	local state: State<V>? = Internal._states[ID]
 
 	-- If the table values changes, then we update the state to match.
 	if state then
@@ -1825,7 +2946,7 @@ function Iris.TableState<K, V>(tab: { [K]: V }, key: K, callback: ((newValue: V)
 		lastChangeTick = Iris.Internal._cycleTick,
 		ConnectedWidgets = {},
 		ConnectedFunctions = {},
-	} :: Types.State<V>
+	} :: State<V>
 	setmetatable(newState, Internal.StateClass)
 	Internal._states[ID] = newState
 
@@ -1859,8 +2980,8 @@ end
     ```
     :::
 ]=]
-function Iris.ComputedState<T, U>(firstState: Types.State<T>, onChangeCallback: (firstValue: T) -> U): Types.State<U>
-	local ID: Types.ID = Internal._getID(2)
+function Iris.ComputedState<T, U>(firstState: State<T>, onChangeCallback: (firstValue: T) -> U): State<U>
+	local ID: ID = Internal._getID(2)
 
 	if Internal._states[ID] then
 		return Internal._states[ID]
@@ -1871,7 +2992,7 @@ function Iris.ComputedState<T, U>(firstState: Types.State<T>, onChangeCallback: 
 			lastChangeTick = Iris.Internal._cycleTick,
 			ConnectedWidgets = {},
 			ConnectedFunctions = {},
-		} :: Types.State<U>
+		} :: State<U>
 		firstState:onChange(function(newValue: T)
 			Internal._states[ID]:set(onChangeCallback(newValue))
 		end)
@@ -1891,7 +3012,7 @@ end
     Iris:Connect(Iris.ShowDemoWindow)
     ```
 ]=]
-Iris.ShowDemoWindow = (function(Iris: Types.Iris)
+Iris.ShowDemoWindow = (function(Iris: Iris)
 	local showMainWindow = Iris.State(true)
 	local showRecursiveWindow = Iris.State(false)
 	local showRuntimeInfo = Iris.State(false)
@@ -1928,7 +3049,7 @@ Iris.ShowDemoWindow = (function(Iris: Types.Iris)
 			do
 				Iris.SeparatorText({ "Basic" })
 
-				local radioButtonState: Types.State<any> = Iris.State(1)
+				local radioButtonState: State<any> = Iris.State(1)
 				Iris.Button({ "Button" })
 				Iris.SmallButton({ "SmallButton" })
 				Iris.Text({ "Text" })
@@ -3669,15 +4790,15 @@ Iris.ShowDemoWindow = (function(Iris: Types.Iris)
 
 	-- main demo window
 	return function()
-		local NoTitleBar: Types.State<boolean> = Iris.State(false)
-		local NoBackground: Types.State<boolean> = Iris.State(false)
-		local NoCollapse: Types.State<boolean> = Iris.State(false)
-		local NoClose: Types.State<boolean> = Iris.State(true)
-		local NoMove: Types.State<boolean> = Iris.State(false)
-		local NoScrollbar: Types.State<boolean> = Iris.State(false)
-		local NoResize: Types.State<boolean> = Iris.State(false)
-		local NoNav: Types.State<boolean> = Iris.State(false)
-		local NoMenu: Types.State<boolean> = Iris.State(false)
+		local NoTitleBar: State<boolean> = Iris.State(false)
+		local NoBackground: State<boolean> = Iris.State(false)
+		local NoCollapse: State<boolean> = Iris.State(false)
+		local NoClose: State<boolean> = Iris.State(true)
+		local NoMove: State<boolean> = Iris.State(false)
+		local NoScrollbar: State<boolean> = Iris.State(false)
+		local NoResize: State<boolean> = Iris.State(false)
+		local NoNav: State<boolean> = Iris.State(false)
+		local NoMenu: State<boolean> = Iris.State(false)
 
 		if showMainWindow.value == false then
 			Iris.Checkbox({ "Open main window" }, { isChecked = showMainWindow })
@@ -3686,7 +4807,7 @@ Iris.ShowDemoWindow = (function(Iris: Types.Iris)
 		end
 
 		debug.profilebegin("Iris/Demo/Window")
-		local window: Types.Window = Iris.Window({
+		local window: Window = Iris.Window({
 			[Iris.Args.Window.Title] = "Iris Demo Window",
 			[Iris.Args.Window.NoTitleBar] = NoTitleBar.value,
 			[Iris.Args.Window.NoBackground] = NoBackground.value,
@@ -3877,7 +4998,7 @@ function widgets.findBestWindowPosForPopup(refPos: Vector2, size: Vector2, outer
 	return clampedPos
 end
 
-function widgets.getScreenSizeForWindow(thisWidget: Types.Widget): Vector2 -- possible parents are GuiBase2d, CoreGui, PlayerGui
+function widgets.getScreenSizeForWindow(thisWidget: Widget): Vector2 -- possible parents are GuiBase2d, CoreGui, PlayerGui
 	if thisWidget.Instance:IsA("GuiBase2d") then
 		return thisWidget.Instance.AbsoluteSize
 	else
@@ -3894,8 +5015,8 @@ function widgets.getScreenSizeForWindow(thisWidget: Types.Widget): Vector2 -- po
 	end
 end
 
-function widgets.extend(superClass: Types.WidgetClass, subClass: Types.WidgetClass): Types.WidgetClass
-	local newClass: Types.WidgetClass = table.clone(superClass)
+function widgets.extend(superClass: WidgetClass, subClass: WidgetClass): WidgetClass
+	local newClass: WidgetClass = table.clone(superClass)
 	for index: unknown, value: any in subClass do
 		newClass[index] = value
 	end
@@ -4116,8 +5237,8 @@ function widgets.applyInputEnded(thisInstance: GuiButton, callback: (input: Inpu
 	end)
 end
 
-function widgets.discardState(thisWidget: Types.StateWidget)
-	for _, state: Types.State<any> in thisWidget.state do
+function widgets.discardState(thisWidget: StateWidget)
+	for _, state: State<any> in thisWidget.state do
 		state.ConnectedWidgets[thisWidget.ID] = nil
 	end
 end
@@ -4129,9 +5250,9 @@ function widgets.registerEvent(event: string, callback: (...any) -> ())
 end
 
 widgets.EVENTS = {
-	hover = function(pathToHovered: (thisWidget: Types.Widget) -> GuiObject)
+	hover = function(pathToHovered: (thisWidget: Widget) -> GuiObject)
 		return {
-			["Init"] = function(thisWidget: Types.Widget & Types.Hovered)
+			["Init"] = function(thisWidget: Widget & Hovered)
 				local hoveredGuiObject: GuiObject = pathToHovered(thisWidget)
 				widgets.applyMouseEnter(hoveredGuiObject, function()
 					thisWidget.isHoveredEvent = true
@@ -4141,15 +5262,15 @@ widgets.EVENTS = {
 				end)
 				thisWidget.isHoveredEvent = false
 			end,
-			["Get"] = function(thisWidget: Types.Widget & Types.Hovered): boolean
+			["Get"] = function(thisWidget: Widget & Hovered): boolean
 				return thisWidget.isHoveredEvent
 			end,
 		}
 	end,
 
-	click = function(pathToClicked: (thisWidget: Types.Widget) -> GuiButton)
+	click = function(pathToClicked: (thisWidget: Widget) -> GuiButton)
 		return {
-			["Init"] = function(thisWidget: Types.Widget & Types.Clicked)
+			["Init"] = function(thisWidget: Widget & Clicked)
 				local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
 				thisWidget.lastClickedTick = -1
 
@@ -4157,15 +5278,15 @@ widgets.EVENTS = {
 					thisWidget.lastClickedTick = Iris._cycleTick + 1
 				end)
 			end,
-			["Get"] = function(thisWidget: Types.Widget & Types.Clicked): boolean
+			["Get"] = function(thisWidget: Widget & Clicked): boolean
 				return thisWidget.lastClickedTick == Iris._cycleTick
 			end,
 		}
 	end,
 
-	rightClick = function(pathToClicked: (thisWidget: Types.Widget) -> GuiButton)
+	rightClick = function(pathToClicked: (thisWidget: Widget) -> GuiButton)
 		return {
-			["Init"] = function(thisWidget: Types.Widget & Types.RightClicked)
+			["Init"] = function(thisWidget: Widget & RightClicked)
 				local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
 				thisWidget.lastRightClickedTick = -1
 
@@ -4173,15 +5294,15 @@ widgets.EVENTS = {
 					thisWidget.lastRightClickedTick = Iris._cycleTick + 1
 				end)
 			end,
-			["Get"] = function(thisWidget: Types.Widget & Types.RightClicked): boolean
+			["Get"] = function(thisWidget: Widget & RightClicked): boolean
 				return thisWidget.lastRightClickedTick == Iris._cycleTick
 			end,
 		}
 	end,
 
-	doubleClick = function(pathToClicked: (thisWidget: Types.Widget) -> GuiButton)
+	doubleClick = function(pathToClicked: (thisWidget: Widget) -> GuiButton)
 		return {
-			["Init"] = function(thisWidget: Types.Widget & Types.DoubleClicked)
+			["Init"] = function(thisWidget: Widget & DoubleClicked)
 				local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
 				thisWidget.lastClickedTime = -1
 				thisWidget.lastClickedPosition = Vector2.zero
@@ -4198,15 +5319,15 @@ widgets.EVENTS = {
 					end
 				end)
 			end,
-			["Get"] = function(thisWidget: Types.Widget & Types.DoubleClicked): boolean
+			["Get"] = function(thisWidget: Widget & DoubleClicked): boolean
 				return thisWidget.lastDoubleClickedTick == Iris._cycleTick
 			end,
 		}
 	end,
 
-	ctrlClick = function(pathToClicked: (thisWidget: Types.Widget) -> GuiButton)
+	ctrlClick = function(pathToClicked: (thisWidget: Widget) -> GuiButton)
 		return {
-			["Init"] = function(thisWidget: Types.Widget & Types.CtrlClicked)
+			["Init"] = function(thisWidget: Widget & CtrlClicked)
 				local clickedGuiObject: GuiButton = pathToClicked(thisWidget)
 				thisWidget.lastCtrlClickedTick = -1
 
@@ -4216,7 +5337,7 @@ widgets.EVENTS = {
 					end
 				end)
 			end,
-			["Get"] = function(thisWidget: Types.Widget & Types.CtrlClicked): boolean
+			["Get"] = function(thisWidget: Widget & CtrlClicked): boolean
 				return thisWidget.lastCtrlClickedTick == Iris._cycleTick
 			end,
 		}
@@ -4233,7 +5354,7 @@ Iris.WidgetConstructor("Root", {
 	hasChildren = true,
 	Args = {},
 	Events = {},
-	Generate = function(_thisWidget: Types.Root)
+	Generate = function(_thisWidget: Root)
 		local Root: Folder = Instance.new("Folder")
 		Root.Name = "Iris_Root"
 
@@ -4319,7 +5440,7 @@ Iris.WidgetConstructor("Root", {
 
 		return Root
 	end,
-	Update = function(thisWidget: Types.Root)
+	Update = function(thisWidget: Root)
 		if NumNonWindowChildren > 0 then
 			local Root = thisWidget.Instance :: any
 			local PseudoWindowScreenGui = Root.PseudoWindowScreenGui :: any
@@ -4327,11 +5448,11 @@ Iris.WidgetConstructor("Root", {
 			PseudoWindow.Visible = true
 		end
 	end,
-	Discard = function(thisWidget: Types.Root)
+	Discard = function(thisWidget: Root)
 		NumNonWindowChildren = 0
 		thisWidget.Instance:Destroy()
 	end,
-	ChildAdded = function(thisWidget: Types.Root, thisChild: Types.Widget)
+	ChildAdded = function(thisWidget: Root, thisChild: Widget)
 		local Root = thisWidget.Instance :: any
 
 		if thisChild.type == "Window" then
@@ -4350,7 +5471,7 @@ Iris.WidgetConstructor("Root", {
 			return PseudoWindow
 		end
 	end,
-	ChildDiscarded = function(thisWidget: Types.Root, thisChild: Types.Widget)
+	ChildDiscarded = function(thisWidget: Root, thisChild: Widget)
 		if thisChild.type ~= "Window" and thisChild.type ~= "Tooltip" and thisChild.type ~= "MenuBar" then
 			NumNonWindowChildren -= 1
 			if NumNonWindowChildren == 0 then
@@ -4361,7 +5482,7 @@ Iris.WidgetConstructor("Root", {
 			end
 		end
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 local function relocateTooltips()
 	if Iris._rootInstance == nil then
@@ -4389,7 +5510,7 @@ Iris.WidgetConstructor("Tooltip", {
 		["Text"] = 1,
 	},
 	Events = {},
-	Generate = function(thisWidget: Types.Tooltip)
+	Generate = function(thisWidget: Tooltip)
 		thisWidget.parentWidget = Iris._rootWidget -- only allow root as parent
 
 		local Tooltip: Frame = Instance.new("Frame")
@@ -4419,7 +5540,7 @@ Iris.WidgetConstructor("Tooltip", {
 
 		return Tooltip
 	end,
-	Update = function(thisWidget: Types.Tooltip)
+	Update = function(thisWidget: Tooltip)
 		local Tooltip = thisWidget.Instance :: Frame
 		local TooltipText: TextLabel = Tooltip.TooltipText
 		if thisWidget.arguments.Text == nil then
@@ -4428,17 +5549,17 @@ Iris.WidgetConstructor("Tooltip", {
 		TooltipText.Text = thisWidget.arguments.Text
 		relocateTooltips()
 	end,
-	Discard = function(thisWidget: Types.Tooltip)
+	Discard = function(thisWidget: Tooltip)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 local windowDisplayOrder: number = 0 -- incremental count which is used for determining focused windows ZIndex
-local dragWindow: Types.Window? -- window being dragged, may be nil
+local dragWindow: Window? -- window being dragged, may be nil
 local isDragging: boolean = false
 local moveDeltaCursorPosition: Vector2 -- cursor offset from drag origin (top left of window)
 
-local resizeWindow: Types.Window? -- window being resized, may be nil
+local resizeWindow: Window? -- window being resized, may be nil
 local isResizing = false
 local isInsideResize = false -- is cursor inside of the focused window resize outer padding
 local isInsideWindow = false -- is cursor inside of the focused window
@@ -4447,10 +5568,10 @@ local resizeFromLeftRight: Enum.LeftRight = Enum.LeftRight.Left
 
 local lastCursorPosition: Vector2
 
-local focusedWindow: Types.Window? -- window with focus, may be nil
+local focusedWindow: Window? -- window with focus, may be nil
 local anyFocusedWindow: boolean = false -- is there any focused window?
 
-local windowWidgets: { [Types.ID]: Types.Window } = {} -- array of widget objects of type window
+local windowWidgets: { [ID]: Window } = {} -- array of widget objects of type window
 
 local function quickSwapWindows()
 	-- ctrl + tab swapping functionality
@@ -4459,9 +5580,9 @@ local function quickSwapWindows()
 	end
 
 	local lowest: number = 0xFFFF
-	local lowestWidget: Types.Window
+	local lowestWidget: Window
 
-	for _, widget: Types.Window in windowWidgets do
+	for _, widget: Window in windowWidgets do
 		if widget.state.isOpened.value and not widget.arguments.NoNav then
 			if widget.Instance:IsA("ScreenGui") then
 				local value: number = widget.Instance.DisplayOrder
@@ -4483,7 +5604,7 @@ local function quickSwapWindows()
 	Iris.SetFocusedWindow(lowestWidget)
 end
 
-local function fitSizeToWindowBounds(thisWidget: Types.Window, intentedSize: Vector2): Vector2
+local function fitSizeToWindowBounds(thisWidget: Window, intentedSize: Vector2): Vector2
 	local windowSize: Vector2 = Vector2.new(thisWidget.state.position.value.X, thisWidget.state.position.value.Y)
 	local minWindowSize: number = (Iris._config.TextSize + 2 * Iris._config.FramePadding.Y) * 2
 	local usableSize: Vector2 = widgets.getScreenSizeForWindow(thisWidget)
@@ -4493,7 +5614,7 @@ local function fitSizeToWindowBounds(thisWidget: Types.Window, intentedSize: Vec
 	return Vector2.new(math.clamp(intentedSize.X, minWindowSize, math.max(maxWindowSize.X, minWindowSize)), math.clamp(intentedSize.Y, minWindowSize, math.max(maxWindowSize.Y, minWindowSize)))
 end
 
-local function fitPositionToWindowBounds(thisWidget: Types.Window, intendedPosition: Vector2): Vector2
+local function fitPositionToWindowBounds(thisWidget: Window, intendedPosition: Vector2): Vector2
 	local thisWidgetInstance = thisWidget.Instance
 	local usableSize: Vector2 = widgets.getScreenSizeForWindow(thisWidget)
 	local safeAreaPadding: Vector2 = Vector2.new(Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.X, Iris._config.WindowBorderSize + Iris._config.DisplaySafeAreaPadding.Y)
@@ -4504,7 +5625,7 @@ local function fitPositionToWindowBounds(thisWidget: Types.Window, intendedPosit
 	)
 end
 
-Iris.SetFocusedWindow = function(thisWidget: Types.Window?)
+Iris.SetFocusedWindow = function(thisWidget: Window?)
 	if focusedWindow == thisWidget then
 		return
 	end
@@ -4572,7 +5693,7 @@ widgets.registerEvent("InputBegan", function(input: InputObject)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		local inWindow: boolean = false
 		local position: Vector2 = widgets.getMouseLocation()
-		for _, window: Types.Window in windowWidgets do
+		for _, window: Window in windowWidgets do
 			local Window = window.Instance :: Instance
 			if not Window then
 				continue
@@ -4713,35 +5834,35 @@ Iris.WidgetConstructor("Window", {
 	},
 	Events = {
 		["closed"] = {
-			["Init"] = function(_thisWidget: Types.Window) end,
-			["Get"] = function(thisWidget: Types.Window)
+			["Init"] = function(_thisWidget: Window) end,
+			["Get"] = function(thisWidget: Window)
 				return thisWidget.lastClosedTick == Iris._cycleTick
 			end,
 		},
 		["opened"] = {
-			["Init"] = function(_thisWidget: Types.Window) end,
-			["Get"] = function(thisWidget: Types.Window)
+			["Init"] = function(_thisWidget: Window) end,
+			["Get"] = function(thisWidget: Window)
 				return thisWidget.lastOpenedTick == Iris._cycleTick
 			end,
 		},
 		["collapsed"] = {
-			["Init"] = function(_thisWidget: Types.Window) end,
-			["Get"] = function(thisWidget: Types.Window)
+			["Init"] = function(_thisWidget: Window) end,
+			["Get"] = function(thisWidget: Window)
 				return thisWidget.lastCollapsedTick == Iris._cycleTick
 			end,
 		},
 		["uncollapsed"] = {
-			["Init"] = function(_thisWidget: Types.Window) end,
-			["Get"] = function(thisWidget: Types.Window)
+			["Init"] = function(_thisWidget: Window) end,
+			["Get"] = function(thisWidget: Window)
 				return thisWidget.lastUncollapsedTick == Iris._cycleTick
 			end,
 		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			local Window = thisWidget.Instance :: Frame
 			return Window.WindowButton
 		end),
 	},
-	Generate = function(thisWidget: Types.Window)
+	Generate = function(thisWidget: Window)
 		thisWidget.parentWidget = Iris._rootWidget -- only allow root as parent
 
 		thisWidget.usesScreenGuis = Iris._config.UseScreenGUIs
@@ -5219,7 +6340,7 @@ Iris.WidgetConstructor("Window", {
 		thisWidget.ChildContainer = ChildContainer
 		return Window
 	end,
-	Update = function(thisWidget: Types.Window)
+	Update = function(thisWidget: Window)
 		local Window = thisWidget.Instance :: GuiObject
 		local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
 		local WindowButton = Window.WindowButton :: TextButton
@@ -5286,7 +6407,7 @@ Iris.WidgetConstructor("Window", {
 
 		Title.Text = thisWidget.arguments.Title or ""
 	end,
-	Discard = function(thisWidget: Types.Window)
+	Discard = function(thisWidget: Window)
 		if focusedWindow == thisWidget then
 			focusedWindow = nil
 			anyFocusedWindow = false
@@ -5303,7 +6424,7 @@ Iris.WidgetConstructor("Window", {
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-	ChildAdded = function(thisWidget: Types.Window, thisChid: Types.Widget)
+	ChildAdded = function(thisWidget: Window, thisChid: Widget)
 		local Window = thisWidget.Instance :: Frame
 		local WindowButton = Window.WindowButton :: TextButton
 		local Content = WindowButton.Content :: Frame
@@ -5315,7 +6436,7 @@ Iris.WidgetConstructor("Window", {
 		end
 		return thisWidget.ChildContainer
 	end,
-	UpdateState = function(thisWidget: Types.Window)
+	UpdateState = function(thisWidget: Window)
 		local stateSize: Vector2 = thisWidget.state.size.value
 		local statePosition: Vector2 = thisWidget.state.position.value
 		local stateIsUncollapsed: boolean = thisWidget.state.isUncollapsed.value
@@ -5416,7 +6537,7 @@ Iris.WidgetConstructor("Window", {
 			end
 		end
 	end,
-	GenerateState = function(thisWidget: Types.Window)
+	GenerateState = function(thisWidget: Window)
 		if thisWidget.state.size == nil then
 			thisWidget.state.size = Iris._widgetState(thisWidget, "size", Vector2.new(400, 300))
 		end
@@ -5436,15 +6557,15 @@ Iris.WidgetConstructor("Window", {
 			thisWidget.state.scrollDistance = Iris._widgetState(thisWidget, "scrollDistance", 0)
 		end
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 local AnyMenuOpen: boolean = false
-local ActiveMenu: Types.Menu? = nil
-local MenuStack: { Types.Menu } = {}
+local ActiveMenu: Menu? = nil
+local MenuStack: { Menu } = {}
 
 local function EmptyMenuStack(menuIndex: number?)
 	for index = #MenuStack, menuIndex and menuIndex + 1 or 1, -1 do
-		local widget: Types.Menu = MenuStack[index]
+		local widget: Menu = MenuStack[index]
 		widget.state.isOpened:set(false)
 
 		widget.Instance.BackgroundColor3 = Iris._config.HeaderColor
@@ -5459,7 +6580,7 @@ local function EmptyMenuStack(menuIndex: number?)
 	end
 end
 
-local function UpdateChildContainerTransform(thisWidget: Types.Menu)
+local function UpdateChildContainerTransform1(thisWidget: Menu)
 	local submenu: boolean = thisWidget.parentWidget.type == "Menu"
 
 	local Menu = thisWidget.Instance :: Frame
@@ -5516,7 +6637,7 @@ widgets.registerEvent("InputBegan", function(inputObject: InputObject)
 	-- this only checks if we clicked outside all the menus. If we clicked in any menu, then the hover function handles this.
 	local isInMenu: boolean = false
 	local MouseLocation: Vector2 = widgets.getMouseLocation()
-	for _, menu: Types.Menu in MenuStack do
+	for _, menu: Menu in MenuStack do
 		for _, container: GuiObject in { menu.ChildContainer, menu.Instance } do
 			local rectMin: Vector2 = container.AbsolutePosition - widgets.GuiOffset
 			local rectMax: Vector2 = rectMin + container.AbsoluteSize
@@ -5541,7 +6662,7 @@ Iris.WidgetConstructor("MenuBar", {
 	hasChildren = true,
 	Args = {},
 	Events = {},
-	Generate = function(thisWidget: Types.MenuBar)
+	Generate = function(thisWidget: MenuBar)
 		local MenuBar: Frame = Instance.new("Frame")
 		MenuBar.Name = "Iris_MenuBar"
 		MenuBar.Size = UDim2.fromScale(1, 0)
@@ -5558,16 +6679,16 @@ Iris.WidgetConstructor("MenuBar", {
 
 		return MenuBar
 	end,
-	Update = function(_thisWidget: Types.Widget)
+	Update = function(_thisWidget: Widget)
 
 	end,
-	ChildAdded = function(thisWidget: Types.MenuBar, _thisChild: Types.Widget)
+	ChildAdded = function(thisWidget: MenuBar, _thisChild: Widget)
 		return thisWidget.Instance
 	end,
-	Discard = function(thisWidget: Types.MenuBar)
+	Discard = function(thisWidget: MenuBar)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("Menu", {
@@ -5577,26 +6698,26 @@ Iris.WidgetConstructor("Menu", {
 		["Text"] = 1,
 	},
 	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 		["opened"] = {
-			["Init"] = function(_thisWidget: Types.Menu) end,
-			["Get"] = function(thisWidget: Types.Menu)
+			["Init"] = function(_thisWidget: Menu) end,
+			["Get"] = function(thisWidget: Menu)
 				return thisWidget.lastOpenedTick == Iris._cycleTick
 			end,
 		},
 		["closed"] = {
-			["Init"] = function(_thisWidget: Types.Menu) end,
-			["Get"] = function(thisWidget: Types.Menu)
+			["Init"] = function(_thisWidget: Menu) end,
+			["Get"] = function(thisWidget: Menu)
 				return thisWidget.lastClosedTick == Iris._cycleTick
 			end,
 		},
 	},
-	Generate = function(thisWidget: Types.Menu)
+	Generate = function(thisWidget: Menu)
 		local Menu: TextButton
 		thisWidget.ButtonColors = {
 			Color = Iris._config.HeaderColor,
@@ -5684,7 +6805,7 @@ Iris.WidgetConstructor("Menu", {
 
 		widgets.applyMouseEnter(Menu, function()
 			if AnyMenuOpen and ActiveMenu and ActiveMenu ~= thisWidget then
-				local parentMenu = thisWidget.parentWidget :: Types.Menu
+				local parentMenu = thisWidget.parentWidget :: Menu
 				local parentIndex: number? = table.find(MenuStack, parentMenu)
 
 				EmptyMenuStack(parentIndex)
@@ -5735,7 +6856,7 @@ Iris.WidgetConstructor("Menu", {
 		thisWidget.ChildContainer = ChildContainer
 		return Menu
 	end,
-	Update = function(thisWidget: Types.Menu)
+	Update = function(thisWidget: Menu)
 		local Menu = thisWidget.Instance :: TextButton
 		local TextLabel: TextLabel
 		if thisWidget.parentWidget.type == "Menu" then
@@ -5745,19 +6866,19 @@ Iris.WidgetConstructor("Menu", {
 		end
 		TextLabel.Text = thisWidget.arguments.Text or "Menu"
 	end,
-	ChildAdded = function(thisWidget: Types.Menu, _thisChild: Types.Widget)
-		UpdateChildContainerTransform(thisWidget)
+	ChildAdded = function(thisWidget: Menu, _thisChild: Widget)
+		UpdateChildContainerTransform1(thisWidget)
 		return thisWidget.ChildContainer
 	end,
-	ChildDiscarded = function(thisWidget: Types.Menu, _thisChild: Types.Widget)
-		UpdateChildContainerTransform(thisWidget)
+	ChildDiscarded = function(thisWidget: Menu, _thisChild: Widget)
+		UpdateChildContainerTransform1(thisWidget)
 	end,
-	GenerateState = function(thisWidget: Types.Menu)
+	GenerateState = function(thisWidget: Menu)
 		if thisWidget.state.isOpened == nil then
 			thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", false)
 		end
 	end,
-	UpdateState = function(thisWidget: Types.Menu)
+	UpdateState = function(thisWidget: Menu)
 		local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
 
 		if thisWidget.state.isOpened.value then
@@ -5765,17 +6886,17 @@ Iris.WidgetConstructor("Menu", {
 			thisWidget.ButtonColors.Transparency = Iris._config.HeaderTransparency
 			ChildContainer.Visible = true
 
-			UpdateChildContainerTransform(thisWidget)
+			UpdateChildContainerTransform1(thisWidget)
 		else
 			thisWidget.lastClosedTick = Iris._cycleTick + 1
 			thisWidget.ButtonColors.Transparency = 1
 			ChildContainer.Visible = false
 		end
 	end,
-	Discard = function(thisWidget: Types.Menu)
+	Discard = function(thisWidget: Menu)
 		-- properly handle removing a menu if open and deleted
 		if AnyMenuOpen then
-			local parentMenu = thisWidget.parentWidget :: Types.Menu
+			local parentMenu = thisWidget.parentWidget :: Menu
 			local parentIndex: number? = table.find(MenuStack, parentMenu)
 			if parentIndex then
 				EmptyMenuStack(parentIndex)
@@ -5790,7 +6911,7 @@ Iris.WidgetConstructor("Menu", {
 		thisWidget.ChildContainer:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("MenuItem", {
@@ -5802,14 +6923,14 @@ Iris.WidgetConstructor("MenuItem", {
 		ModifierKey = 3,
 	},
 	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.MenuItem)
+	Generate = function(thisWidget: MenuItem)
 		local MenuItem: TextButton = Instance.new("TextButton")
 		MenuItem.Name = "MenuItem"
 		MenuItem.BackgroundTransparency = 1
@@ -5838,7 +6959,7 @@ Iris.WidgetConstructor("MenuItem", {
 		end)
 
 		widgets.applyMouseEnter(MenuItem, function()
-			local parentMenu = thisWidget.parentWidget :: Types.Menu
+			local parentMenu = thisWidget.parentWidget :: Menu
 			if AnyMenuOpen and ActiveMenu and ActiveMenu ~= parentMenu then
 				local parentIndex: number? = table.find(MenuStack, parentMenu)
 
@@ -5875,7 +6996,7 @@ Iris.WidgetConstructor("MenuItem", {
 
 		return MenuItem
 	end,
-	Update = function(thisWidget: Types.MenuItem)
+	Update = function(thisWidget: MenuItem)
 		local MenuItem = thisWidget.Instance :: TextButton
 		local TextLabel: TextLabel = MenuItem.TextLabel
 		local Shortcut: TextLabel = MenuItem.Shortcut
@@ -5889,10 +7010,10 @@ Iris.WidgetConstructor("MenuItem", {
 			end
 		end
 	end,
-	Discard = function(thisWidget: Types.MenuItem)
+	Discard = function(thisWidget: MenuItem)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("MenuToggle", {
@@ -5905,22 +7026,22 @@ Iris.WidgetConstructor("MenuToggle", {
 	},
 	Events = {
 		["checked"] = {
-			["Init"] = function(_thisWidget: Types.MenuToggle) end,
-			["Get"] = function(thisWidget: Types.MenuToggle): boolean
+			["Init"] = function(_thisWidget: MenuToggle) end,
+			["Get"] = function(thisWidget: MenuToggle): boolean
 				return thisWidget.lastCheckedTick == Iris._cycleTick
 			end,
 		},
 		["unchecked"] = {
-			["Init"] = function(_thisWidget: Types.MenuToggle) end,
-			["Get"] = function(thisWidget: Types.MenuToggle): boolean
+			["Init"] = function(_thisWidget: MenuToggle) end,
+			["Get"] = function(thisWidget: MenuToggle): boolean
 				return thisWidget.lastUncheckedTick == Iris._cycleTick
 			end,
 		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.MenuToggle)
+	Generate = function(thisWidget: MenuToggle)
 		local MenuItem: TextButton = Instance.new("TextButton")
 		MenuItem.Name = "MenuItem"
 		MenuItem.BackgroundTransparency = 1
@@ -5951,7 +7072,7 @@ Iris.WidgetConstructor("MenuToggle", {
 		end)
 
 		widgets.applyMouseEnter(MenuItem, function()
-			local parentMenu = thisWidget.parentWidget :: Types.Menu
+			local parentMenu = thisWidget.parentWidget :: Menu
 			if AnyMenuOpen and ActiveMenu and ActiveMenu ~= parentMenu then
 				local parentIndex: number? = table.find(MenuStack, parentMenu)
 
@@ -6004,12 +7125,12 @@ Iris.WidgetConstructor("MenuToggle", {
 
 		return MenuItem
 	end,
-	GenerateState = function(thisWidget: Types.MenuToggle)
+	GenerateState = function(thisWidget: MenuToggle)
 		if thisWidget.state.isChecked == nil then
 			thisWidget.state.isChecked = Iris._widgetState(thisWidget, "isChecked", false)
 		end
 	end,
-	Update = function(thisWidget: Types.MenuToggle)
+	Update = function(thisWidget: MenuToggle)
 		local MenuItem = thisWidget.Instance :: TextButton
 		local TextLabel: TextLabel = MenuItem.TextLabel
 		local Shortcut: TextLabel = MenuItem.Shortcut
@@ -6023,7 +7144,7 @@ Iris.WidgetConstructor("MenuToggle", {
 			end
 		end
 	end,
-	UpdateState = function(thisWidget: Types.MenuToggle)
+	UpdateState = function(thisWidget: MenuToggle)
 		local MenuItem = thisWidget.Instance :: TextButton
 		local Icon: ImageLabel = MenuItem.Icon
 
@@ -6035,11 +7156,11 @@ Iris.WidgetConstructor("MenuToggle", {
 			thisWidget.lastUncheckedTick = Iris._cycleTick + 1
 		end
 	end,
-	Discard = function(thisWidget: Types.MenuToggle)
+	Discard = function(thisWidget: MenuToggle)
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("Separator", {
@@ -6047,7 +7168,7 @@ Iris.WidgetConstructor("Separator", {
 	hasChildren = false,
 	Args = {},
 	Events = {},
-	Generate = function(thisWidget: Types.Separator)
+	Generate = function(thisWidget: Separator)
 		local Separator: Frame = Instance.new("Frame")
 		Separator.Name = "Iris_Separator"
 		Separator.BackgroundColor3 = Iris._config.SeparatorColor
@@ -6065,11 +7186,11 @@ Iris.WidgetConstructor("Separator", {
 
 		return Separator
 	end,
-	Update = function(_thisWidget: Types.Separator) end,
-	Discard = function(thisWidget: Types.Separator)
+	Update = function(_thisWidget: Separator) end,
+	Discard = function(thisWidget: Separator)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("Indent", {
@@ -6079,7 +7200,7 @@ Iris.WidgetConstructor("Indent", {
 		["Width"] = 1,
 	},
 	Events = {},
-	Generate = function(thisWidget: Types.Indent)
+	Generate = function(thisWidget: Indent)
 		local Indent: Frame = Instance.new("Frame")
 		Indent.Name = "Iris_Indent"
 		Indent.BackgroundTransparency = 1
@@ -6093,7 +7214,7 @@ Iris.WidgetConstructor("Indent", {
 
 		return Indent
 	end,
-	Update = function(thisWidget: Types.Indent)
+	Update = function(thisWidget: Indent)
 		local Indent = thisWidget.Instance :: Frame
 
 		local indentWidth: number
@@ -6104,13 +7225,13 @@ Iris.WidgetConstructor("Indent", {
 		end
 		Indent.UIPadding.PaddingLeft = UDim.new(0, indentWidth)
 	end,
-	Discard = function(thisWidget: Types.Indent)
+	Discard = function(thisWidget: Indent)
 		thisWidget.Instance:Destroy()
 	end,
-	ChildAdded = function(thisWidget: Types.Indent, _thisChild: Types.Widget)
+	ChildAdded = function(thisWidget: Indent, _thisChild: Widget)
 		return thisWidget.Instance
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("SameLine", {
@@ -6122,7 +7243,7 @@ Iris.WidgetConstructor("SameLine", {
 		["HorizontalAlignment"] = 3,
 	},
 	Events = {},
-	Generate = function(thisWidget: Types.SameLine)
+	Generate = function(thisWidget: SameLine)
 		local SameLine: Frame = Instance.new("Frame")
 		SameLine.Name = "Iris_SameLine"
 		SameLine.BackgroundTransparency = 1
@@ -6135,7 +7256,7 @@ Iris.WidgetConstructor("SameLine", {
 
 		return SameLine
 	end,
-	Update = function(thisWidget: Types.SameLine)
+	Update = function(thisWidget: SameLine)
 		local Sameline = thisWidget.Instance :: Frame
 		local uiListLayout: UIListLayout = Sameline.UIListLayout
 		local itemWidth: number
@@ -6156,13 +7277,13 @@ Iris.WidgetConstructor("SameLine", {
 			uiListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 		end
 	end,
-	Discard = function(thisWidget: Types.SameLine)
+	Discard = function(thisWidget: SameLine)
 		thisWidget.Instance:Destroy()
 	end,
-	ChildAdded = function(thisWidget: Types.SameLine, _thisChild: Types.Widget)
+	ChildAdded = function(thisWidget: SameLine, _thisChild: Widget)
 		return thisWidget.Instance
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("Group", {
@@ -6170,7 +7291,7 @@ Iris.WidgetConstructor("Group", {
 	hasChildren = true,
 	Args = {},
 	Events = {},
-	Generate = function(thisWidget: Types.Group)
+	Generate = function(thisWidget: Group)
 		local Group: Frame = Instance.new("Frame")
 		Group.Name = "Iris_Group"
 		Group.AutomaticSize = Enum.AutomaticSize.XY
@@ -6184,14 +7305,14 @@ Iris.WidgetConstructor("Group", {
 
 		return Group
 	end,
-	Update = function(_thisWidget: Types.Group) end,
-	Discard = function(thisWidget: Types.Group)
+	Update = function(_thisWidget: Group) end,
+	Discard = function(thisWidget: Group)
 		thisWidget.Instance:Destroy()
 	end,
-	ChildAdded = function(thisWidget: Types.Group, _thisChild: Types.Widget)
+	ChildAdded = function(thisWidget: Group, _thisChild: Widget)
 		return thisWidget.Instance
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 --stylua: ignore
 Iris.WidgetConstructor("Text", {
 	hasState = false,
@@ -6203,11 +7324,11 @@ Iris.WidgetConstructor("Text", {
 		["RichText"] = 4,
 	},
 	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.Text)
+	Generate = function(thisWidget: Text)
 		local Text: TextLabel = Instance.new("TextLabel")
 		Text.Name = "Iris_Text"
 		Text.Size = UDim2.fromOffset(0, 0)
@@ -6221,7 +7342,7 @@ Iris.WidgetConstructor("Text", {
 
 		return Text
 	end,
-	Update = function(thisWidget: Types.Text)
+	Update = function(thisWidget: Text)
 		local Text = thisWidget.Instance :: TextLabel
 		if thisWidget.arguments.Text == nil then
 			error("Text argument is needed for Iris.Text().", 5)
@@ -6244,10 +7365,10 @@ Iris.WidgetConstructor("Text", {
 
 		Text.Text = thisWidget.arguments.Text
 	end,
-	Discard = function(thisWidget: Types.Text)
+	Discard = function(thisWidget: Text)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("SeparatorText", {
@@ -6257,11 +7378,11 @@ Iris.WidgetConstructor("SeparatorText", {
 		["Text"] = 1,
 	},
 	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.SeparatorText)
+	Generate = function(thisWidget: SeparatorText)
 		local SeparatorText = Instance.new("Frame")
 		SeparatorText.Name = "Iris_SeparatorText"
 		SeparatorText.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
@@ -6310,7 +7431,7 @@ Iris.WidgetConstructor("SeparatorText", {
 
 		return SeparatorText
 	end,
-	Update = function(thisWidget: Types.SeparatorText)
+	Update = function(thisWidget: SeparatorText)
 		local SeparatorText = thisWidget.Instance :: Frame
 		local TextLabel: TextLabel = SeparatorText.TextLabel
 		if thisWidget.arguments.Text == nil then
@@ -6318,10 +7439,10 @@ Iris.WidgetConstructor("SeparatorText", {
 		end
 		TextLabel.Text = thisWidget.arguments.Text
 	end,
-	Discard = function(thisWidget: Types.SeparatorText)
+	Discard = function(thisWidget: SeparatorText)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 local abstractButton = {
 	hasState = false,
@@ -6331,23 +7452,23 @@ local abstractButton = {
 		["Size"] = 2,
 	},
 	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Types.Widget)
+		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Types.Widget)
+		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Types.Widget)
+		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.Button)
+	Generate = function(thisWidget: Button)
 		local Button: TextButton = Instance.new("TextButton")
 		Button.Size = UDim2.fromOffset(0, 0)
 		Button.BackgroundColor3 = Iris._config.ButtonColor
@@ -6374,31 +7495,31 @@ local abstractButton = {
 
 		return Button
 	end,
-	Update = function(thisWidget: Types.Button)
+	Update = function(thisWidget: Button)
 		local Button = thisWidget.Instance :: TextButton
 		Button.Text = thisWidget.arguments.Text or "Button"
 		Button.Size = thisWidget.arguments.Size or UDim2.fromOffset(0, 0)
 	end,
-	Discard = function(thisWidget: Types.Button)
+	Discard = function(thisWidget: Button)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass
+} :: WidgetClass
 widgets.abstractButton = abstractButton
 
 --stylua: ignore
 Iris.WidgetConstructor("Button", widgets.extend(abstractButton, {
-	Generate = function(thisWidget: Types.Button)
+	Generate = function(thisWidget: Button)
 		local Button: TextButton = abstractButton.Generate(thisWidget)
 		Button.Name = "Iris_Button"
 
 		return Button
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 )
 
 --stylua: ignore
 Iris.WidgetConstructor("SmallButton", widgets.extend(abstractButton, {
-	Generate = function(thisWidget: Types.Button)
+	Generate = function(thisWidget: Button)
 		local SmallButton = abstractButton.Generate(thisWidget) :: TextButton
 		SmallButton.Name = "Iris_SmallButton"
 
@@ -6410,7 +7531,7 @@ Iris.WidgetConstructor("SmallButton", widgets.extend(abstractButton, {
 
 		return SmallButton
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 )
 --stylua: ignore
 Iris.WidgetConstructor("Checkbox", {
@@ -6421,22 +7542,22 @@ Iris.WidgetConstructor("Checkbox", {
 	},
 	Events = {
 		["checked"] = {
-			["Init"] = function(_thisWidget: Types.Checkbox) end,
-			["Get"] = function(thisWidget: Types.Checkbox): boolean
+			["Init"] = function(_thisWidget: Checkbox) end,
+			["Get"] = function(thisWidget: Checkbox): boolean
 				return thisWidget.lastCheckedTick == Iris._cycleTick
 			end,
 		},
 		["unchecked"] = {
-			["Init"] = function(_thisWidget: Types.Checkbox) end,
-			["Get"] = function(thisWidget: Types.Checkbox): boolean
+			["Init"] = function(_thisWidget: Checkbox) end,
+			["Get"] = function(thisWidget: Checkbox): boolean
 				return thisWidget.lastUncheckedTick == Iris._cycleTick
 			end,
 		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.Checkbox)
+	Generate = function(thisWidget: Checkbox)
 		local Checkbox: TextButton = Instance.new("TextButton")
 		Checkbox.Name = "Iris_Checkbox"
 		Checkbox.AutomaticSize = Enum.AutomaticSize.XY
@@ -6500,20 +7621,20 @@ Iris.WidgetConstructor("Checkbox", {
 
 		return Checkbox
 	end,
-	Update = function(thisWidget: Types.Checkbox)
+	Update = function(thisWidget: Checkbox)
 		local Checkbox = thisWidget.Instance :: TextButton
 		Checkbox.TextLabel.Text = thisWidget.arguments.Text or "Checkbox"
 	end,
-	Discard = function(thisWidget: Types.Checkbox)
+	Discard = function(thisWidget: Checkbox)
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-	GenerateState = function(thisWidget: Types.Checkbox)
+	GenerateState = function(thisWidget: Checkbox)
 		if thisWidget.state.isChecked == nil then
 			thisWidget.state.isChecked = Iris._widgetState(thisWidget, "checked", false)
 		end
 	end,
-	UpdateState = function(thisWidget: Types.Checkbox)
+	UpdateState = function(thisWidget: Checkbox)
 		local Checkbox = thisWidget.Instance :: TextButton
 		local Box = Checkbox.Box :: Frame
 		local Checkmark: ImageLabel = Box.Checkmark
@@ -6525,7 +7646,7 @@ Iris.WidgetConstructor("Checkbox", {
 			thisWidget.lastUncheckedTick = Iris._cycleTick + 1
 		end
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 --stylua: ignore
 Iris.WidgetConstructor("RadioButton", {
 	hasState = true,
@@ -6536,28 +7657,28 @@ Iris.WidgetConstructor("RadioButton", {
 	},
 	Events = {
 		["selected"] = {
-			["Init"] = function(_thisWidget: Types.RadioButton) end,
-			["Get"] = function(thisWidget: Types.RadioButton)
+			["Init"] = function(_thisWidget: RadioButton) end,
+			["Get"] = function(thisWidget: RadioButton)
 				return thisWidget.lastSelectedTick == Iris._cycleTick
 			end,
 		},
 		["unselected"] = {
-			["Init"] = function(_thisWidget: Types.RadioButton) end,
-			["Get"] = function(thisWidget: Types.RadioButton)
+			["Init"] = function(_thisWidget: RadioButton) end,
+			["Get"] = function(thisWidget: RadioButton)
 				return thisWidget.lastUnselectedTick == Iris._cycleTick
 			end,
 		},
 		["active"] = {
-			["Init"] = function(_thisWidget: Types.RadioButton) end,
-			["Get"] = function(thisWidget: Types.RadioButton)
+			["Init"] = function(_thisWidget: RadioButton) end,
+			["Get"] = function(thisWidget: RadioButton)
 				return thisWidget.state.index.value == thisWidget.arguments.Index
 			end,
 		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.RadioButton)
+	Generate = function(thisWidget: RadioButton)
 		local RadioButton: TextButton = Instance.new("TextButton")
 		RadioButton.Name = "Iris_RadioButton"
 		RadioButton.AutomaticSize = Enum.AutomaticSize.XY
@@ -6617,7 +7738,7 @@ Iris.WidgetConstructor("RadioButton", {
 
 		return RadioButton
 	end,
-	Update = function(thisWidget: Types.RadioButton)
+	Update = function(thisWidget: RadioButton)
 		local RadioButton = thisWidget.Instance :: TextButton
 		local TextLabel: TextLabel = RadioButton.TextLabel
 
@@ -6627,16 +7748,16 @@ Iris.WidgetConstructor("RadioButton", {
 			Iris._widgets[thisWidget.type].UpdateState(thisWidget)
 		end
 	end,
-	Discard = function(thisWidget: Types.RadioButton)
+	Discard = function(thisWidget: RadioButton)
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-	GenerateState = function(thisWidget: Types.RadioButton)
+	GenerateState = function(thisWidget: RadioButton)
 		if thisWidget.state.index == nil then
 			thisWidget.state.index = Iris._widgetState(thisWidget, "index", thisWidget.arguments.Index)
 		end
 	end,
-	UpdateState = function(thisWidget: Types.RadioButton)
+	UpdateState = function(thisWidget: RadioButton)
 		local RadioButton = thisWidget.Instance :: TextButton
 		local Button = RadioButton.Button :: Frame
 		local Circle: Frame = Button.Circle
@@ -6650,7 +7771,7 @@ Iris.WidgetConstructor("RadioButton", {
 			thisWidget.lastUnselectedTick = Iris._cycleTick + 1
 		end
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 local abstractImage = {
 	hasState = false,
 	hasChildren = false,
@@ -6664,19 +7785,19 @@ local abstractImage = {
 		["SliceCenter"] = 7,
 		["SliceScale"] = 8,
 	},
-	Discard = function(thisWidget: Types.Image)
+	Discard = function(thisWidget: Image)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass
+} :: WidgetClass
 
 --stylua: ignore
 Iris.WidgetConstructor("Image", widgets.extend(abstractImage, {
 	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.Image)
+	Generate = function(thisWidget: Image)
 		local Image: ImageLabel = Instance.new("ImageLabel")
 		Image.Name = "Iris_Image"
 		Image.BackgroundTransparency = 1
@@ -6689,7 +7810,7 @@ Iris.WidgetConstructor("Image", widgets.extend(abstractImage, {
 
 		return Image
 	end,
-	Update = function(thisWidget: Types.Image)
+	Update = function(thisWidget: Image)
 		local Image = thisWidget.Instance :: ImageLabel
 
 		Image.Image = thisWidget.arguments.Image or widgets.ICONS.UNKNOWN_TEXTURE
@@ -6717,29 +7838,29 @@ Iris.WidgetConstructor("Image", widgets.extend(abstractImage, {
 			Image.ResampleMode = thisWidget.arguments.ResampleMode
 		end
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 )
 
 --stylua: ignore
 Iris.WidgetConstructor("ImageButton", widgets.extend(abstractImage, {
 	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Types.Widget)
+		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Types.Widget)
+		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Types.Widget)
+		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.ImageButton)
+	Generate = function(thisWidget: ImageButton)
 		local Button: ImageButton = Instance.new("ImageButton")
 		Button.Name = "Iris_ImageButton"
 		Button.AutomaticSize = Enum.AutomaticSize.XY
@@ -6773,7 +7894,7 @@ Iris.WidgetConstructor("ImageButton", widgets.extend(abstractImage, {
 
 		return Button
 	end,
-	Update = function(thisWidget: Types.ImageButton)
+	Update = function(thisWidget: ImageButton)
 		local Button = thisWidget.Instance :: TextButton
 		local Image: ImageLabel = Button.ImageLabel
 
@@ -6802,21 +7923,21 @@ Iris.WidgetConstructor("ImageButton", widgets.extend(abstractImage, {
 			Image.ResampleMode = thisWidget.arguments.ResampleMode
 		end
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 )
 local abstractTree = {
 	hasState = true,
 	hasChildren = true,
 	Events = {
 		["collapsed"] = {
-			["Init"] = function(_thisWidget: Types.CollapsingHeader) end,
-			["Get"] = function(thisWidget: Types.CollapsingHeader)
+			["Init"] = function(_thisWidget: CollapsingHeader) end,
+			["Get"] = function(thisWidget: CollapsingHeader)
 				return thisWidget.lastCollapsedTick == Iris._cycleTick
 			end,
 		},
 		["uncollapsed"] = {
-			["Init"] = function(_thisWidget: Types.CollapsingHeader) end,
-			["Get"] = function(thisWidget: Types.CollapsingHeader)
+			["Init"] = function(_thisWidget: CollapsingHeader) end,
+			["Get"] = function(thisWidget: CollapsingHeader)
 				return thisWidget.lastUncollapsedTick == Iris._cycleTick
 			end,
 		},
@@ -6824,18 +7945,18 @@ local abstractTree = {
 			return thisWidget.Instance
 		end),
 	},
-	Discard = function(thisWidget: Types.CollapsingHeader)
+	Discard = function(thisWidget: CollapsingHeader)
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-	ChildAdded = function(thisWidget: Types.CollapsingHeader, _thisChild: Types.Widget)
+	ChildAdded = function(thisWidget: CollapsingHeader, _thisChild: Widget)
 		local ChildContainer: Frame = thisWidget.ChildContainer :: Frame
 
 		ChildContainer.Visible = thisWidget.state.isUncollapsed.value
 
 		return ChildContainer
 	end,
-	UpdateState = function(thisWidget: Types.CollapsingHeader)
+	UpdateState = function(thisWidget: CollapsingHeader)
 		local isUncollapsed: boolean = thisWidget.state.isUncollapsed.value
 		local Tree = thisWidget.Instance :: Frame
 		local ChildContainer = thisWidget.ChildContainer :: Frame
@@ -6852,12 +7973,12 @@ local abstractTree = {
 
 		ChildContainer.Visible = isUncollapsed
 	end,
-	GenerateState = function(thisWidget: Types.CollapsingHeader)
+	GenerateState = function(thisWidget: CollapsingHeader)
 		if thisWidget.state.isUncollapsed == nil then
 			thisWidget.state.isUncollapsed = Iris._widgetState(thisWidget, "isUncollapsed", thisWidget.arguments.DefaultOpen or false)
 		end
 	end,
-} :: Types.WidgetClass
+} :: WidgetClass
 
 --stylua: ignore
 Iris.WidgetConstructor(
@@ -6869,7 +7990,7 @@ Iris.WidgetConstructor(
 			["NoIndent"] = 3,
 			["DefaultOpen"] = 4,
 		},
-		Generate = function(thisWidget: Types.Tree)
+		Generate = function(thisWidget: Tree)
 			local Tree: Frame = Instance.new("Frame")
 			Tree.Name = "Iris_Tree"
 			Tree.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
@@ -6958,7 +8079,7 @@ Iris.WidgetConstructor(
 			thisWidget.ChildContainer = ChildContainer
 			return Tree
 		end,
-		Update = function(thisWidget: Types.Tree)
+		Update = function(thisWidget: Tree)
 			local Tree = thisWidget.Instance :: Frame
 			local ChildContainer = thisWidget.ChildContainer :: Frame
 			local Header = Tree.Header :: Frame
@@ -6992,7 +8113,7 @@ Iris.WidgetConstructor(
 			["Text"] = 1,
 			["DefaultOpen"] = 2
 		},
-		Generate = function(thisWidget: Types.CollapsingHeader)
+		Generate = function(thisWidget: CollapsingHeader)
 			local CollapsingHeader: Frame = Instance.new("Frame")
 			CollapsingHeader.Name = "Iris_CollapsingHeader"
 			CollapsingHeader.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
@@ -7086,7 +8207,7 @@ Iris.WidgetConstructor(
 			thisWidget.ChildContainer = ChildContainer
 			return CollapsingHeader
 		end,
-		Update = function(thisWidget: Types.CollapsingHeader)
+		Update = function(thisWidget: CollapsingHeader)
 			local Tree = thisWidget.Instance :: Frame
 			local Header = Tree.Header :: Frame
 			local Button = Header.Button :: TextButton
@@ -7096,7 +8217,7 @@ Iris.WidgetConstructor(
 		end,
 	})
 )
-local function openTab(TabBar: Types.TabBar, Index: number)
+local function openTab(TabBar: TabBar, Index: number)
 	if TabBar.state.index.value > 0 then
 		return
 	end
@@ -7104,7 +8225,7 @@ local function openTab(TabBar: Types.TabBar, Index: number)
 	TabBar.state.index:set(Index)
 end
 
-local function closeTab(TabBar: Types.TabBar, Index: number)
+local function closeTab(TabBar: TabBar, Index: number)
 	if TabBar.state.index.value ~= Index then
 		return
 	end
@@ -7135,7 +8256,7 @@ Iris.WidgetConstructor("TabBar", {
 	hasChildren = true,
 	Args = {},
 	Events = {},
-	Generate = function(thisWidget: Types.TabBar)
+	Generate = function(thisWidget: TabBar)
 		local TabBar: Frame = Instance.new("Frame")
 		TabBar.Name = "Iris_TabBar"
 		TabBar.AutomaticSize = Enum.AutomaticSize.Y
@@ -7183,8 +8304,8 @@ Iris.WidgetConstructor("TabBar", {
 
 		return TabBar
 	end,
-	Update = function(_thisWidget: Types.TabBar) end,
-	ChildAdded = function(thisWidget: Types.TabBar, thisChild: Types.Tab)
+	Update = function(_thisWidget: TabBar) end,
+	ChildAdded = function(thisWidget: TabBar, thisChild: Tab)
 		assert(thisChild.type == "Tab", "Only Iris.Tab can be parented to Iris.TabBar.")
 		local TabBar = thisWidget.Instance :: Frame
 		thisChild.ChildContainer.Parent = thisWidget.ChildContainer
@@ -7194,7 +8315,7 @@ Iris.WidgetConstructor("TabBar", {
 
 		return TabBar.Bar
 	end,
-	ChildDiscarded = function(thisWidget: Types.TabBar, thisChild: Types.Tab)
+	ChildDiscarded = function(thisWidget: TabBar, thisChild: Tab)
 		local Index: number = thisChild.Index
 		table.remove(thisWidget.Tabs, Index)
 
@@ -7204,17 +8325,17 @@ Iris.WidgetConstructor("TabBar", {
 
 		closeTab(thisWidget, Index)
 	end,
-	GenerateState = function(thisWidget: Types.Tab)
+	GenerateState = function(thisWidget: Tab)
 		if thisWidget.state.index == nil then
 			thisWidget.state.index = Iris._widgetState(thisWidget, "index", 1)
 		end
 	end,
-	UpdateState = function(_thisWidget: Types.Tab)
+	UpdateState = function(_thisWidget: Tab)
 	end,
-	Discard = function(thisWidget: Types.TabBar)
+	Discard = function(thisWidget: TabBar)
 		thisWidget.Instance:Destroy()
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 --stylua: ignore
 Iris.WidgetConstructor("Tab", {
@@ -7225,44 +8346,44 @@ Iris.WidgetConstructor("Tab", {
 		["Hideable"] = 2,
 	},
 	Events = {
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 		["selected"] = {
-			["Init"] = function(_thisWidget: Types.Tab) end,
-			["Get"] = function(thisWidget: Types.Tab)
+			["Init"] = function(_thisWidget: Tab) end,
+			["Get"] = function(thisWidget: Tab)
 				return thisWidget.lastSelectedTick == Iris._cycleTick
 			end,
 		},
 		["unselected"] = {
-			["Init"] = function(_thisWidget: Types.Tab) end,
-			["Get"] = function(thisWidget: Types.Tab)
+			["Init"] = function(_thisWidget: Tab) end,
+			["Get"] = function(thisWidget: Tab)
 				return thisWidget.lastUnselectedTick == Iris._cycleTick
 			end,
 		},
 		["active"] = {
-			["Init"] = function(_thisWidget: Types.Tab) end,
-			["Get"] = function(thisWidget: Types.Tab)
+			["Init"] = function(_thisWidget: Tab) end,
+			["Get"] = function(thisWidget: Tab)
 				return thisWidget.state.index.value == thisWidget.Index
 			end,
 		},
 		["opened"] = {
-			["Init"] = function(_thisWidget: Types.Tab) end,
-			["Get"] = function(thisWidget: Types.Tab)
+			["Init"] = function(_thisWidget: Tab) end,
+			["Get"] = function(thisWidget: Tab)
 				return thisWidget.lastOpenedTick == Iris._cycleTick
 			end,
 		},
 		["closed"] = {
-			["Init"] = function(_thisWidget: Types.Tab) end,
-			["Get"] = function(thisWidget: Types.Tab)
+			["Init"] = function(_thisWidget: Tab) end,
+			["Get"] = function(thisWidget: Tab)
 				return thisWidget.lastClosedTick == Iris._cycleTick
 			end,
 		},
 	},
-	Generate = function(thisWidget: Types.Tab)
+	Generate = function(thisWidget: Tab)
 		local Tab = Instance.new("TextButton")
 		Tab.Name = "Iris_Tab"
 		Tab.AutomaticSize = Enum.AutomaticSize.XY
@@ -7363,7 +8484,7 @@ Iris.WidgetConstructor("Tab", {
 
 		return Tab
 	end,
-	Update = function(thisWidget: Types.Tab)
+	Update = function(thisWidget: Tab)
 		local Tab = thisWidget.Instance :: TextButton
 		local TextLabel: TextLabel = Tab.TextLabel
 		local CloseButton: TextButton = Tab.CloseButton
@@ -7371,10 +8492,10 @@ Iris.WidgetConstructor("Tab", {
 		TextLabel.Text = thisWidget.arguments.Text
 		CloseButton.Visible = if thisWidget.arguments.Hideable == true then true else false
 	end,
-	ChildAdded = function(thisWidget: Types.Tab, _thisChild: Types.Widget)
+	ChildAdded = function(thisWidget: Tab, _thisChild: Widget)
 		return thisWidget.ChildContainer
 	end,
-	GenerateState = function(thisWidget: Types.Tab)
+	GenerateState = function(thisWidget: Tab)
 		thisWidget.state.index = thisWidget.parentWidget.state.index
 		thisWidget.state.index.ConnectedWidgets[thisWidget.ID] = thisWidget
 
@@ -7382,7 +8503,7 @@ Iris.WidgetConstructor("Tab", {
 			thisWidget.state.isOpened = Iris._widgetState(thisWidget, "isOpened", true)
 		end
 	end,
-	UpdateState = function(thisWidget: Types.Tab)
+	UpdateState = function(thisWidget: Tab)
 		local Tab = thisWidget.Instance :: TextButton
 		local Container = thisWidget.ChildContainer :: Frame
 
@@ -7416,7 +8537,7 @@ Iris.WidgetConstructor("Tab", {
 			end
 		end
 	end,
-	Discard = function(thisWidget: Types.Tab)
+	Discard = function(thisWidget: Tab)
 		if thisWidget.state.isOpened.value == true then
 			closeTab(thisWidget.parentWidget, thisWidget.Index)
 		end
@@ -7425,10 +8546,10 @@ Iris.WidgetConstructor("Tab", {
 		thisWidget.ChildContainer:Destroy()
 		widgets.discardState(thisWidget)
 	end
-} :: Types.WidgetClass)
+} :: WidgetClass)
 local numberChanged = {
-	["Init"] = function(_thisWidget: Types.Widget) end,
-	["Get"] = function(thisWidget: Types.Input<any>)
+	["Init"] = function(_thisWidget: Widget) end,
+	["Get"] = function(thisWidget: Input<any>)
 		return thisWidget.lastNumberChangedTick == Iris._cycleTick
 	end,
 }
@@ -7494,7 +8615,7 @@ local function getValueByIndex<T>(value: T, index: number, arguments: any): numb
 	error(`Incorrect datatype or value: {value} {typeof(value)} {index}.`)
 end
 
-local function updateValueByIndex<T>(value: T, index: number, newValue: number, arguments: Types.Arguments): T
+local function updateValueByIndex<T>(value: T, index: number, newValue: number, arguments: Arguments): T
 	if typeof(value) == "number" then
 		return newValue :: any
 	elseif typeof(value) == "Vector2" then
@@ -7616,9 +8737,9 @@ local defaultSigFigs: { [InputDataTypes]: { number } } = {
     --[[
         Input
     ]]
-local generateInputScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> Types.WidgetClass
+local generateInputScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> WidgetClass
 do
-	local function generateButtons(thisWidget: Types.Input<number>, parent: GuiObject, textHeight: number)
+	local function generateButtons(thisWidget: Input<number>, parent: GuiObject, textHeight: number)
 		local SubButton = widgets.abstractButton.Generate(thisWidget) :: TextButton
 		SubButton.Name = "SubButton"
 		SubButton.ZIndex = 5
@@ -7630,13 +8751,13 @@ do
 
 		widgets.applyButtonClick(SubButton, function()
 			local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
-			local changeValue: number = (thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, 1, thisWidget.arguments :: Types.Argument) or 1) * (isCtrlHeld and 100 or 1)
+			local changeValue: number = (thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, 1, thisWidget.arguments :: Argument) or 1) * (isCtrlHeld and 100 or 1)
 			local newValue: number = thisWidget.state.number.value - changeValue
 			if thisWidget.arguments.Min ~= nil then
-				newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, 1, thisWidget.arguments :: Types.Argument))
+				newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, 1, thisWidget.arguments :: Argument))
 			end
 			if thisWidget.arguments.Max ~= nil then
-				newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, 1, thisWidget.arguments :: Types.Argument))
+				newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, 1, thisWidget.arguments :: Argument))
 			end
 			thisWidget.state.number:set(newValue)
 			thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
@@ -7653,13 +8774,13 @@ do
 
 		widgets.applyButtonClick(AddButton, function()
 			local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
-			local changeValue: number = (thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, 1, thisWidget.arguments :: Types.Argument) or 1) * (isCtrlHeld and 100 or 1)
+			local changeValue: number = (thisWidget.arguments.Increment and getValueByIndex(thisWidget.arguments.Increment, 1, thisWidget.arguments :: Argument) or 1) * (isCtrlHeld and 100 or 1)
 			local newValue: number = thisWidget.state.number.value + changeValue
 			if thisWidget.arguments.Min ~= nil then
-				newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, 1, thisWidget.arguments :: Types.Argument))
+				newValue = math.max(newValue, getValueByIndex(thisWidget.arguments.Min, 1, thisWidget.arguments :: Argument))
 			end
 			if thisWidget.arguments.Max ~= nil then
-				newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, 1, thisWidget.arguments :: Types.Argument))
+				newValue = math.min(newValue, getValueByIndex(thisWidget.arguments.Max, 1, thisWidget.arguments :: Argument))
 			end
 			thisWidget.state.number:set(newValue)
 			thisWidget.lastNumberChangedTick = Iris._cycleTick + 1
@@ -7681,11 +8802,11 @@ do
 			},
 			Events = {
 				["numberChanged"] = numberChanged,
-				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 					return thisWidget.Instance
 				end),
 			},
-			Generate = function(thisWidget: Types.Input<T>)
+			Generate = function(thisWidget: Input<T>)
 				local Input: Frame = Instance.new("Frame")
 				Input.Name = "Iris_Input" .. dataType
 				Input.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
@@ -7782,7 +8903,7 @@ do
 
 				return Input
 			end,
-			Update = function(thisWidget: Types.Input<T>)
+			Update = function(thisWidget: Input<T>)
 				local Input = thisWidget.Instance :: GuiObject
 				local TextLabel: TextLabel = Input.TextLabel
 				TextLabel.Text = thisWidget.arguments.Text or `Input {dataType}`
@@ -7830,11 +8951,11 @@ do
 					thisWidget.arguments.Prefix = defaultPrefx[dataType]
 				end
 			end,
-			Discard = function(thisWidget: Types.Input<T>)
+			Discard = function(thisWidget: Input<T>)
 				thisWidget.Instance:Destroy()
 				widgets.discardState(thisWidget)
 			end,
-			GenerateState = function(thisWidget: Types.Input<T>)
+			GenerateState = function(thisWidget: Input<T>)
 				if thisWidget.state.number == nil then
 					thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
 				end
@@ -7842,7 +8963,7 @@ do
 					thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", 0)
 				end
 			end,
-			UpdateState = function(thisWidget: Types.Input<T>)
+			UpdateState = function(thisWidget: Input<T>)
 				local Input = thisWidget.Instance :: GuiObject
 
 				for index = 1, components do
@@ -7861,12 +8982,12 @@ end
     --[[
         Drag
     ]]
-local generateDragScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> Types.WidgetClass
-local generateColorDragScalar: (dataType: InputDataTypes, ...any) -> Types.WidgetClass
+local generateDragScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> WidgetClass
+local generateColorDragScalar: (dataType: InputDataTypes, ...any) -> WidgetClass
 do
 	local PreviouseMouseXPosition: number = 0
 	local AnyActiveDrag: boolean = false
-	local ActiveDrag: Types.Input<Types.InputDataType>? = nil
+	local ActiveDrag: Input<InputDataType>? = nil
 	local ActiveIndex: number = 0
 	local ActiveDataType: InputDataTypes | "" = ""
 
@@ -7881,7 +9002,7 @@ do
 			return
 		end
 
-		local state: Types.State<Types.InputDataType> = ActiveDrag.state.number
+		local state: State<InputDataType> = ActiveDrag.state.number
 		if ActiveDataType == "Color3" or ActiveDataType == "Color4" then
 			local Drag = ActiveDrag :: any
 			state = Drag.state.color
@@ -7910,7 +9031,7 @@ do
 		ActiveDrag.lastNumberChangedTick = Iris._cycleTick + 1
 	end
 
-	local function DragMouseDown(thisWidget: Types.Input<Types.InputDataType>, dataTypes: InputDataTypes, index: number, x: number, y: number)
+	local function DragMouseDown(thisWidget: Input<InputDataType>, dataTypes: InputDataTypes, index: number, x: number, y: number)
 		local currentTime: number = widgets.getTime()
 		local isTimeValid: boolean = currentTime - thisWidget.lastClickedTime < Iris._config.MouseDoubleClickTime
 		local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
@@ -7959,11 +9080,11 @@ do
 			},
 			Events = {
 				["numberChanged"] = numberChanged,
-				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 					return thisWidget.Instance
 				end),
 			},
-			Generate = function(thisWidget: Types.Input<T>)
+			Generate = function(thisWidget: Input<T>)
 				thisWidget.lastClickedTime = -1
 				thisWidget.lastClickedPosition = Vector2.zero
 
@@ -8053,7 +9174,7 @@ do
 
 					InputField.FocusLost:Connect(function()
 						local newValue: number? = tonumber(InputField.Text:match("-?%d*%.?%d*"))
-						local state: Types.State<T> = thisWidget.state.number
+						local state: State<T> = thisWidget.state.number
 						local widget = thisWidget :: any
 						if dataType == "Color4" and index == 4 then
 							state = widget.state.transparency
@@ -8120,7 +9241,7 @@ do
 
 				return Drag
 			end,
-			Update = function(thisWidget: Types.Input<T>)
+			Update = function(thisWidget: Input<T>)
 				local Input = thisWidget.Instance :: GuiObject
 				local TextLabel: TextLabel = Input.TextLabel
 				TextLabel.Text = thisWidget.arguments.Text or `Drag {dataType}`
@@ -8160,11 +9281,11 @@ do
 					thisWidget.arguments.Prefix = defaultPrefx[dataType]
 				end
 			end,
-			Discard = function(thisWidget: Types.Input<T>)
+			Discard = function(thisWidget: Input<T>)
 				thisWidget.Instance:Destroy()
 				widgets.discardState(thisWidget)
 			end,
-			GenerateState = function(thisWidget: Types.Input<T>)
+			GenerateState = function(thisWidget: Input<T>)
 				if thisWidget.state.number == nil then
 					thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
 				end
@@ -8172,12 +9293,12 @@ do
 					thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
 				end
 			end,
-			UpdateState = function(thisWidget: Types.Input<T>)
+			UpdateState = function(thisWidget: Input<T>)
 				local Drag = thisWidget.Instance :: Frame
 
 				local widget = thisWidget :: any
 				for index = 1, components do
-					local state: Types.State<T> = thisWidget.state.number
+					local state: State<T> = thisWidget.state.number
 					if dataType == "Color3" or dataType == "Color4" then
 						state = widget.state.color
 						if index == 4 then
@@ -8223,7 +9344,7 @@ do
 
 	function generateColorDragScalar(dataType: InputDataTypes, ...: any)
 		local defaultValues: { any } = { ... }
-		local input: Types.WidgetClass = generateDragScalar(dataType, dataType == "Color4" and 4 or 3, defaultValues[1])
+		local input: WidgetClass = generateDragScalar(dataType, dataType == "Color4" and 4 or 3, defaultValues[1])
 
 		return widgets.extend(input, {
 			Args = {
@@ -8232,7 +9353,7 @@ do
 				["UseHSV"] = 3,
 				["Format"] = 4,
 			},
-			Update = function(thisWidget: Types.InputColor4)
+			Update = function(thisWidget: InputColor4)
 				local Input = thisWidget.Instance :: GuiObject
 				local TextLabel: TextLabel = Input.TextLabel
 				TextLabel.Text = thisWidget.arguments.Text or `Drag {dataType}`
@@ -8263,7 +9384,7 @@ do
 					Iris._widgets[thisWidget.type].UpdateState(thisWidget)
 				end
 			end,
-			GenerateState = function(thisWidget: Types.InputColor4)
+			GenerateState = function(thisWidget: InputColor4)
 				if thisWidget.state.color == nil then
 					thisWidget.state.color = Iris._widgetState(thisWidget, "color", defaultValues[1])
 				end
@@ -8283,11 +9404,11 @@ end
     --[[
         Slider
     ]]
-local generateSliderScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> Types.WidgetClass
-local generateEnumSliderScalar: (enum: Enum, item: EnumItem) -> Types.WidgetClass
+local generateSliderScalar: <T>(dataType: InputDataTypes, components: number, defaultValue: any) -> WidgetClass
+local generateEnumSliderScalar: (enum: Enum, item: EnumItem) -> WidgetClass
 do
 	local AnyActiveSlider: boolean = false
-	local ActiveSlider: Types.Input<Types.InputDataType>? = nil
+	local ActiveSlider: Input<InputDataType>? = nil
 	local ActiveIndex: number = 0
 	local ActiveDataType: InputDataTypes | "" = ""
 
@@ -8317,7 +9438,7 @@ do
 		ActiveSlider.lastNumberChangedTick = Iris._cycleTick + 1
 	end
 
-	local function SliderMouseDown(thisWidget: Types.Input<Types.InputDataType>, dataType: InputDataTypes, index: number)
+	local function SliderMouseDown(thisWidget: Input<InputDataType>, dataType: InputDataTypes, index: number)
 		local isCtrlHeld: boolean = widgets.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or widgets.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
 		if isCtrlHeld then
 			thisWidget.state.editingText:set(index)
@@ -8362,11 +9483,11 @@ do
 			},
 			Events = {
 				["numberChanged"] = numberChanged,
-				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+				["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 					return thisWidget.Instance
 				end),
 			},
-			Generate = function(thisWidget: Types.Input<T>)
+			Generate = function(thisWidget: Input<T>)
 				local Slider: Frame = Instance.new("Frame")
 				Slider.Name = "Iris_Slider" .. dataType
 				Slider.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
@@ -8514,7 +9635,7 @@ do
 
 				return Slider
 			end,
-			Update = function(thisWidget: Types.Input<T>)
+			Update = function(thisWidget: Input<T>)
 				local Input = thisWidget.Instance :: GuiObject
 				local TextLabel: TextLabel = Input.TextLabel
 				TextLabel.Text = thisWidget.arguments.Text or `Slider {dataType}`
@@ -8579,11 +9700,11 @@ do
 					end
 				end
 			end,
-			Discard = function(thisWidget: Types.Input<T>)
+			Discard = function(thisWidget: Input<T>)
 				thisWidget.Instance:Destroy()
 				widgets.discardState(thisWidget)
 			end,
-			GenerateState = function(thisWidget: Types.Input<T>)
+			GenerateState = function(thisWidget: Input<T>)
 				if thisWidget.state.number == nil then
 					thisWidget.state.number = Iris._widgetState(thisWidget, "number", defaultValue)
 				end
@@ -8591,7 +9712,7 @@ do
 					thisWidget.state.editingText = Iris._widgetState(thisWidget, "editingText", false)
 				end
 			end,
-			UpdateState = function(thisWidget: Types.Input<T>)
+			UpdateState = function(thisWidget: Input<T>)
 				local Slider = thisWidget.Instance :: Frame
 
 				for index = 1, components do
@@ -8638,7 +9759,7 @@ do
 	end
 
 	function generateEnumSliderScalar(enum: Enum, item: EnumItem)
-		local input: Types.WidgetClass = generateSliderScalar("Enum", 1, item.Value)
+		local input: WidgetClass = generateSliderScalar("Enum", 1, item.Value)
 		local valueToName = { string }
 
 		for _, enumItem: EnumItem in enum:GetEnumItems() do
@@ -8649,7 +9770,7 @@ do
 			Args = {
 				["Text"] = 1,
 			},
-			Update = function(thisWidget: Types.InputEnum)
+			Update = function(thisWidget: InputEnum)
 				local Input = thisWidget.Instance :: GuiObject
 				local TextLabel: TextLabel = Input.TextLabel
 				TextLabel.Text = thisWidget.arguments.Text or "Input Enum"
@@ -8665,7 +9786,7 @@ do
 
 				GrabBar.Size = UDim2.new(grabScaleSize, 0, 1, 0)
 			end,
-			GenerateState = function(thisWidget: Types.InputEnum)
+			GenerateState = function(thisWidget: InputEnum)
 				if thisWidget.state.number == nil then
 					thisWidget.state.number = Iris._widgetState(thisWidget, "number", item.Value)
 				end
@@ -8681,7 +9802,7 @@ do
 end
 
 do
-	local inputNum: Types.WidgetClass = generateInputScalar("Num", 1, 0)
+	local inputNum: WidgetClass = generateInputScalar("Num", 1, 0)
 	inputNum.Args["NoButtons"] = 6
 	Iris.WidgetConstructor("InputNum", inputNum)
 end
@@ -8721,18 +9842,18 @@ Iris.WidgetConstructor("InputText", {
 	},
 	Events = {
 		["textChanged"] = {
-			["Init"] = function(thisWidget: Types.InputText)
+			["Init"] = function(thisWidget: InputText)
 				thisWidget.lastTextChangedTick = 0
 			end,
-			["Get"] = function(thisWidget: Types.InputText)
+			["Get"] = function(thisWidget: InputText)
 				return thisWidget.lastTextChangedTick == Iris._cycleTick
 			end,
 		},
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.InputText)
+	Generate = function(thisWidget: InputText)
 		local InputText: Frame = Instance.new("Frame")
 		InputText.Name = "Iris_InputText"
 		InputText.AutomaticSize = Enum.AutomaticSize.Y
@@ -8784,7 +9905,7 @@ Iris.WidgetConstructor("InputText", {
 
 		return InputText
 	end,
-	Update = function(thisWidget: Types.InputText)
+	Update = function(thisWidget: InputText)
 		local InputText = thisWidget.Instance :: Frame
 		local TextLabel: TextLabel = InputText.TextLabel
 		local InputField: TextBox = InputText.InputField
@@ -8794,22 +9915,22 @@ Iris.WidgetConstructor("InputText", {
 		InputField.TextEditable = not thisWidget.arguments.ReadOnly
 		InputField.MultiLine = thisWidget.arguments.MultiLine or false
 	end,
-	Discard = function(thisWidget: Types.InputText)
+	Discard = function(thisWidget: InputText)
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-	GenerateState = function(thisWidget: Types.InputText)
+	GenerateState = function(thisWidget: InputText)
 		if thisWidget.state.text == nil then
 			thisWidget.state.text = Iris._widgetState(thisWidget, "text", "")
 		end
 	end,
-	UpdateState = function(thisWidget: Types.InputText)
+	UpdateState = function(thisWidget: InputText)
 		local InputText = thisWidget.Instance :: Frame
 		local InputField: TextBox = InputText.InputField
 
 		InputField.Text = thisWidget.state.text.value
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 --stylua: ignore
 Iris.WidgetConstructor("Selectable", {
 	hasState = true,
@@ -8821,45 +9942,45 @@ Iris.WidgetConstructor("Selectable", {
 	},
 	Events = {
 		["selected"] = {
-			["Init"] = function(_thisWidget: Types.Selectable) end,
-			["Get"] = function(thisWidget: Types.Selectable)
+			["Init"] = function(_thisWidget: Selectable) end,
+			["Get"] = function(thisWidget: Selectable)
 				return thisWidget.lastSelectedTick == Iris._cycleTick
 			end,
 		},
 		["unselected"] = {
-			["Init"] = function(_thisWidget: Types.Selectable) end,
-			["Get"] = function(thisWidget: Types.Selectable)
+			["Init"] = function(_thisWidget: Selectable) end,
+			["Get"] = function(thisWidget: Selectable)
 				return thisWidget.lastUnselectedTick == Iris._cycleTick
 			end,
 		},
 		["active"] = {
-			["Init"] = function(_thisWidget: Types.Selectable) end,
-			["Get"] = function(thisWidget: Types.Selectable)
+			["Init"] = function(_thisWidget: Selectable) end,
+			["Get"] = function(thisWidget: Selectable)
 				return thisWidget.state.index.value == thisWidget.arguments.Index
 			end,
 		},
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
 			local Selectable = thisWidget.Instance :: Frame
 			return Selectable.SelectableButton
 		end),
-		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Types.Widget)
+		["rightClicked"] = widgets.EVENTS.rightClick(function(thisWidget: Widget)
 			local Selectable = thisWidget.Instance :: Frame
 			return Selectable.SelectableButton
 		end),
-		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Types.Widget)
+		["doubleClicked"] = widgets.EVENTS.doubleClick(function(thisWidget: Widget)
 			local Selectable = thisWidget.Instance :: Frame
 			return Selectable.SelectableButton
 		end),
-		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Types.Widget)
+		["ctrlClicked"] = widgets.EVENTS.ctrlClick(function(thisWidget: Widget)
 			local Selectable = thisWidget.Instance :: Frame
 			return Selectable.SelectableButton
 		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			local Selectable = thisWidget.Instance :: Frame
 			return Selectable.SelectableButton
 		end),
 	},
-	Generate = function(thisWidget: Types.Selectable)
+	Generate = function(thisWidget: Selectable)
 		local Selectable: Frame = Instance.new("Frame")
 		Selectable.Name = "Iris_Selectable"
 		Selectable.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, Iris._config.TextSize + 2 * Iris._config.FramePadding.Y - Iris._config.ItemSpacing.Y))
@@ -8904,16 +10025,16 @@ Iris.WidgetConstructor("Selectable", {
 
 		return Selectable
 	end,
-	Update = function(thisWidget: Types.Selectable)
+	Update = function(thisWidget: Selectable)
 		local Selectable = thisWidget.Instance :: Frame
 		local SelectableButton: TextButton = Selectable.SelectableButton
 		SelectableButton.Text = thisWidget.arguments.Text or "Selectable"
 	end,
-	Discard = function(thisWidget: Types.Selectable)
+	Discard = function(thisWidget: Selectable)
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-	GenerateState = function(thisWidget: Types.Selectable)
+	GenerateState = function(thisWidget: Selectable)
 		if thisWidget.state.index == nil then
 			if thisWidget.arguments.Index ~= nil then
 				error("A shared state index is needded for Iris.Selectables() with an Index argument.", 5)
@@ -8921,7 +10042,7 @@ Iris.WidgetConstructor("Selectable", {
 			thisWidget.state.index = Iris._widgetState(thisWidget, "index", false)
 		end
 	end,
-	UpdateState = function(thisWidget: Types.Selectable)
+	UpdateState = function(thisWidget: Selectable)
 		local Selectable = thisWidget.Instance :: Frame
 		local SelectableButton: TextButton = Selectable.SelectableButton
 		if thisWidget.state.index.value == (thisWidget.arguments.Index or true) then
@@ -8934,14 +10055,14 @@ Iris.WidgetConstructor("Selectable", {
 			thisWidget.lastUnselectedTick = Iris._cycleTick + 1
 		end
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 local AnyOpenedCombo: boolean = false
 local ComboOpenedTick: number = -1
-local OpenedCombo: Types.Combo? = nil
+local OpenedCombo: Combo? = nil
 local CachedContentSize: number = 0
 
-local function UpdateChildContainerTransform(thisWidget: Types.Combo)
+local function UpdateChildContainerTransform(thisWidget: Combo)
 	local Combo = thisWidget.Instance :: Frame
 	local PreviewContainer = Combo.PreviewContainer :: TextButton
 	local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
@@ -9033,32 +10154,32 @@ Iris.WidgetConstructor("Combo", {
 	},
 	Events = {
 		["opened"] = {
-			["Init"] = function(_thisWidget: Types.Combo) end,
-			["Get"] = function(thisWidget: Types.Combo)
+			["Init"] = function(_thisWidget: Combo) end,
+			["Get"] = function(thisWidget: Combo)
 				return thisWidget.lastOpenedTick == Iris._cycleTick
 			end,
 		},
 		["closed"] = {
-			["Init"] = function(_thisWidget: Types.Combo) end,
-			["Get"] = function(thisWidget: Types.Combo)
+			["Init"] = function(_thisWidget: Combo) end,
+			["Get"] = function(thisWidget: Combo)
 				return thisWidget.lastClosedTick == Iris._cycleTick
 			end,
 		},
 		["changed"] = {
-			["Init"] = function(_thisWidget: Types.Combo) end,
-			["Get"] = function(thisWidget: Types.Combo)
+			["Init"] = function(_thisWidget: Combo) end,
+			["Get"] = function(thisWidget: Combo)
 				return thisWidget.lastChangedTick == Iris._cycleTick
 			end,
 		},
-		["clicked"] = widgets.EVENTS.click(function(thisWidget: Types.Widget)
+		["clicked"] = widgets.EVENTS.click(function(thisWidget: Widget)
 			local Combo = thisWidget.Instance :: Frame
 			return Combo.PreviewContainer
 		end),
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.Combo)
+	Generate = function(thisWidget: Combo)
 		local frameHeight: number = Iris._config.TextSize + 2 * Iris._config.FramePadding.Y
 
 		local Combo: Frame = Instance.new("Frame")
@@ -9210,7 +10331,7 @@ Iris.WidgetConstructor("Combo", {
 		thisWidget.UIListLayout = ChildContainerUIListLayout
 		return Combo
 	end,
-	Update = function(thisWidget: Types.Combo)
+	Update = function(thisWidget: Combo)
 		local Iris_Combo = thisWidget.Instance :: Frame
 		local PreviewContainer = Iris_Combo.PreviewContainer :: TextButton
 		local PreviewLabel: TextLabel = PreviewContainer.PreviewLabel
@@ -9238,11 +10359,11 @@ Iris.WidgetConstructor("Combo", {
 			PreviewContainer.AutomaticSize = Enum.AutomaticSize.Y
 		end
 	end,
-	ChildAdded = function(thisWidget: Types.Combo, _thisChild: Types.Widget)
+	ChildAdded = function(thisWidget: Combo, _thisChild: Widget)
 		UpdateChildContainerTransform(thisWidget)
 		return thisWidget.ChildContainer
 	end,
-	GenerateState = function(thisWidget: Types.Combo)
+	GenerateState = function(thisWidget: Combo)
 		if thisWidget.state.index == nil then
 			thisWidget.state.index = Iris._widgetState(thisWidget, "index", "No Selection")
 		end
@@ -9257,7 +10378,7 @@ Iris.WidgetConstructor("Combo", {
 			end
 		end)
 	end,
-	UpdateState = function(thisWidget: Types.Combo)
+	UpdateState = function(thisWidget: Combo)
 		local Combo = thisWidget.Instance :: Frame
 		local ChildContainer = thisWidget.ChildContainer :: ScrollingFrame
 		local PreviewContainer = Combo.PreviewContainer :: TextButton
@@ -9289,7 +10410,7 @@ Iris.WidgetConstructor("Combo", {
 		local stateIndex: any = thisWidget.state.index.value
 		PreviewLabel.Text = if typeof(stateIndex) == "EnumItem" then stateIndex.Name else tostring(stateIndex)
 	end,
-	Discard = function(thisWidget: Types.Combo)
+	Discard = function(thisWidget: Combo)
 		-- If we are discarding the current combo active, we need to hide it
 		if OpenedCombo and OpenedCombo == thisWidget then
 			OpenedCombo = nil
@@ -9300,7 +10421,7 @@ Iris.WidgetConstructor("Combo", {
 		thisWidget.ChildContainer:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 -- stylua: ignore
 Iris.WidgetConstructor("ProgressBar", {
 	hasState = true,
@@ -9310,17 +10431,17 @@ Iris.WidgetConstructor("ProgressBar", {
 		["Format"] = 2,
 	},
 	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 		["changed"] = {
-			["Init"] = function(_thisWidget: Types.ProgressBar) end,
-			["Get"] = function(thisWidget: Types.ProgressBar)
+			["Init"] = function(_thisWidget: ProgressBar) end,
+			["Get"] = function(thisWidget: ProgressBar)
 				return thisWidget.lastChangedTick == Iris._cycleTick
 			end,
 		},
 	},
-	Generate = function(thisWidget: Types.ProgressBar)
+	Generate = function(thisWidget: ProgressBar)
 		local ProgressBar: Frame = Instance.new("Frame")
 		ProgressBar.Name = "Iris_ProgressBar"
 		ProgressBar.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
@@ -9387,12 +10508,12 @@ Iris.WidgetConstructor("ProgressBar", {
 
 		return ProgressBar
 	end,
-	GenerateState = function(thisWidget: Types.ProgressBar)
+	GenerateState = function(thisWidget: ProgressBar)
 		if thisWidget.state.progress == nil then
 			thisWidget.state.progress = Iris._widgetState(thisWidget, "Progress", 0)
 		end
 	end,
-	Update = function(thisWidget: Types.ProgressBar)
+	Update = function(thisWidget: ProgressBar)
 		local Progress = thisWidget.Instance :: Frame
 		local TextLabel: TextLabel = Progress.TextLabel
 		local Bar = Progress.Bar :: Frame
@@ -9404,7 +10525,7 @@ Iris.WidgetConstructor("ProgressBar", {
 
 		TextLabel.Text = thisWidget.arguments.Text or "Progress Bar"
 	end,
-	UpdateState = function(thisWidget: Types.ProgressBar)
+	UpdateState = function(thisWidget: ProgressBar)
 		local ProgressBar = thisWidget.Instance :: Frame
 		local Bar = ProgressBar.Bar :: Frame
 		local Progress: TextLabel = Bar.Progress
@@ -9430,11 +10551,11 @@ Iris.WidgetConstructor("ProgressBar", {
 		end
 		thisWidget.lastChangedTick = Iris._cycleTick + 1
 	end,
-	Discard = function(thisWidget: Types.ProgressBar)
+	Discard = function(thisWidget: ProgressBar)
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 local function createLine(parent: Frame, index: number): Frame
 	local Block: Frame = Instance.new("Frame")
@@ -9449,7 +10570,7 @@ local function createLine(parent: Frame, index: number): Frame
 	return Block
 end
 
-local function clearLine(thisWidget: Types.PlotLines)
+local function clearLine(thisWidget: PlotLines)
 	if thisWidget.HoveredLine then
 		thisWidget.HoveredLine.BackgroundColor3 = Iris._config.PlotLinesColor
 		thisWidget.HoveredLine.BackgroundTransparency = Iris._config.PlotLinesTransparency
@@ -9458,7 +10579,7 @@ local function clearLine(thisWidget: Types.PlotLines)
 	end
 end
 
-local function updateLine(thisWidget: Types.PlotLines, silent: true?)
+local function updateLine(thisWidget: PlotLines, silent: true?)
 	local PlotLines = thisWidget.Instance :: Frame
 	local Background = PlotLines.Background :: Frame
 	local Plot = Background.Plot :: Frame
@@ -9506,11 +10627,11 @@ Iris.WidgetConstructor("PlotLines", {
 		["TextOverlay"] = 5,
 	},
 	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.PlotLines)
+	Generate = function(thisWidget: PlotLines)
 		local PlotLines: Frame = Instance.new("Frame")
 		PlotLines.Name = "Iris_PlotLines"
 		PlotLines.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
@@ -9606,7 +10727,7 @@ Iris.WidgetConstructor("PlotLines", {
 
 		return PlotLines
 	end,
-	GenerateState = function(thisWidget: Types.PlotLines)
+	GenerateState = function(thisWidget: PlotLines)
 		if thisWidget.state.values == nil then
 			thisWidget.state.values = Iris._widgetState(thisWidget, "values", { 0, 1 })
 		end
@@ -9614,7 +10735,7 @@ Iris.WidgetConstructor("PlotLines", {
 			thisWidget.state.hovered = Iris._widgetState(thisWidget, "hovered", nil)
 		end
 	end,
-	Update = function(thisWidget: Types.PlotLines)
+	Update = function(thisWidget: PlotLines)
 		local PlotLines = thisWidget.Instance :: Frame
 		local TextLabel: TextLabel = PlotLines.TextLabel
 		local Background = PlotLines.Background :: Frame
@@ -9625,7 +10746,7 @@ Iris.WidgetConstructor("PlotLines", {
 		OverlayText.Text = thisWidget.arguments.TextOverlay or ""
 		PlotLines.Size = UDim2.new(1, 0, 0, thisWidget.arguments.Height or 0)
 	end,
-	UpdateState = function(thisWidget: Types.PlotLines)
+	UpdateState = function(thisWidget: PlotLines)
 		if thisWidget.state.hovered.lastChangeTick == Iris._cycleTick then
 			if thisWidget.state.hovered.value then
 				thisWidget.Tooltip.Visible = true
@@ -9688,12 +10809,12 @@ Iris.WidgetConstructor("PlotLines", {
 			end
 		end
 	end,
-	Discard = function(thisWidget: Types.PlotLines)
+	Discard = function(thisWidget: PlotLines)
 		thisWidget.Instance:Destroy()
 		thisWidget.Tooltip:Destroy()
 		widgets.discardState(thisWidget)
 	end,
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 local function createBlock(parent: Frame, index: number): Frame
 	local Block: Frame = Instance.new("Frame")
@@ -9707,7 +10828,7 @@ local function createBlock(parent: Frame, index: number): Frame
 	return Block
 end
 
-local function clearBlock(thisWidget: Types.PlotHistogram)
+local function clearBlock(thisWidget: PlotHistogram)
 	if thisWidget.HoveredBlock then
 		thisWidget.HoveredBlock.BackgroundColor3 = Iris._config.PlotHistogramColor
 		thisWidget.HoveredBlock.BackgroundTransparency = Iris._config.PlotHistogramTransparency
@@ -9716,7 +10837,7 @@ local function clearBlock(thisWidget: Types.PlotHistogram)
 	end
 end
 
-local function updateBlock(thisWidget: Types.PlotHistogram, silent: true?)
+local function updateBlock(thisWidget: PlotHistogram, silent: true?)
 	local PlotHistogram = thisWidget.Instance :: Frame
 	local Background = PlotHistogram.Background :: Frame
 	local Plot = Background.Plot :: Frame
@@ -9760,11 +10881,11 @@ Iris.WidgetConstructor("PlotHistogram", {
 		["BaseLine"] = 6,
 	},
 	Events = {
-		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+		["hovered"] = widgets.EVENTS.hover(function(thisWidget: Widget)
 			return thisWidget.Instance
 		end),
 	},
-	Generate = function(thisWidget: Types.PlotHistogram)
+	Generate = function(thisWidget: PlotHistogram)
 		local PlotHistogram: Frame = Instance.new("Frame")
 		PlotHistogram.Name = "Iris_PlotHistogram"
 		PlotHistogram.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
@@ -9858,7 +10979,7 @@ Iris.WidgetConstructor("PlotHistogram", {
 
 		return PlotHistogram
 	end,
-	GenerateState = function(thisWidget: Types.PlotHistogram)
+	GenerateState = function(thisWidget: PlotHistogram)
 		if thisWidget.state.values == nil then
 			thisWidget.state.values = Iris._widgetState(thisWidget, "values", { 1 })
 		end     
@@ -9866,7 +10987,7 @@ Iris.WidgetConstructor("PlotHistogram", {
 			thisWidget.state.hovered = Iris._widgetState(thisWidget, "hovered", nil)
 		end     
 	end,
-	Update = function(thisWidget: Types.PlotHistogram)
+	Update = function(thisWidget: PlotHistogram)
 		local PlotLines = thisWidget.Instance :: Frame
 		local TextLabel: TextLabel = PlotLines.TextLabel
 		local Background = PlotLines.Background :: Frame
@@ -9877,7 +10998,7 @@ Iris.WidgetConstructor("PlotHistogram", {
 		OverlayText.Text = thisWidget.arguments.TextOverlay or ""
 		PlotLines.Size = UDim2.new(1, 0, 0, thisWidget.arguments.Height or 0)
 	end,
-	UpdateState = function(thisWidget: Types.PlotHistogram)
+	UpdateState = function(thisWidget: PlotHistogram)
 		if thisWidget.state.hovered.lastChangeTick == Iris._cycleTick then
 			if thisWidget.state.hovered.value then
 				thisWidget.Tooltip.Visible = true
@@ -9939,22 +11060,22 @@ Iris.WidgetConstructor("PlotHistogram", {
 			end
 		end
 	end,
-	Discard = function(thisWidget: Types.PlotHistogram)
+	Discard = function(thisWidget: PlotHistogram)
 		thisWidget.Instance:Destroy()
 		thisWidget.Tooltip:Destroy()
 		widgets.discardState(thisWidget)            
 	end,
-} :: Types.WidgetClass)
-local Tables: { [Types.ID]: Types.Table } = {}
-local TableMinWidths: { [Types.Table]: { boolean } } = {}
+} :: WidgetClass)
+local Tables: { [ID]: Table } = {}
+local TableMinWidths: { [Table]: { boolean } } = {}
 local AnyActiveTable = false
-local ActiveTable: Types.Table? = nil
+local ActiveTable: Table? = nil
 local ActiveColumn = 0
 local ActiveLeftWidth = -1
 local ActiveRightWidth = -1
 local MousePositionX = 0
 
-local function CalculateMinColumnWidth(thisWidget: Types.Table, index: number)
+local function CalculateMinColumnWidth(thisWidget: Table, index: number)
 	local width = 0
 	for _, row in thisWidget._cellInstances do
 		local cell = row[index]
@@ -10066,7 +11187,7 @@ local function UpdateActiveColumn()
 	widths:set(widths.value, true)
 end
 
-local function ColumnMouseDown(thisWidget: Types.Table, index: number)
+local function ColumnMouseDown(thisWidget: Table, index: number)
 	AnyActiveTable = true
 	ActiveTable = thisWidget
 	ActiveColumn = index
@@ -10096,7 +11217,7 @@ widgets.registerEvent("InputEnded", function(inputObject: InputObject)
 	end
 end)
 
-local function GenerateCell(_thisWidget: Types.Table, index: number, width: UDim, header: boolean)
+local function GenerateCell(_thisWidget: Table, index: number, width: UDim, header: boolean)
 	local Cell: TextButton
 	if header then
 		Cell = Instance.new("TextButton")
@@ -10131,7 +11252,7 @@ local function GenerateCell(_thisWidget: Types.Table, index: number, width: UDim
 	return Cell
 end
 
-local function GenerateColumnBorder(thisWidget: Types.Table, index: number, style: "Light" | "Strong")
+local function GenerateColumnBorder(thisWidget: Table, index: number, style: "Light" | "Strong")
 	local Border = Instance.new("ImageButton")
 	Border.Name = `Border_{index}`
 	Border.Size = UDim2.new(0, 5, 1, 0)
@@ -10185,7 +11306,7 @@ local function GenerateColumnBorder(thisWidget: Types.Table, index: number, styl
 end
 
 -- creates a new row and all columns, and adds all to the table's row and cell instance tables, but does not parent
-local function GenerateRow(thisWidget: Types.Table, index: number)
+local function GenerateRow(thisWidget: Table, index: number)
 	local Row: Frame = Instance.new("Frame")
 	Row.Name = `Row_{index}`
 	Row.AutomaticSize = Enum.AutomaticSize.Y
@@ -10223,7 +11344,7 @@ local function GenerateRow(thisWidget: Types.Table, index: number)
 	return Row
 end
 
-local function GenerateRowBorder(_thisWidget: Types.Table, index: number, style: "Light" | "Strong")
+local function GenerateRowBorder(_thisWidget: Table, index: number, style: "Light" | "Strong")
 	local Border = Instance.new("Frame")
 	Border.Name = `Border_{index}`
 	Border.Size = UDim2.new(1, 0, 0, 0)
@@ -10260,7 +11381,7 @@ Iris.WidgetConstructor("Table", {
 		LimitTableWidth = 9,
 	},
 	Events = {},
-	Generate = function(thisWidget: Types.Table)
+	Generate = function(thisWidget: Table)
 		Tables[thisWidget.ID] = thisWidget
 		TableMinWidths[thisWidget] = {}
 
@@ -10320,7 +11441,7 @@ Iris.WidgetConstructor("Table", {
 
 		return Table
 	end,
-	GenerateState = function(thisWidget: Types.Table)
+	GenerateState = function(thisWidget: Table)
 		local NumColumns = thisWidget.arguments.NumColumns
 		if thisWidget.state.widths == nil then
 			local Widths: { number } = table.create(NumColumns, 1 / NumColumns)
@@ -10354,7 +11475,7 @@ Iris.WidgetConstructor("Table", {
 		thisWidget._columnBorders[0] = TableColumnBorder
 		TableColumnBorder.Parent = Table
 	end,
-	Update = function(thisWidget: Types.Table)
+	Update = function(thisWidget: Table)
 		local NumColumns = thisWidget.arguments.NumColumns
 		assert(NumColumns >= 1, "Iris.Table must have at least one column.")
 
@@ -10426,7 +11547,7 @@ Iris.WidgetConstructor("Table", {
 			Iris._widgets["Table"].UpdateState(thisWidget)
 		end
 	end,
-	UpdateState = function(thisWidget: Types.Table)
+	UpdateState = function(thisWidget: Table)
 		local Table = thisWidget.Instance :: Frame
 		local BorderContainer = Table.BorderContainer :: Frame
 		local RowContainer = Table.RowContainer :: Frame
@@ -10501,7 +11622,7 @@ Iris.WidgetConstructor("Table", {
 		RowContainer.UISizeConstraint.MaxSize = Vector2.new(Width, math.huge)
 		thisWidget._columnBorders[0].Position = UDim2.new(0, Width - 3, 0, 0)
 	end,
-	ChildAdded = function(thisWidget: Types.Table, _: Types.Widget)
+	ChildAdded = function(thisWidget: Table, _: Widget)
 		local rowIndex = thisWidget._rowIndex
 		local columnIndex = thisWidget._columnIndex
 		-- determine if the row exists yet
@@ -10528,7 +11649,7 @@ Iris.WidgetConstructor("Table", {
 
 		return thisWidget._cellInstances[rowIndex][columnIndex]
 	end,
-	ChildDiscarded = function(thisWidget: Types.Table, thisChild: Types.Widget)
+	ChildDiscarded = function(thisWidget: Table, thisChild: Widget)
 		local Cell = thisChild.Instance.Parent
 
 		if Cell ~= nil then
@@ -10539,13 +11660,13 @@ Iris.WidgetConstructor("Table", {
 			end
 		end
 	end,
-	Discard = function(thisWidget: Types.Table)
+	Discard = function(thisWidget: Table)
 		Tables[thisWidget.ID] = nil
 		TableMinWidths[thisWidget] = nil
 		thisWidget.Instance:Destroy()
 		widgets.discardState(thisWidget)
 	end
-} :: Types.WidgetClass)
+} :: WidgetClass)
 
 -- basic wrapper for nearly every widget, saves space.
 local function wrapper(name)
@@ -10630,7 +11751,7 @@ Iris.Window = wrapper("Window")
     --[=[
         @within Iris
         @function SetFocusedWindow
-        @param window Types.Window -- the window to focus.
+        @param window Window -- the window to focus.
 
         Sets the focused window to the window provided, which brings it to the front and makes it active.
     ]=]
@@ -10983,9 +12104,9 @@ Iris.Text = wrapper("Text")
         }
         ```
     ]=]
-Iris.TextWrapped = function(arguments: Types.WidgetArguments): Types.Text
+Iris.TextWrapped = function(arguments: WidgetArguments): Text
 	arguments[2] = true
-	return Iris.Internal._Insert("Text", arguments) :: Types.Text
+	return Iris.Internal._Insert("Text", arguments) :: Text
 end
 
     --[=[
@@ -11008,10 +12129,10 @@ end
         }
         ```
     ]=]
-Iris.TextColored = function(arguments: Types.WidgetArguments): Types.Text
+Iris.TextColored = function(arguments: WidgetArguments): Text
 	arguments[3] = arguments[2]
 	arguments[2] = nil
-	return Iris.Internal._Insert("Text", arguments) :: Types.Text
+	return Iris.Internal._Insert("Text", arguments) :: Text
 end
 
     --[=[
@@ -11413,7 +12534,7 @@ Iris.Tab = wrapper("Tab")
         @class Input
         Input Widget API
 
-        Input Widgets are textboxes for typing in specific number values. See [Drag], [Slider] or [InputText](Text#InputText) for more input types.
+        Input Widgets are textboxes for typing in specific number values. See [Drag], [Slider] or [InputText](Text#InputText) for more input 
 
         Iris provides a set of specific inputs for the datatypes:
         Number,
@@ -12208,7 +13329,7 @@ Iris.Combo = wrapper("Combo")
         }
         ```
     ]=]
-Iris.ComboArray = function<T>(arguments: Types.WidgetArguments, states: Types.WidgetStates?, selectionArray: { T })
+Iris.ComboArray = function<T>(arguments: WidgetArguments, states: WidgetStates?, selectionArray: { T })
 	local defaultState
 	if states == nil then
 		defaultState = Iris.State(selectionArray[1])
@@ -12216,9 +13337,9 @@ Iris.ComboArray = function<T>(arguments: Types.WidgetArguments, states: Types.Wi
 		defaultState = states
 	end
 	local thisWidget = Iris.Internal._Insert("Combo", arguments, defaultState)
-	local sharedIndex: Types.State<T> = thisWidget.state.index
+	local sharedIndex: State<T> = thisWidget.state.index
 	for _, Selection in selectionArray do
-		Iris.Internal._Insert("Selectable", { Selection, Selection }, { index = sharedIndex } :: Types.States)
+		Iris.Internal._Insert("Selectable", { Selection, Selection }, { index = sharedIndex } :: States)
 	end
 	Iris.End()
 
@@ -12257,7 +13378,7 @@ end
         }
         ```
     ]=]
-Iris.ComboEnum = function(arguments: Types.WidgetArguments, states: Types.WidgetStates?, enumType: Enum)
+Iris.ComboEnum = function(arguments: WidgetArguments, states: WidgetStates?, enumType: Enum)
 	local defaultState
 	if states == nil then
 		defaultState = Iris.State(enumType:GetEnumItems()[1])
@@ -12267,7 +13388,7 @@ Iris.ComboEnum = function(arguments: Types.WidgetArguments, states: Types.Widget
 	local thisWidget = Iris.Internal._Insert("Combo", arguments, defaultState)
 	local sharedIndex = thisWidget.state.index
 	for _, Selection in enumType:GetEnumItems() do
-		Iris.Internal._Insert("Selectable", { Selection.Name, Selection }, { index = sharedIndex } :: Types.States)
+		Iris.Internal._Insert("Selectable", { Selection.Name, Selection }, { index = sharedIndex } :: States)
 	end
 	Iris.End()
 
@@ -12515,7 +13636,7 @@ Iris.Table = wrapper("Table")
         then moves to the cell in the first column of the next row.
     ]=]
 Iris.NextColumn = function(): number
-	local Table = Iris.Internal._GetParentWidget() :: Types.Table
+	local Table = Iris.Internal._GetParentWidget() :: Table
 	assert(Table ~= nil, "Iris.NextColumn() can only called when directly within a table.")
 
 	local columnIndex = Table._columnIndex
@@ -12535,7 +13656,7 @@ end
         In a table, moves to the cell in the first column of the next row.
     ]=]
 Iris.NextRow = function(): number
-	local Table = Iris.Internal._GetParentWidget() :: Types.Table
+	local Table = Iris.Internal._GetParentWidget() :: Table
 	assert(Table ~= nil, "Iris.NextRow() can only called when directly within a table.")
 	Table._columnIndex = 1
 	Table._rowIndex += 1
@@ -12552,7 +13673,7 @@ end
         Will erorr if the given index is not in the range of 1 to NumColumns.
     ]=]
 Iris.SetColumnIndex = function(index: number): ()
-	local Table = Iris.Internal._GetParentWidget() :: Types.Table
+	local Table = Iris.Internal._GetParentWidget() :: Table
 	assert(Table ~= nil, "Iris.SetColumnIndex() can only called when directly within a table.")
 	assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
 	Table._columnIndex = index
@@ -12566,7 +13687,7 @@ end
         In a table, moves to the cell in the given row with the same previous column.
     ]=]
 Iris.SetRowIndex = function(index: number): ()
-	local Table = Iris.Internal._GetParentWidget() :: Types.Table
+	local Table = Iris.Internal._GetParentWidget() :: Table
 	assert(Table ~= nil, "Iris.SetRowIndex() can only called when directly within a table.")
 	assert(index >= 1, "The index must be greater or equal to 1.")
 	Table._rowIndex = index
@@ -12580,7 +13701,7 @@ end
         from the last column to the first.
     ]=]
 Iris.NextHeaderColumn = function(): number
-	local Table = Iris.Internal._GetParentWidget() :: Types.Table
+	local Table = Iris.Internal._GetParentWidget() :: Table
 	assert(Table ~= nil, "Iris.NextHeaderColumn() can only called when directly within a table.")
 
 	Table._rowIndex = 0
@@ -12599,7 +13720,7 @@ end
         Will erorr if the given index is not in the range of 1 to NumColumns.
     ]=]
 Iris.SetHeaderColumnIndex = function(index: number): ()
-	local Table = Iris.Internal._GetParentWidget() :: Types.Table
+	local Table = Iris.Internal._GetParentWidget() :: Table
 	assert(Table ~= nil, "Iris.SetHeaderColumnIndex() can only called when directly within a table.")
 	assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
 
@@ -12620,7 +13741,7 @@ end
         Will erorr if the given index is not in the range of 1 to NumColumns.
     ]=]
 Iris.SetColumnWidth = function(index: number, width: number): ()
-	local Table = Iris.Internal._GetParentWidget() :: Types.Table
+	local Table = Iris.Internal._GetParentWidget() :: Table
 	assert(Table ~= nil, "Iris.SetColumnWidth() can only called when directly within a table.")
 	assert((index >= 1) and (index <= Table.arguments.NumColumns), `The index must be between 1 and {Table.arguments.NumColumns}, inclusive.`)
 
