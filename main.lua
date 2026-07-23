@@ -283,10 +283,6 @@ local Internal: Types.Internal = (function(Iris: Types.Iris): Types.Internal
 		-- if Internal.parentInstance:IsA("GuiBase2d") and math.min(Internal.parentInstance.AbsoluteSize.X, Internal.parentInstance.AbsoluteSize.Y) < 100 then
 		--     error("Iris Parent Instance is too small")
 		-- end
-		local compatibleParent: boolean = (Internal.parentInstance:IsA("GuiBase2d") or Internal.parentInstance:IsA("CoreGui") or Internal.parentInstance:IsA("PluginGui") or Internal.parentInstance:IsA("PlayerGui"))
-		if compatibleParent == false then
-			error("The Iris parent instance will not display any GUIs.")
-		end
 
 		-- if we are running in Studio, we want full error tracebacks, so we don't have
 		-- any pcall to protect from an error.
@@ -983,7 +979,7 @@ function Iris.Init(parentInstance: Instance?, eventConnection: (RBXScriptSignal 
 
     if parentInstance == nil then
         -- coalesce to playerGui
-        parentInstance = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+        parentInstance = (gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
     end
     if eventConnection == nil then
         -- coalesce to Heartbeat
