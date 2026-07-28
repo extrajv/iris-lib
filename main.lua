@@ -1,3 +1,5 @@
+setthreadidentity(7)
+
 --!optimize 2
 --[=[
     @class Iris
@@ -18,7 +20,7 @@
     end)
     ```
 ]=]
-print("sddsa")
+
 local HttpService = game:GetService("HttpService")
 local Iris = {} :: Types.Iris
 
